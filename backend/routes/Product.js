@@ -72,6 +72,23 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
+// ================= GET PRODUCT BY ID =================
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate("user", "username rating reviewCount location");
+
+    if (!product) {
+      return res.status(404).json({ message: "ไม่พบสินค้า" });
+    }
+
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 // ================= UPDATE PRODUCT =================
 // ================= UPDATE PRODUCT =================
 router.put("/:id", protect, async (req, res) => {
@@ -196,8 +213,5 @@ router.put("/:id/remove-image", protect, async (req, res) => {
 
   res.json(product);
 });
-
-
-
 
 module.exports = router;
