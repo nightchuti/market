@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
-    trim: true // ตัดช่องว่างหัวท้าย
+    trim: true
   },
   description: {
     type: String
@@ -19,7 +19,6 @@ const productSchema = new mongoose.Schema({
     required: true,
     min: [0, "ราคาต้องไม่ต่ำกว่า 0"]
   },
-  // ในไฟล์ models/Product.js
   category: {
     type: String,
     enum: [
@@ -33,38 +32,30 @@ const productSchema = new mongoose.Schema({
       "อุปกรณ์อิเล็กทรอนิกส์",
       "อื่นๆ"
     ],
-    required: true,
-    trim: true // 💡 เพิ่มบรรทัดนี้เพื่อล้างช่องว่าง (Space) ที่หัว-ท้าย
+    required: true
+    // ✅ ลบ trim: true ออก (ใช้ไม่ได้กับ enum)
   },
-  // เปลี่ยนจาก quantity เฉยๆ เป็นการกำหนดค่าตรวจสอบด้วย
   quantity: {
     type: Number,
     required: [true, "กรุณาระบุจำนวนสต็อก"],
-    min: [0, "สินค้าในสต็อกไม่สามารถติดลบได้"], // สำคัญมากสำหรับการตัดสต็อก
+    min: [0, "สินค้าในสต็อกไม่สามารถติดลบได้"],
     default: 0
   },
-  images: [
-    {
-      type: String
-    }
-  ],
-  isActive: { // เพิ่มสถานะเปิด/ปิดการขาย
+  images: [{ type: String }],
+  isActive: {
     type: Boolean,
     default: true
   },
-
   deliveryType: {
     type: String,
     enum: ["meetup", "delivery", "both"],
     default: "delivery"
   },
-
   tradeOption: {
     type: String,
     enum: ["sell_only", "trade_allowed", "negotiable"],
     default: "sell_only"
   },
-
   lat: {
     type: Number,
     default: null
@@ -79,17 +70,30 @@ const productSchema = new mongoose.Schema({
   },
   embeddings: {
     type: [Number],
-    default: [] // สำหรับเก็บ AI Vector ของตัวสินค้าเอง
+    default: []
   },
   status: {
     type: String,
     enum: ["available", "pending", "exchanged", "sold"],
     default: "available"
-  },
-
+  }
 }, { timestamps: true });
 
-// ทำ Index เพื่อให้ค้นหาด้วยชื่อหรือหมวดหมู่ได้เร็วขึ้น
+// ✅ เพิ่ม Middleware ทำความสะอาด category ก่อน validate
+productSchema.pre('validate', function(next) {
+  if (this.category && typeof this.category === 'string') {
+    this.category = this.category.trim();
+  }
+  if (this.locationName && typeof this.locationName === 'string') {
+    this.locationName = this.locationName.trim();
+  }
+  next();
+});
+
+// Index
 productSchema.index({ title: "text", category: 1 });
+productSchema.index({ user: 1 });
+productSchema.index({ status: 1 });
+productSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Product", productSchema);
