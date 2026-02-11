@@ -1,17 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const Shop = require("../models/shop")
+const tradeController = require("../controllers/tradeController");
+const protect = require("../middleware/authMiddleware");
+const multer = require("multer");
 
-// create shop
-router.post("/", async (req, res) => {
-  const shop = await Shop.create(req.body);
-  res.json(shop);
-});
+const upload = multer({ storage: multer.memoryStorage() });
 
-// get shop (ร้านหลัก)
-router.get("/", async (req, res) => {
-  const shop = await Shop.findOne();
-  res.json(shop);
-});
+router.post("/", protect, tradeController.createTrade);
+router.get("/", protect, tradeController.getOpenTrades);
+router.post("/search-image", protect, upload.single("image"), tradeController.searchByImage);
+router.post("/:id/match", protect, tradeController.findMatches);
+router.patch("/:id/lock-trade", protect, tradeController.lockTrade);
+router.post("/:id/confirm-swap", protect, tradeController.confirmSwap);
 
 module.exports = router;
