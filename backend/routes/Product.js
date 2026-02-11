@@ -41,8 +41,8 @@ router.post("/", protect, async (req, res) => {
     // --- ส่วนของ AI Embedding ---
     let vector = [];
     try {
-      const model = genAI.getGenerativeModel({ model: "embedding-001" });
-      const textToEmbed = `Product: ${title}. Category: ${category}. Description: ${description || ''}. Delivery: ${deliveryType}.`;
+      const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+      const textToEmbed = `Product: ${title}. category: ${category}. Description: ${description || ''}. Delivery: ${deliveryType}.`;
       const result = await model.embedContent(textToEmbed);
       vector = result.embedding.values;
     } catch (aiErr) {
