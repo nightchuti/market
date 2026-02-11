@@ -80,3 +80,12 @@
 .btn-solid:hover {
   background: #244a16;
 }
+
+.error-text {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 6px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-weight: 400;
+}

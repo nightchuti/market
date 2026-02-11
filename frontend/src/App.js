@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import AllProducts from "./pages/AllProducts";
 import ProductDetail from "./pages/ProductDetail";
 import AddProduct from "./pages/AddProduct";
+import ChatPage from "./pages/ChatPage";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/products" element={<AllProducts />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/add-product" element={<AddProduct />} />
+          <Route path="/chat/:sellerId" element={<ChatPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

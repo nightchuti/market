@@ -33,14 +33,19 @@ function Home() {
               key={p._id}
               onClick={() => navigate(`/products/${p._id}`)}
             >
+
               <img
                 src={
-                  p.images?.length
-                    ? `http://localhost:5000${p.images[0]}`
+                  p.images && p.images.length > 0
+                    ? p.images[0].startsWith("http")
+                      ? p.images[0] // ถ้าเป็น URL เต็ม ใช้เลย
+                      : `http://localhost:5000/uploads/${p.images[0].replace(/^\/?uploads\/?/, "")}`
                     : "https://via.placeholder.com/300"
                 }
                 alt={p.title}
               />
+
+
               <h4>{p.title}</h4>
               <p className="price">฿{p.price}</p>
             </div>

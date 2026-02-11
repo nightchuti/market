@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./AllProducts.css";
+import { useNavigate } from "react-router-dom";
 
 function AllProducts() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [exchangeable, setExchangeable] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
@@ -81,15 +83,23 @@ function AllProducts() {
       {/* ===== PRODUCT GRID ===== */}
       <div className="product-grid">
         {products.map((p) => (
-          <div className="product-card" key={p._id}>
+          <div
+            className="product-card"
+            key={p._id}
+            onClick={() => navigate(`/products/${p._id}`)}
+          >
+            
             <img
               src={
-                p.images?.length
-                  ? `http://localhost:5000${p.images[0]}`
+                p.images && p.images.length > 0
+                  ? p.images[0].startsWith("http")
+                    ? p.images[0] // ถ้าเป็น URL เต็ม
+                    : `http://localhost:5000/uploads/${p.images[0].replace(/^\/?uploads\/?/, "")}`
                   : "https://via.placeholder.com/300"
               }
               alt={p.title}
             />
+
             <h4>{p.title}</h4>
             <p className="price">฿{p.price}</p>
             <p className="seller">ผู้ขาย: {p.user?.username}</p>
