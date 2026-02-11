@@ -1,0 +1,84 @@
+.home {
+  font-family: "Prompt", sans-serif;
+  background: #fafafa;
+}
+
+/* ===== HERO ===== */
+.hero {
+  background: linear-gradient(135deg, #2f5d1e, #4c8a2b);
+  color: white;
+  padding: 90px 20px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 38px;
+  font-weight: 700;
+}
+
+.hero p {
+  margin: 14px 0 24px;
+  font-size: 16px;
+}
+
+.btn-main {
+  background: #f7b733;
+  padding: 10px 22px;  
+  border-radius: 999px;
+  border: none;
+  font-size: 15px;  
+  font-weight: 600;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  transition: 0.25s;
+  width: auto;
+}
+
+.btn-main:hover {
+  background: #f1aa1f;
+  transform: translateY(-2px); 
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+}
+
+.btn-main:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+
+/* ===== PRODUCTS ===== */
+.product-section {
+  padding: 50px 40px;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 22px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+}
+
+.product-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.price {
+  font-weight: 600;
+  margin-top: 6px;
+}
