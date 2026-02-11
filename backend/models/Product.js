@@ -29,6 +29,7 @@ const productSchema = new mongoose.Schema({
       "อุปกรณ์การเรียน",
       "อาหาร",
       "อุปกรณ์สัตว์เลี้ยง",
+      "อุปกรณ์อิเล็กทรอนิกส์",
       "อื่นๆ"
     ],
     required: true
