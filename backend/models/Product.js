@@ -49,7 +49,7 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  
+
   deliveryType: {
   type: String,
   enum: ["meetup", "delivery", "both"],
@@ -61,6 +61,23 @@ tradeOption: {
   enum: ["sell_only", "trade_allowed", "negotiable"],
   default: "sell_only"
 },
+
+lat: { 
+    type: Number, 
+    default: null 
+  },
+  lng: { 
+    type: Number, 
+    default: null 
+  },
+  locationName: { 
+    type: String, 
+    trim: true 
+  },
+  embeddings: { 
+    type: [Number], 
+    default: [] // สำหรับเก็บ AI Vector ของตัวสินค้าเอง
+  }
 
 }, { timestamps: true });
 
