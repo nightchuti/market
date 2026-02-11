@@ -41,15 +41,41 @@ function ProductDetail() {
 
         {/* ================= LEFT : IMAGES ================= */}
         <div className="image-section">
-          <img
-            className="main-image"
-            src={
-              selectedImage?.startsWith("http")
-                ? selectedImage
-                : `http://localhost:5000${selectedImage}`
-            }
-            alt={product.title}
-          />
+          <div className="image-section">
+            {product.images?.length > 0 && selectedImage ? (
+              <img
+                className="main-image"
+                src={
+                  selectedImage.startsWith("http")
+                    ? selectedImage
+                    : `http://localhost:5000${selectedImage}`
+                }
+                alt={product.title}
+              />
+            ) : (
+              <div className="main-image placeholder">
+                ไม่มีรูปสินค้า
+              </div>
+            )}
+
+            {product.images?.length > 0 && (
+              <div className="thumbnail-row">
+                {product.images.map((img, i) => (
+                  <img
+                    key={i}
+                    src={
+                      img.startsWith("http")
+                        ? img
+                        : `http://localhost:5000${img}`
+                    }
+                    alt="thumb"
+                    onClick={() => setSelectedImage(img)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
 
           <div className="thumbnail-row">
             {product.images?.map((img, i) => (
