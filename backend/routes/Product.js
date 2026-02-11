@@ -32,48 +32,70 @@ router.get("/my", protect, async (req, res) => {
 
 // ================= CREATE PRODUCT =================
 router.post("/", protect, async (req, res) => {
+  try {
+    const { 
+      title, description, price, category, quantity, images, 
+      deliveryType, tradeOption, lat, lng, locationName 
+    } = req.body;
 
-  const product = await Product.create({
-    user: req.user.id,
-    title: req.body.title,
-    description: req.body.description,
-    price: req.body.price,
-    category: req.body.category,
-    quantity: req.body.quantity,
-    images: req.body.images
-  });
+    // --- ส่วนของ AI Embedding ---
+    let vector = [];
+    try {
+      const model = genAI.getGenerativeModel({ model: "embedding-001" });
+      const textToEmbed = `Product: ${title}. Category: ${category}. Description: ${description || ''}. Delivery: ${deliveryType}.`;
+      const result = await model.embedContent(textToEmbed);
+      vector = result.embedding.values;
+    } catch (aiErr) {
+      console.error("AI Embedding failed:", aiErr.message);
+      // ถ้า AI พัง ยังยอมให้สร้างสินค้าได้ แต่ไม่มี vector (หรือจะ return error ก็ได้)
+    }
 
-  res.json(product);
+    const product = await Product.create({
+      user: req.user.id,
+      title,
+      description,
+      price,
+      category,
+      quantity,
+      images,
+      deliveryType, // เก็บข้อมูลนัดรับ/จัดส่ง
+      tradeOption,  // เก็บตัวเลือกการแลก
+      lat,          // เก็บละติจูดจริงจากหน้าบ้าน
+      lng,          // เก็บลองจิจูดจริงจากหน้าบ้าน
+      locationName, // ชื่อสถานที่นัดพบ
+      embeddings: vector // เก็บตัวเลข AI 768 มิติ
+    });
 
+    res.status(201).json(product);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // ================= UPDATE PRODUCT =================
+// ================= UPDATE PRODUCT =================
 router.put("/:id", protect, async (req, res) => {
-
   const product = await Product.findById(req.params.id);
 
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
-  }
+  if (!product) return res.status(404).json({ message: "Product not found" });
+  if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "Not authorized" });
 
-  // ✅ ตรวจว่าเป็นเจ้าของโพสต์ไหม
-  if (product.user.toString() !== req.user.id) {
-    return res.status(403).json({ message: "Not authorized" });
-  }
-
+  // อัปเดตฟิลด์ทั่วไป
   product.title = req.body.title || product.title;
   product.description = req.body.description || product.description;
   product.price = req.body.price || product.price;
   product.category = req.body.category || product.category;
   product.quantity = req.body.quantity || product.quantity;
+  
+  // อัปเดตฟิลด์ใหม่
+  product.deliveryType = req.body.deliveryType || product.deliveryType;
+  product.tradeOption = req.body.tradeOption || product.tradeOption;
+  product.lat = req.body.lat || product.lat;
+  product.lng = req.body.lng || product.lng;
+  product.locationName = req.body.locationName || product.locationName;
 
   await product.save();
-
-  res.json({
-    message: "Product updated",
-    product
-  });
-
+  res.json({ message: "Product updated", product });
 });
 
 //==================DELETE PRODUCT ====================
