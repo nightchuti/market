@@ -77,7 +77,12 @@ lat: {
   embeddings: { 
     type: [Number], 
     default: [] // สำหรับเก็บ AI Vector ของตัวสินค้าเอง
-  }
+  },
+  status: { 
+    type: String, 
+    enum: ["available", "pending", "exchanged", "sold"], 
+    default: "available" 
+  },
 
 }, { timestamps: true });
 
