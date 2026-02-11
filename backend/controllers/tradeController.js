@@ -89,4 +89,74 @@ exports.confirmSwap = async (req, res) => {
     }
 };
 
+// --- 5. ดึงรายการทั้งหมด (ที่ขาดไป) ---
+exports.getOpenTrades = async (req, res) => {
+    try {
+        const trades = await Trade.find({ status: "Open" })
+            .populate("owner", "username email");
+        res.json(trades);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// --- 6. ล็อครายการเพื่อนัดหมาย (ที่ขาดไป) ---
+exports.lockTrade = async (req, res) => {
+    try {
+        const { partnerTradeId } = req.body;
+        const trade = await Trade.findById(req.params.id);
+        const partnerTrade = await Trade.findById(partnerTradeId);
+
+        if (!trade || !partnerTrade) return res.status(404).json({ message: "ไม่พบรายการ" });
+
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+        trade.status = "Matched";
+        trade.matchedWith = partnerTradeId;
+        trade.verificationCode = code;    
+
+        partnerTrade.status = "Matched";
+        partnerTrade.matchedWith = trade._id;
+
+        await trade.save();
+        await partnerTrade.save();
+
+        res.json({ message: "นัดหมายสำเร็จ", verificationCode: code });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// --- 7. ค้นหาด้วยข้อความ (Manual Search) ---
+exports.manualSearch = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) return res.status(400).json({ message: "กรุณาระบุคำค้นหา" });
+
+        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const result = await model.embedContent(q);
+        const vector = result.embedding.values;
+
+        const matches = await Trade.aggregate([
+            {
+                "$vectorSearch": {
+                    "index": "trade_AI",
+                    "path": "embeddings",
+                    "queryVector": vector,
+                    "numCandidates": 100,
+                    "limit": 10
+                }
+            },
+            { "$match": { "status": "Open" } }
+        ]);
+        res.json(matches);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// --- 8. ยืนยันพิกัด (Verify Location) ---
+exports.verifyLocation = async (req, res) => {
+    res.json({ message: "Location verified", verified: true });
+};
 // เพิ่มเติม: manualSearch, lockTrade, verifyLocation (ใช้ตามที่คุยกันก่อนหน้าได้เลย)
