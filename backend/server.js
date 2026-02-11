@@ -12,6 +12,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const couponRoutes = require("./routes/couponRoutes"); 
+const tradeRoutes = require("./routes/tradeRoutes");
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use("/api/order", orderRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/trades", tradeRoutes);
 
 app.get("/", (req, res) => {
   res.send("API Running");
