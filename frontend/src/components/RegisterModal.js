@@ -1,16 +1,14 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import "./AuthModal.css";
 
 function RegisterModal({ close }) {
-  const navigate = useNavigate();
-
   const [form, setForm] = useState({
     username: "",
     email: "",
     phonenumber: "",
     password: "",
+    confirmPassword: "",
     role: "nisit",
   });
 
@@ -19,28 +17,57 @@ function RegisterModal({ close }) {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setError("");
   };
 
   const submit = async () => {
     try {
       setError("");
+
+      // ✅ เช็คแค่กรอกไม่ครบ
+      if (
+        !form.username ||
+        !form.email ||
+        !form.phonenumber ||
+        !form.password ||
+        !form.confirmPassword
+      ) {
+        setError("กรุณากรอกข้อมูลให้ครบถ้วน");
+        return;
+      }
+
+      // ✅ เช็ครหัสผ่านตรงกัน
+      if (form.password !== form.confirmPassword) {
+        setError("รหัสผ่านไม่ตรงกัน");
+        return;
+      }
+
       setLoading(true);
 
       const res = await axios.post(
         "http://localhost:5000/api/auth/register",
-        form
+        {
+          username: form.username,
+          email: form.email,
+          phonenumber: form.phonenumber,
+          password: form.password,
+          role: form.role,
+        }
       );
 
-      // เก็บ token (ถ้ามี)
+      // สมัครเสร็จ = login อัตโนมัติ
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
       }
 
-      // ไปหน้า home
-      navigate("/home");
+      if (res.data.user) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
+
+      close();
 
     } catch (err) {
-      setError(err.response?.data?.message || "Register failed");
+      setError(err.response?.data?.message || "สมัครไม่สำเร็จ");
     } finally {
       setLoading(false);
     }
@@ -82,7 +109,19 @@ function RegisterModal({ close }) {
           onChange={handleChange}
         />
 
-        <select name="role" value={form.role} onChange={handleChange}>
+        <input
+          name="confirmPassword"
+          type="password"
+          placeholder="Confirm Password"
+          value={form.confirmPassword}
+          onChange={handleChange}
+        />
+
+        <select
+          name="role"
+          value={form.role}
+          onChange={handleChange}
+        >
           <option value="nisit">Nisit</option>
           <option value="staff">Staff</option>
           <option value="shop">Shop</option>
@@ -90,7 +129,11 @@ function RegisterModal({ close }) {
 
         {error && <p className="error-text">{error}</p>}
 
-        <button className="btn-main" onClick={submit} disabled={loading}>
+        <button
+          className="btn-main"
+          onClick={submit}
+          disabled={loading}
+        >
           {loading ? "กำลังสมัคร..." : "สมัครสมาชิก"}
         </button>
       </div>
