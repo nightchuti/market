@@ -48,7 +48,20 @@ const productSchema = new mongoose.Schema({
   isActive: { // เพิ่มสถานะเปิด/ปิดการขาย
     type: Boolean,
     default: true
-  }
+  },
+  
+  deliveryType: {
+  type: String,
+  enum: ["meetup", "delivery", "both"],
+  default: "delivery"
+},
+
+tradeOption: {
+  type: String,
+  enum: ["sell_only", "trade_allowed", "negotiable"],
+  default: "sell_only"
+},
+
 }, { timestamps: true });
 
 // ทำ Index เพื่อให้ค้นหาด้วยชื่อหรือหมวดหมู่ได้เร็วขึ้น
