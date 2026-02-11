@@ -7,6 +7,7 @@ const upload = require("../middleware/upload");
 
 // ================= UPLOAD MANY IMAGES =================
 router.post("/upload", upload.array("images", 6), (req, res) => {
+
   const images = req.files.map(file =>
     `/uploads/${file.filename}`
   );
@@ -15,41 +16,22 @@ router.post("/upload", upload.array("images", 6), (req, res) => {
     message: "Upload success",
     images
   });
-});
 
+});
 
 // ================= MY PRODUCTS =================
 router.get("/my", protect, async (req, res) => {
+
   const products = await Product.find({
     user: req.user.id
   });
 
   res.json(products);
+
 });
 
-
-// ================= RECOMMENDED PRODUCTS =================
-router.get("/recommended", async (req, res) => {
-  try {
-    const products = await Product.find({ isRecommended: true })
-      .sort({ createdAt: -1 })
-      .limit(6)
-      .populate("user", "username");
-
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-
-// ================= CREATE PRODUCT (SHOP ONLY) =================
+// ================= CREATE PRODUCT =================
 router.post("/", protect, async (req, res) => {
-
-  // 🏪 เฉพาะ shop เท่านั้น
-  if (req.user.role !== "shop") {
-    return res.status(403).json({ message: "Shop only" });
-  }
 
   const product = await Product.create({
     user: req.user.id,
@@ -58,17 +40,16 @@ router.post("/", protect, async (req, res) => {
     price: req.body.price,
     category: req.body.category,
     quantity: req.body.quantity,
-    images: req.body.images || [],
-    isRecommended: req.body.isRecommended || false,
-    exchangeable: req.body.exchangeable || false
+    images: req.body.images
   });
 
   res.json(product);
-});
 
+});
 
 // ================= UPDATE PRODUCT =================
 router.put("/:id", protect, async (req, res) => {
+
   const product = await Product.findById(req.params.id);
 
   if (!product) {
@@ -80,13 +61,11 @@ router.put("/:id", protect, async (req, res) => {
     return res.status(403).json({ message: "Not authorized" });
   }
 
-  product.title = req.body.title ?? product.title;
-  product.description = req.body.description ?? product.description;
-  product.price = req.body.price ?? product.price;
-  product.category = req.body.category ?? product.category;
-  product.quantity = req.body.quantity ?? product.quantity;
-  product.exchangeable = req.body.exchangeable ?? product.exchangeable;
-  product.isRecommended = req.body.isRecommended ?? product.isRecommended;
+  product.title = req.body.title || product.title;
+  product.description = req.body.description || product.description;
+  product.price = req.body.price || product.price;
+  product.category = req.body.category || product.category;
+  product.quantity = req.body.quantity || product.quantity;
 
   await product.save();
 
@@ -94,36 +73,34 @@ router.put("/:id", protect, async (req, res) => {
     message: "Product updated",
     product
   });
+
 });
 
-
-// ================= DELETE PRODUCT =================
+//==================DELETE PRODUCT ====================
 router.delete("/:id", protect, async (req, res) => {
+
   const product = await Product.findById(req.params.id);
 
   if (!product) {
     return res.status(404).json({ message: "Product not found" });
   }
 
+  // ✅ ตรวจเจ้าของ
   if (product.user.toString() !== req.user.id) {
     return res.status(403).json({ message: "Not authorized" });
   }
 
   await product.deleteOne();
+
   res.json({ message: "Product deleted" });
+
 });
 
 
-// ================= GET ALL PRODUCTS (FILTER) =================
+// ================= GET ALL PRODUCTS =================
 router.get("/", async (req, res) => {
 
-  const {
-    search,
-    category,
-    minPrice,
-    maxPrice,
-    exchangeable
-  } = req.query;
+  const { search, category, minPrice, maxPrice } = req.query;
 
   let filter = {};
 
@@ -132,40 +109,25 @@ router.get("/", async (req, res) => {
     filter.title = { $regex: search, $options: "i" };
   }
 
-  // 📂 หมวดหมู่
+  // 📂 ค้นตามหมวดหมู่
   if (category) {
     filter.category = category;
   }
 
-  // 💰 ราคา
+  // 💰 ค้นตามราคา
   if (minPrice || maxPrice) {
     filter.price = {};
+
     if (minPrice) filter.price.$gte = Number(minPrice);
     if (maxPrice) filter.price.$lte = Number(maxPrice);
   }
 
-  // 🔄 แลกเปลี่ยนได้
-  if (exchangeable === "true") {
-    filter.exchangeable = true;
-  }
-
   const products = await Product.find(filter)
-    .populate("user", "username dormAddress");
+    .populate("user", "username");
 
   res.json(products);
 });
 
-
-// ================= PRODUCT DETAIL =================
-router.get("/:id", async (req, res) => {
-  const product = await Product.findById(req.params.id)
-    .populate("user", "username dormAddress");
-
-  if (!product)
-    return res.status(404).json({ message: "Product not found" });
-
-  res.json(product);
-});
 
 
 // ================= ADD IMAGE =================
@@ -195,6 +157,7 @@ router.put("/:id/add-images",
 
 // ================= REMOVE IMAGE =================
 router.put("/:id/remove-image", protect, async (req, res) => {
+
   const product = await Product.findById(req.params.id);
 
   if (!product)
@@ -208,7 +171,11 @@ router.put("/:id/remove-image", protect, async (req, res) => {
   );
 
   await product.save();
+
   res.json(product);
 });
+
+
+
 
 module.exports = router;
