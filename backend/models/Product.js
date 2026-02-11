@@ -79,16 +79,6 @@ const productSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// ✅ เพิ่ม Middleware ทำความสะอาด category ก่อน validate
-productSchema.pre('validate', function(next) {
-  if (this.category && typeof this.category === 'string') {
-    this.category = this.category.trim();
-  }
-  if (this.locationName && typeof this.locationName === 'string') {
-    this.locationName = this.locationName.trim();
-  }
-  next();
-});
 
 // Index
 productSchema.index({ title: "text", category: 1 });
