@@ -13,26 +13,12 @@ const orderSchema = new mongoose.Schema({
       product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product",
-        required: true   // ✅ แนะนำเพิ่ม
+        required: true
       },
-      quantity: {
-        type: Number,
-        required: true,
-        min: 1           // ✅ กันจำนวนติดลบ
-      },
-      price: {
-        type: Number,
-        required: true,
-        min: 0           // ✅ กันราคาติดลบ
-      }
+      quantity: Number,
+      price: Number
     }
   ],
-
-  shippingAddress: {
-    name: { type: String, required: true },
-    phone: { type: String, required: true },
-    address: { type: String, required: true }
-  },
 
   shippingAddress: {
     dormName: String,
@@ -42,31 +28,46 @@ const orderSchema = new mongoose.Schema({
     lng: Number
   },
 
-  couponCode: {
-    type: String,
-    default: null
-  },
+  couponCode: String,
 
   paymentMethod: {
     type: String,
     enum: ["COD", "PROMPTPAY"],
-    default: "COD"
+    default: "PROMPTPAY"
   },
 
-  totalPrice: {
-    type: Number,
-    required: true,
-    min: 0
-  },
+  paymentSlip: String,
+
+  subTotal: Number,
+  discount: Number,
+  deliveryFee: Number,
+  totalPrice: Number,
 
   status: {
     type: String,
-    enum: ["Pending", "Paid", "Shipped", "Completed", "Cancelled"],
-    default: "Pending"
-  }
+    enum: [
+      "PendingPayment",
+      "WaitingConfirm",
+      "Paid",
+      "Preparing",
+      "ReadyToShip",
+      "Shipping",
+      "Completed",
+      "Cancelled",
+      "Disputed"
+    ],
+    default: "PendingPayment"
+  },
 
-  
+  deliveryDetails: {
+    riderName: String,
+    riderPhone: String,
+    trackingUrl: String,
+    deliveryId: String
+  },
 
+  paidAt: Date,
+  completedAt: Date
 
 }, { timestamps: true });
 

@@ -1,27 +1,24 @@
 const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema({
-
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true
   },
-
   title: {
     type: String,
-    required: true
+    required: true,
+    trim: true // ตัดช่องว่างหัวท้าย
   },
-
   description: {
     type: String
   },
-
   price: {
     type: Number,
-    required: true
+    required: true,
+    min: [0, "ราคาต้องไม่ต่ำกว่า 0"]
   },
-
   category: {
     type: String,
     enum: [
@@ -36,29 +33,25 @@ const productSchema = new mongoose.Schema({
     ],
     required: true
   },
-
-  quantity: {
+  // เปลี่ยนจาก quantity เฉยๆ เป็นการกำหนดค่าตรวจสอบด้วย
+  quantity: { 
     type: Number,
-    default: 1
+    required: [true, "กรุณาระบุจำนวนสต็อก"],
+    min: [0, "สินค้าในสต็อกไม่สามารถติดลบได้"], // สำคัญมากสำหรับการตัดสต็อก
+    default: 0
   },
-
   images: [
     {
       type: String
     }
   ],
-
-  isRecommended: {
+  isActive: { // เพิ่มสถานะเปิด/ปิดการขาย
     type: Boolean,
-    default: false
-  },
-
-  exchangeable: {
-    type: Boolean,
-    default: false
+    default: true
   }
-
-
 }, { timestamps: true });
+
+// ทำ Index เพื่อให้ค้นหาด้วยชื่อหรือหมวดหมู่ได้เร็วขึ้น
+productSchema.index({ title: "text", category: 1 });
 
 module.exports = mongoose.model("Product", productSchema);
