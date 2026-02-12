@@ -5,14 +5,16 @@ import { useNavigate } from "react-router-dom";
 
 function AllProducts() {
   const [products, setProducts] = useState([]);
+  const [pagination, setPagination] = useState(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [exchangeable, setExchangeable] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts({ page: 1 });
   }, []);
+
 
   const fetchProducts = async (params = {}) => {
     try {
@@ -20,17 +22,21 @@ function AllProducts() {
         "http://localhost:5000/api/products",
         { params }
       );
-      setProducts(res.data);
+
+      setProducts(res.data.products);
+      setPagination(res.data.pagination); // ✅ ใช้จริงตรงนี้
     } catch (err) {
       console.log(err);
+      setProducts([]);
     }
   };
+
 
   const handleSearch = () => {
     const params = {
       search,
       category,
-      ...(exchangeable && { exchangeable: true })
+      ...(exchangeable && { tradeOption: "exchange" })
     };
 
     fetchProducts(params);
@@ -38,11 +44,8 @@ function AllProducts() {
 
   return (
     <div className="all-products">
-
-      {/* ===== HEADER ===== */}
       <h1>สินค้าทั้งหมด</h1>
 
-      {/* ===== FILTER ===== */}
       <div className="filter-bar">
         <input
           placeholder="ค้นหาสินค้า..."
@@ -65,7 +68,6 @@ function AllProducts() {
           <option value="อื่นๆ">อื่นๆ</option>
         </select>
 
-        {/* 🔄 แลกเปลี่ยนได้ */}
         <label className="exchange-filter">
           <input
             type="checkbox"
@@ -80,7 +82,6 @@ function AllProducts() {
         </button>
       </div>
 
-      {/* ===== PRODUCT GRID ===== */}
       <div className="product-grid">
         {products.map((p) => (
           <div
@@ -88,12 +89,11 @@ function AllProducts() {
             key={p._id}
             onClick={() => navigate(`/products/${p._id}`)}
           >
-            
             <img
               src={
                 p.images && p.images.length > 0
                   ? p.images[0].startsWith("http")
-                    ? p.images[0] // ถ้าเป็น URL เต็ม
+                    ? p.images[0]
                     : `http://localhost:5000/uploads/${p.images[0].replace(/^\/?uploads\/?/, "")}`
                   : "https://via.placeholder.com/300"
               }
@@ -104,7 +104,7 @@ function AllProducts() {
             <p className="price">฿{p.price}</p>
             <p className="seller">ผู้ขาย: {p.user?.username}</p>
 
-            {p.exchangeable && (
+            {p.tradeOption === "exchange" && (
               <span className="exchange-badge">🔄 แลกเปลี่ยนได้</span>
             )}
           </div>
@@ -114,6 +114,38 @@ function AllProducts() {
       {products.length === 0 && (
         <p className="empty">ไม่พบสินค้า</p>
       )}
+
+      {/* ===== PAGINATION ===== */}
+      {pagination && (
+        <div className="pagination">
+          <button
+            className="page-btn"
+            disabled={pagination.page === 1}
+            onClick={() =>
+              fetchProducts({ page: pagination.page - 1 })
+            }
+          >
+            ← ก่อนหน้า
+          </button>
+
+          <div className="page-info">
+            หน้า <span>{pagination.page}</span> จาก {pagination.pages}
+          </div>
+
+          <button
+            className="page-btn"
+            disabled={pagination.page === pagination.pages}
+            onClick={() =>
+              fetchProducts({ page: pagination.page + 1 })
+            }
+          >
+            ถัดไป →
+          </button>
+        </div>
+      )}
+
+
+
     </div>
   );
 }

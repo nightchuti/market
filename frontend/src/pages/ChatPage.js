@@ -15,34 +15,34 @@ function ChatPage() {
   useEffect(() => {
     if (!token) return;
 
+    const fetchMessages = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/chat/${sellerId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setMessages(res.data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    const fetchSeller = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/auth/user/${sellerId}`
+        );
+        setSeller(res.data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
     fetchMessages();
     fetchSeller();
-  }, [sellerId]);
-
-  const fetchMessages = async () => {
-    try {
-      const res = await axios.get(
-        `http://localhost:5000/api/chat/${sellerId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setMessages(res.data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const fetchSeller = async () => {
-    try {
-      const res = await axios.get(
-        `http://localhost:5000/api/auth/user/${sellerId}`
-      );
-      setSeller(res.data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  }, [sellerId, token]);
 
   const sendMessage = async () => {
     if (!text.trim()) return;
@@ -59,7 +59,8 @@ function ChatPage() {
         }
       );
 
-      setMessages([...messages, res.data]);
+      // ใช้ functional update กัน state เก่า
+      setMessages((prev) => [...prev, res.data]);
       setText("");
     } catch (err) {
       console.log(err);
@@ -78,7 +79,7 @@ function ChatPage() {
             <div
               key={msg._id}
               className={
-                msg.sender === currentUser._id
+                msg.sender === currentUser?._id
                   ? "chat-message me"
                   : "chat-message other"
               }

@@ -8,9 +8,20 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/products")
-      .then((res) => setProducts(res.data));
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/products?limit=6"
+        );
+
+        setProducts(res.data.products); // ✅ แก้ตรงนี้
+      } catch (err) {
+        console.log(err);
+        setProducts([]);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   return (
@@ -33,24 +44,26 @@ function Home() {
               key={p._id}
               onClick={() => navigate(`/products/${p._id}`)}
             >
-
               <img
                 src={
                   p.images && p.images.length > 0
                     ? p.images[0].startsWith("http")
-                      ? p.images[0] // ถ้าเป็น URL เต็ม ใช้เลย
+                      ? p.images[0]
                       : `http://localhost:5000/uploads/${p.images[0].replace(/^\/?uploads\/?/, "")}`
                     : "https://via.placeholder.com/300"
                 }
                 alt={p.title}
               />
 
-
               <h4>{p.title}</h4>
               <p className="price">฿{p.price}</p>
             </div>
           ))}
         </div>
+
+        {products.length === 0 && (
+          <p className="empty">ยังไม่มีสินค้า</p>
+        )}
       </section>
     </div>
   );
