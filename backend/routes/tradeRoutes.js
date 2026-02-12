@@ -1,3 +1,4 @@
+// backend/routes/tradeRoutes.js
 const express = require("express");
 const router = express.Router();
 const tradeController = require("../controllers/tradeController");
@@ -17,12 +18,7 @@ router.get("/search", tradeController.manualSearch);
 router.post("/", protect, tradeController.createTrade);
 router.get("/my-trades", protect, tradeController.getMyTrades);
 
-router.post(
-  "/search-image",
-  protect,
-  upload.single("image"),
-  tradeController.searchByImage
-);
+router.post("/search-image", protect, upload.single("image"), tradeController.searchByImage);
 
 router.post("/:id/match", protect, tradeController.findMatches);
 router.put("/:id/lock", protect, tradeController.lockTrade);

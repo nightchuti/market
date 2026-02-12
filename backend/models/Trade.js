@@ -1,29 +1,31 @@
+// backend/models/Trade.js
 const mongoose = require("mongoose");
 
 const tradeSchema = new mongoose.Schema({
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User", required: true
+    ref: "User",
+    required: true
   },
+  // 🔴 จุดที่แก้: ต้องเป็น ObjectId และมี ref ไปที่ Product
   offeredProduct: {
-    type: String, required: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product", // ชื่อต้องตรงกับ Model Product ของคุณ
+    required: true
   },
   wantedCategory: { type: String, required: true },
-
   description: { type: String },
-
   wantedPriceRange: { type: String },
+  
+  status: {
+    type: String,
+    default: "Open",
+    enum: ["Open", "Matched", "Locked", "Completed", "Cancelled"]
+  },
 
-  status: { 
-    type: String, 
-    default: "Open", 
-    enum: ["Open", "Matched", "Locked", "Completed", "Cancelled"] },
-
-  // พิกัด (ไม่ใส่ required เพื่อกัน Error แต่แนะนำให้ส่งจากหน้าบ้าน)
   lat: { type: Number },
   lng: { type: Number },
-  
-  // AI Data
+
   embeddings: { type: [Number], default: [] },
   matchedWith: { type: mongoose.Schema.Types.ObjectId, ref: "Trade" },
   verificationCode: { type: String }
