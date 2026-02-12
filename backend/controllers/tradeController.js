@@ -1,14 +1,23 @@
 // controllers/tradeController.js
-
 const Trade = require("../models/Trade");
 const Product = require("../models/Product");
 const mongoose = require("mongoose");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// ตรวจสอบว่ามี API KEY หรือไม่
+// ตรวจสอบ API Key
 const genAI = process.env.GEMINI_API_KEY 
     ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) 
     : null;
+
+// Helper: แปลงไฟล์รูปเป็น Format ที่ Gemini เข้าใจ
+function fileToGenerativePart(buffer, mimeType) {
+    return {
+        inlineData: {
+            data: buffer.toString("base64"),
+            mimeType
+        },
+    };
+}
 
 // ==========================================
 // 1. สร้างประกาศแลกเปลี่ยน (Create Trade)
@@ -17,81 +26,54 @@ exports.createTrade = async (req, res) => {
     try {
         const { offeredProduct, wantedCategory, description, lat, lng } = req.body;
         
-        // 1. ตรวจสอบสินค้า
         const product = await Product.findById(offeredProduct);
-        if (!product) {
-            return res.status(404).json({ message: "ไม่พบสินค้าที่จะนำมาแลก" });
-        }
+        if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+        if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "ไม่ใช่เจ้าของสินค้า" });
 
-        // 2. ตรวจสอบความเป็นเจ้าของ
-        if (product.user.toString() !== req.user.id) {
-            return res.status(403).json({ message: "คุณไม่ใช่เจ้าของสินค้าชิ้นนี้" });
-        }
-
-        // 3. สร้าง Embedding ด้วย AI (ใส่ try-catch กันระบบล่ม)
+        // AI Embedding
         let embeddings = [];
         if (genAI) {
             try {
                 const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
                 const textToEmbed = `Offer: ${product.title}. Category: ${product.category}. Want: ${wantedCategory}. Description: ${description}`;
-                
                 const result = await model.embedContent(textToEmbed);
                 embeddings = result.embedding.values;
-                console.log("✅ AI Embedding Success");
             } catch (aiError) {
-                console.log("⚠️ AI Error (สร้าง Trade แบบไม่มี Vector):", aiError.message);
-                // ทำงานต่อโดย embeddings = []
+                console.log("⚠️ AI Error:", aiError.message);
             }
         }
 
-        // 4. บันทึกข้อมูล
         const trade = await Trade.create({
             owner: req.user.id,
             offeredProduct,
             wantedCategory,
             description,
-            lat: lat || product.lat, // ถ้าไม่ระบุพิกัดใหม่ ให้ใช้พิกัดเดียวกับสินค้า
+            lat: lat || product.lat,
             lng: lng || product.lng,
             embeddings 
         });
 
-        res.status(201).json({
-            message: "สร้างรายการแลกเปลี่ยนสำเร็จ",
-            trade
-        });
-
+        res.status(201).json({ message: "สร้างรายการสำเร็จ", trade });
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: err.message });
     }
 };
 
 // ==========================================
-// 2. ระบบจับคู่ (Find Matches) - แก้ไขใหม่รับ ID
+// 2. ระบบจับคู่ (Find Matches)
 // ==========================================
 exports.findMatches = async (req, res) => {
     try {
-        const tradeId = req.params.id; // รับ ID จาก URL
-
-        // 1. ค้นหา Trade ของเรา
+        const tradeId = req.params.id;
         const myTrade = await Trade.findById(tradeId);
 
-        if (!myTrade) {
-            return res.status(404).json({ message: "ไม่พบรายการแลกเปลี่ยนนี้" });
-        }
-
-        // 2. Security Check: ต้องเป็นเจ้าของเท่านั้นถึงดูคู่แมตช์ได้
-        if (myTrade.owner.toString() !== req.user.id) {
-            return res.status(403).json({ message: "คุณไม่มีสิทธิ์เข้าถึงรายการนี้" });
-        }
-
-        console.log(`🔎 เริ่มค้นหาคู่แมตช์ให้กับ: ${tradeId} (อยากได้: ${myTrade.wantedCategory})`);
+        if (!myTrade) return res.status(404).json({ message: "ไม่พบรายการ" });
+        if (myTrade.owner.toString() !== req.user.id) return res.status(403).json({ message: "ไม่มีสิทธิ์" });
 
         let pipeline = [];
 
-        // --- กรณี A: AI ทำงาน (มี Vector) ---
+        // กรณีมี Vector ให้ค้นหาด้วย AI
         if (myTrade.embeddings && myTrade.embeddings.length > 0) {
-            console.log("🤖 ใช้ AI Vector Search...");
             pipeline.push({
                 "$vectorSearch": {
                     "index": "trade_ai",
@@ -101,14 +83,14 @@ exports.findMatches = async (req, res) => {
                     "limit": 10
                 }
             });
-            // กรองสถานะและไม่เอาของตัวเอง
             pipeline.push({ 
                 "$match": { 
                     "status": "Open", 
                     "owner": { "$ne": new mongoose.Types.ObjectId(req.user.id) } 
                 } 
             });
-            // ดึงข้อมูลสินค้ามาแสดง
+        } else {
+            // Fallback: ใช้ Category Matching
             pipeline.push({
                 "$lookup": {
                     "from": "products",
@@ -117,139 +99,170 @@ exports.findMatches = async (req, res) => {
                     "as": "productInfo"
                 }
             });
-        } 
-        // --- กรณี B: AI ไม่ทำงาน (ใช้ Category Matching) ---
-        else {
-            console.log("⚠️ ใช้ Category Matching (Fallback)...");
-            
-            // 1. ดึงข้อมูลสินค้าของคนอื่นมาก่อน
-            pipeline.push({
-                "$lookup": {
-                    "from": "products",
-                    "localField": "offeredProduct",
-                    "foreignField": "_id",
-                    "as": "productInfo"
-                }
-            });
-            
-            // 2. แตก Array เป็น Object
             pipeline.push({ "$unwind": "$productInfo" });
-
-            // 3. กรองเงื่อนไข
             pipeline.push({
                 "$match": {
                     "status": "Open",
-                    "owner": { "$ne": new mongoose.Types.ObjectId(req.user.id) }, // ไม่ใช่ของตัวเอง
-                    "productInfo.category": myTrade.wantedCategory // ✅ หมวดหมู่ตรงกับที่เราอยากได้
+                    "owner": { "$ne": new mongoose.Types.ObjectId(req.user.id) },
+                    "productInfo.category": myTrade.wantedCategory
                 }
             });
         }
 
-        const matches = await Trade.aggregate(pipeline);
-        
-        res.json({ 
-            message: matches.length ? "เจอคู่แมตช์!" : "ยังไม่เจอคู่แมตช์",
-            myRequest: {
-                want: myTrade.wantedCategory,
-                offer: myTrade.offeredProduct
-            },
-            matches 
+        // Lookup ข้อมูลสินค้าเพื่อส่งกลับไปแสดงผล
+        pipeline.push({
+            "$lookup": {
+                "from": "products",
+                "localField": "offeredProduct",
+                "foreignField": "_id",
+                "as": "productDetails"
+            }
         });
 
-    } catch (err) { 
-        console.error(err);
-        res.status(500).json({ error: err.message }); 
-    }
-};
+        const matches = await Trade.aggregate(pipeline);
+        res.json({ message: matches.length ? "เจอคู่แมตช์!" : "ยังไม่เจอ", matches });
 
-// ==========================================
-// 3. ล็อครายการ (Lock Trade)
-// ==========================================
-exports.lockTrade = async (req, res) => {
-    try {
-        const { partnerTradeId } = req.body; // ID ของคู่ค้าที่เราเลือก
-
-        // อัปเดตสถานะ Trade ของเรา
-        const trade = await Trade.findByIdAndUpdate(
-            req.params.id,
-            { 
-                status: "Locked", 
-                matchedWith: partnerTradeId 
-            }, 
-            { new: true }
-        );
-        
-        // อัปเดตสถานะสินค้าเป็น 'pending' (จองแล้ว)
-        await Product.findByIdAndUpdate(trade.offeredProduct, { status: "pending" });
-
-        // (Optional) ควรไปอัปเดต Trade ของคู่ค้าด้วยให้เป็น Locked เหมือนกัน
-        if (partnerTradeId) {
-             await Trade.findByIdAndUpdate(partnerTradeId, { status: "Locked", matchedWith: req.params.id });
-        }
-
-        res.json({ message: "ล็อครายการแล้ว กำลังรอนัดพบ", trade });
     } catch (err) { 
         res.status(500).json({ error: err.message }); 
     }
 };
 
 // ==========================================
-// 4. ตรวจสอบตำแหน่ง (Verify Location)
+// 3. ค้นหาด้วยข้อความ (Manual Search) - ✅ เพิ่มใหม่
 // ==========================================
-exports.verifyLocation = async (req, res) => {
+exports.manualSearch = async (req, res) => {
     try {
-        const { userLat, userLng } = req.body;
-        const trade = await Trade.findById(req.params.id);
+        const { q } = req.query; // รับค่า ?q=... จาก URL
+        if (!q) return res.status(400).json({ message: "กรุณาระบุคำค้นหา" });
 
-        if (!trade) return res.status(404).json({ message: "ไม่พบรายการ" });
+        // ค้นหาใน Description หรือ WantedCategory ของ Trade
+        // หรือจะ Advance ขึ้นด้วยการ Lookup ไปหาชื่อสินค้าก็ได้ (อันนี้เอาแบบ Basic ก่อน)
+        const trades = await Trade.find({
+            status: "Open",
+            $or: [
+                { description: { $regex: q, $options: "i" } },
+                { wantedCategory: { $regex: q, $options: "i" } }
+            ]
+        }).populate("offeredProduct");
 
-        // คำนวณระยะห่าง (สูตร Haversine หรือ Euclidean แบบง่ายสำหรับระยะใกล้)
-        // 1 องศา ≈ 111,320 เมตร
-        const dist = Math.sqrt(Math.pow(userLat - trade.lat, 2) + Math.pow(userLng - trade.lng, 2)) * 111320;
-
-        if (dist <= 500) { // ยอมรับระยะห่างไม่เกิน 500 เมตร
-            res.json({ success: true, message: "คุณอยู่ในจุดนัดพบแล้ว", distance: dist });
-        } else {
-            res.status(400).json({ success: false, message: "คุณยังไม่อยู่ในจุดนัดพบ", distance: dist });
-        }
+        res.json(trades);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
 
 // ==========================================
-// 5. ยืนยันการแลกสำเร็จ (Confirm Swap)
+// 4. ค้นหาด้วยรูปภาพ (Search By Image) - ✅ เพิ่มใหม่
 // ==========================================
-exports.confirmSwap = async (req, res) => {
+exports.searchByImage = async (req, res) => {
     try {
-        const trade = await Trade.findByIdAndUpdate(req.params.id, { status: "Completed" }, { new: true });
+        if (!req.file) return res.status(400).json({ message: "กรุณาอัพโหลดรูปภาพ" });
+        if (!genAI) return res.status(500).json({ message: "ระบบ AI ไม่พร้อมใช้งาน" });
+
+        // 1. ใช้ Gemini Vision ดูรูปแล้วแปลงเป็น Text Description
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // หรือ gemini-pro-vision
+        const imagePart = fileToGenerativePart(req.file.buffer, req.file.mimetype);
         
-        // ลดจำนวนสินค้าลง 1
-        const updatedProduct = await Product.findByIdAndUpdate(
-            trade.offeredProduct,
-            { $inc: { quantity: -1 } },
-            { new: true }
-        );
+        const prompt = "Describe this item in detail for a barter trade. Focus on what it is, its category, and condition.";
+        const generatedContent = await model.generateContent([prompt, imagePart]);
+        const description = generatedContent.response.text();
+        
+        console.log("🖼️ AI Description:", description);
 
-        // ถ้าสินค้าหมดสต็อก ให้ปิดการมองเห็น
-        if (updatedProduct.quantity <= 0) {
-            await Product.findByIdAndUpdate(trade.offeredProduct, {
-                status: "exchanged",
-                isActive: false
-            });
-        }
+        // 2. เอาคำบรรยายไปแปลงเป็น Vector
+        const embedModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const result = await embedModel.embedContent(description);
+        const vector = result.embedding.values;
 
-        res.json({ message: "การแลกเปลี่ยนเสร็จสมบูรณ์!", trade });
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
+        // 3. ใช้ Vector ค้นหา Trade ที่คล้ายกัน
+        const matches = await Trade.aggregate([
+            {
+                "$vectorSearch": {
+                    "index": "trade_ai",
+                    "path": "embeddings",
+                    "queryVector": vector,
+                    "numCandidates": 50,
+                    "limit": 10
+                }
+            },
+            { 
+                "$match": { 
+                    "status": "Open", 
+                    "owner": { "$ne": new mongoose.Types.ObjectId(req.user.id) } 
+                } 
+            },
+            {
+                "$lookup": {
+                    "from": "products",
+                    "localField": "offeredProduct",
+                    "foreignField": "_id",
+                    "as": "productDetails"
+                }
+            }
+        ]);
+
+        res.json({ 
+            message: "ค้นหาด้วยรูปภาพสำเร็จ", 
+            aiDescription: description,
+            matches 
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
     }
 };
 
 // ==========================================
-// 6. Helper Functions (ดึงข้อมูล)
+// 5. ล็อครายการ, ตรวจสอบพิกัด, ยืนยันแลก (Flow ปกติ)
 // ==========================================
+exports.lockTrade = async (req, res) => {
+    try {
+        const { partnerTradeId } = req.body;
+        const trade = await Trade.findByIdAndUpdate(req.params.id, 
+            { status: "Locked", matchedWith: partnerTradeId }, 
+            { new: true }
+        );
+        await Product.findByIdAndUpdate(trade.offeredProduct, { status: "pending" });
+        
+        if (partnerTradeId) {
+             await Trade.findByIdAndUpdate(partnerTradeId, { status: "Locked", matchedWith: req.params.id });
+        }
+        res.json({ message: "ล็อครายการแล้ว", trade });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+};
 
-// ดูรายการแลกเปลี่ยนทั้งหมดที่เปิดอยู่ (Feed)
+exports.verifyLocation = async (req, res) => {
+    try {
+        const { userLat, userLng } = req.body;
+        const trade = await Trade.findById(req.params.id);
+        if (!trade) return res.status(404).json({ message: "ไม่พบรายการ" });
+
+        const dist = Math.sqrt(Math.pow(userLat - trade.lat, 2) + Math.pow(userLng - trade.lng, 2)) * 111320;
+        
+        if (dist <= 500) {
+            res.json({ success: true, message: "อยู่ในจุดนัดพบ", distance: dist });
+        } else {
+            res.status(400).json({ success: false, message: "ยังไม่ถึงจุดนัดพบ", distance: dist });
+        }
+    } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+exports.confirmSwap = async (req, res) => {
+    try {
+        const trade = await Trade.findByIdAndUpdate(req.params.id, { status: "Completed" }, { new: true });
+        const updatedProduct = await Product.findByIdAndUpdate(trade.offeredProduct, { $inc: { quantity: -1 } }, { new: true });
+        
+        if (updatedProduct.quantity <= 0) {
+            await Product.findByIdAndUpdate(trade.offeredProduct, { status: "exchanged", isActive: false });
+        }
+        res.json({ message: "แลกเปลี่ยนสำเร็จ!", trade });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// ==========================================
+// 6. Helper Functions
+// ==========================================
 exports.getOpenTrades = async (req, res) => {
     try {
         const trades = await Trade.find({ status: "Open" })
@@ -257,30 +270,20 @@ exports.getOpenTrades = async (req, res) => {
             .populate("owner", "username email")
             .sort("-createdAt");
         res.json(trades);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
-// ดูรายการของฉัน
 exports.getMyTrades = async (req, res) => {
     try {
-        const trades = await Trade.find({ owner: req.user.id })
-            .populate("offeredProduct")
-            .sort("-createdAt");
+        const trades = await Trade.find({ owner: req.user.id }).populate("offeredProduct").sort("-createdAt");
         res.json(trades);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
-// ยกเลิกรายการ
 exports.cancelTrade = async (req, res) => {
     try {
         const trade = await Trade.findOneAndDelete({ _id: req.params.id, owner: req.user.id });
-        if (!trade) return res.status(404).json({ message: "ไม่พบรายการหรือคุณไม่ใช่เจ้าของ" });
-        res.json({ message: "ลบรายการเรียบร้อยแล้ว" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        if (!trade) return res.status(404).json({ message: "ไม่พบรายการ" });
+        res.json({ message: "ลบรายการเรียบร้อย" });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 };
