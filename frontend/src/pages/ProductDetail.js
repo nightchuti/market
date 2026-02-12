@@ -32,10 +32,19 @@ function ProductDetail() {
     alert("เพิ่มลงตะกร้าแล้ว (เชื่อม cart API ได้เลย)");
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+
   if (!product) return <p className="loading">ไม่พบสินค้า</p>;
 
   return (
     <div className="product-detail">
+
+      <button className="btn-back" onClick={handleBack}>
+        ← กลับ
+      </button>
       <div className="detail-container">
 
         {/* ===== LEFT : IMAGES ===== */}
