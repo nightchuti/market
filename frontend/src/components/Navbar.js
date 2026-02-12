@@ -1,9 +1,10 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 
 export default function Navbar({ onLogin, onRegister }) {
   const user = JSON.parse(localStorage.getItem("user"));
   const location = useLocation();
+  const navigate = useNavigate()
 
   const isActive = (path) => location.pathname === path;
 
@@ -39,6 +40,14 @@ export default function Navbar({ onLogin, onRegister }) {
       <div className="nav-btn">
         {user ? (
           <>
+
+            <button
+              className="btn-add"
+              onClick={() => navigate("/add-product")}
+            >
+              + เพิ่มสินค้า
+            </button>
+
             <span className="username">{user.username}</span>
             <button
               className="btn-outline"
