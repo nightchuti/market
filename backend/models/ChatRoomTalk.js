@@ -1,23 +1,39 @@
 const mongoose = require("mongoose");
 
 const chatRoomSchema = new mongoose.Schema({
-  participants: [{ 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User" 
-  }], // เก็บ ID ของคู่สนทนาทั้ง 2 คน
-  
-  productId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "Product" 
-  }, // (Optional) สินค้าที่กำลังคุยกัน
-  
-  tradeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Trade"
-  }, // (Optional) ถ้าคุยเรื่อง Trade ให้ใส่ ID Trade ด้วย
+    type: { 
+      type: String, 
+      enum: ["trade", "normal"], 
+      default: "normal" },
+    participants: [{ 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "User", 
+      required: true }],
+    productId: { type: mongoose.Schema.Types.ObjectId,
+      ref: "Product", 
+      required: true },
+    
+    // Trade Fields
+    offeredProductId: { type: mongoose.Schema.Types.ObjectId, 
+      ref: "Product", 
+      efault: null },
+    tradeStatus: { 
+        type: String, 
+        enum: ["pending", "negotiating", "accepted", "rejected", "cancelled", "completed"], 
+        default: "pending" 
+    },
+    isLocked: { type: Boolean, default: false },
+    lockedProductSnapshot: { type: Object, default: null },
+    lockedOfferedProductSnapshot: { type: Object, default: null },
 
-  lastMessage: { type: String }, // เอาไว้โชว์ตัวอย่างข้อความล่าสุดในหน้ารายการ
-  unreadCount: { type: Number, default: 0 } // (Optional)
-}, { timestamps: true }); // timestamps จะช่วยเรียงลำดับห้องที่คุยล่าสุดให้
+    // Metadata
+    lastMessage: { type: String, default: "" },
+    lastMessageAt: { type: Date, default: Date.now },
+    unreadBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
+}, { timestamps: true });
+
+// เพิ่ม Index เพื่อความเร็วในการ Query
+chatRoomSchema.index({ participants: 1 });
+chatRoomSchema.index({ lastMessageAt: -1 });
 
 module.exports = mongoose.model("ChatRoom", chatRoomSchema);
