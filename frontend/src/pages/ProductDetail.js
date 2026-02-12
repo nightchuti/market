@@ -112,12 +112,10 @@ function ProductDetail() {
 
           </div>
 
-
-
           {/* SELLER CARD */}
           <div className="seller-card">
-            <h4>{product.user?.username}</h4>
-            <p>ที่อยู่ :  {product.user?.location || "ไม่ระบุ"}</p>
+            <h4>ผู้ขาย : {product.user?.username}</h4>
+            <p>สถานที่ : {product.locationName || "ไม่ระบุ"}</p>
           </div>
 
           <div className="button-group">

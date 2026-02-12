@@ -23,7 +23,12 @@ export default function AddProduct() {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files);
+
+    setImages((prev) => [...prev, ...files]);
+  };
+
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleChange = (e) => {
@@ -31,6 +36,10 @@ export default function AddProduct() {
   };
 
   const submit = async () => {
+    const mustHavePrice =
+      form.tradeOption === "sell_only" ||
+      form.tradeOption === "negotiable";
+
     if (
       !form.title ||
       !form.category ||
@@ -38,21 +47,20 @@ export default function AddProduct() {
       !form.tradeOption ||
       !form.locationName ||
       form.quantity === "" ||
-      (form.tradeOption === "sell_only" && !form.price)
+      (mustHavePrice && !form.price)
     ) {
       alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");
       return;
     }
 
-    if (form.tradeOption === "sell_only" && Number(form.price) <= 0) {
-      alert("สินค้าขายต้องมีราคามากกว่า 0");
+    if (mustHavePrice && Number(form.price) <= 0) {
+      alert("ราคาต้องมากกว่า 0");
       return;
     }
 
     try {
       const formData = new FormData();
 
-      // เพิ่มข้อมูลปกติ
       formData.append("title", form.title);
       formData.append("description", form.description);
       formData.append("category", form.category);
@@ -60,10 +68,15 @@ export default function AddProduct() {
       formData.append("tradeOption", form.tradeOption);
       formData.append("locationName", form.locationName);
       formData.append("quantity", Number(form.quantity));
+
+      // 🔥 เงื่อนไขราคาใหม่
       formData.append(
         "price",
-        form.tradeOption === "sell_only" ? Number(form.price) : 0
+        form.tradeOption === "trade_allowed"
+          ? 0
+          : Number(form.price)
       );
+
       formData.append("lat", form.lat ? Number(form.lat) : null);
       formData.append("lng", form.lng ? Number(form.lng) : null);
 
@@ -85,11 +98,13 @@ export default function AddProduct() {
 
       alert("เพิ่มสินค้าเรียบร้อยแล้ว");
       navigate("/products");
+
     } catch (err) {
-      console.error(err);
+      console.error(err.response?.data || err);
       alert("เกิดข้อผิดพลาด");
     }
   };
+
 
   const getMyLocation = () => {
     if (!navigator.geolocation) {
@@ -152,29 +167,39 @@ export default function AddProduct() {
         {/* preview รูป */}
         <div className="image-preview">
           {images.map((img, index) => (
-            <img
-              key={index}
-              src={URL.createObjectURL(img)}
-              alt="preview"
-            />
+            <div key={index} className="preview-item">
+              <img
+                src={URL.createObjectURL(img)}
+                alt="preview"
+              />
+              <button
+                type="button"
+                className="remove-btn"
+                onClick={() => removeImage(index)}
+              >
+                ✕
+              </button>
+            </div>
           ))}
         </div>
+
       </div>
 
-      {form.tradeOption === "sell_only" && (
-        <div className="form-group">
-          <label>ราคา (บาท) <span>*</span></label>
+      {(form.tradeOption === "sell_only" ||
+        form.tradeOption === "negotiable") && (
+          <div className="form-group">
+            <label>ราคา (บาท) <span>*</span></label>
 
-          <input
-            name="price"
-            type="number"
-            min="0"
-            value={form.price}
-            onChange={handleChange}
-            required
-          />
-        </div>
-      )}
+            <input
+              name="price"
+              type="number"
+              min="0"
+              value={form.price}
+              onChange={handleChange}
+              required
+            />
+          </div>
+        )}
 
       <div className="form-group">
         <label>จำนวนสินค้า <span>*</span></label>
@@ -229,8 +254,8 @@ export default function AddProduct() {
           value={form.tradeOption}
           onChange={handleChange}
         >
-          <option value="sell_only">ขายอย่างเดียว</option>
-          <option value="trade_allowed">รับแลก</option>
+          <option value="sell_only">ขายเท่านั้น</option>
+          <option value="trade_allowed">รับแลกเท่านั้น</option>
           <option value="negotiable">รับแลก / ต่อรองได้</option>
         </select>
       </div>
@@ -243,6 +268,39 @@ export default function AddProduct() {
           onChange={handleChange}
         />
       </div>
+
+      <div className="form-group">
+        <div className="label-inline">
+          <label>พิกัด (Latitude / Longitude)</label>
+          <button
+            type="button"
+            className="location-btn"
+            onClick={getMyLocation}
+          >
+            ใช้ตำแหน่งปัจจุบัน
+          </button>
+        </div>
+
+        <div className="form-row">
+          <input
+            name="lat"
+            type="number"
+            step="any"
+            placeholder="Latitude"
+            value={form.lat}
+            onChange={handleChange}
+          />
+          <input
+            name="lng"
+            type="number"
+            step="any"
+            placeholder="Longitude"
+            value={form.lng}
+            onChange={handleChange}
+          />
+        </div>
+      </div>
+
 
       <button onClick={submit} className="submit-btn">
         บันทึกสินค้า

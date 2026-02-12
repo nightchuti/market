@@ -43,11 +43,22 @@ router.post("/", protect, upload.array("images", 6), async (req, res) => {
       : [];
 
     // Validation
-    if (!title || !price || !category) {
+    if (!title || !category) {
       return res.status(400).json({
-        message: "กรุณาระบุชื่อสินค้า ราคา และหมวดหมู่"
+        message: "กรุณาระบุชื่อสินค้า และหมวดหมู่"
       });
     }
+
+    // ต้องมีราคา ยกเว้นแลกอย่างเดียว
+    if (
+      (tradeOption === "sell_only" || tradeOption === "negotiable") &&
+      (!price || Number(price) <= 0)
+    ) {
+      return res.status(400).json({
+        message: "สินค้าขายต้องมีราคามากกว่า 0"
+      });
+    }
+
 
     // ✅ สร้าง AI Embedding
     let vector = [];
@@ -68,7 +79,10 @@ router.post("/", protect, upload.array("images", 6), async (req, res) => {
       user: req.user.id,
       title,
       description,
-      price: Number(price),
+      price:
+        tradeOption === "trade_allowed"
+          ? 0
+          : Number(price),
       category: category.trim(), // ✅ ตัดช่องว่าง
       quantity: quantity || 1,
       images: imagePaths,
