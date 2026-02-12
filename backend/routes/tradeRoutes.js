@@ -31,7 +31,7 @@ router.post("/search-image", protect, upload.single("image"), tradeController.se
 router.post("/:id/match", protect, tradeController.findMatches);
 router.patch("/:id/lock-trade", protect, tradeController.lockTrade);
 router.post("/:id/verify-location", protect, tradeController.verifyLocation);
-router.post("/:id/  ", protect, tradeController.confirmSwap);
+router.post("/:id/confirm-swap", protect, tradeController.confirmSwap);
 router.delete("/:id/cancel", protect, tradeController.cancelTrade);
 
 module.exports = router;
