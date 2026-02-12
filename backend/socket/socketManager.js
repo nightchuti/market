@@ -38,9 +38,13 @@ const socketManager = (io) => {
         const chatRoom = await ChatRoom.findById(roomId);
         if (!chatRoom) return socket.emit("error", { message: "ไม่พบห้องแชท" });
 
-        const isParticipant = chatRoom.participants.map(String).includes(String(sender));
-        if (!isParticipant) return socket.emit("error", { message: "คุณไม่มีสิทธิ์ในห้องนี้" });
+        // ปรับวิธีเช็คให้ชัวร์ขึ้น (ป้องกันกรณี participants เป็น Object)
+        const isParticipant = chatRoom.participants.some(p => String(p._id || p) === String(sender));
 
+        if (!isParticipant) {
+          console.log("Access Denied: Sender not in participants");
+          return socket.emit("error", { message: "คุณไม่มีสิทธิ์ในห้องนี้" });
+        }
         // ถ้าเป็นห้องเทรดที่ถูก reject/cancelled/completed ห้ามส่งข้อความ
         if (chatRoom.type === "trade" &&
           ["rejected", "cancelled", "completed"].includes(chatRoom.tradeStatus)) {
