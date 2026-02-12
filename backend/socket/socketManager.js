@@ -1,5 +1,5 @@
 const Message = require("../models/Message");
-const ChatRoom = require("../models/ChatRoom");
+const ChatRoom = require("../models/ChatRoomTalk");
 
 const socketManager = (io) => {
   const onlineUsers = new Map(); // userId -> socketId

@@ -8,9 +8,11 @@ const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 let socket;
 
 export default function ChatPage() {
-  const { roomId } = useParams();
-  const navigate   = useNavigate();
-  const bottomRef  = useRef(null);
+  // รองรับทั้ง :roomId และ :sellerId (param เก่า)
+  const params   = useParams();
+  const roomId   = params.roomId || params.sellerId;
+  const navigate = useNavigate();
+  const bottomRef   = useRef(null);
   const typingTimer = useRef(null);
 
   const [messages, setMessages] = useState([]);
@@ -18,36 +20,54 @@ export default function ChatPage() {
   const [room, setRoom]         = useState(null);
   const [typing, setTyping]     = useState("");
   const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState("");
 
   const token       = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const headers     = { Authorization: `Bearer ${token}` };
 
-  // ── 1. โหลดห้อง + ประวัติข้อความจาก DB ─────────────────
+  // ── 1. โหลดห้อง + ประวัติข้อความจาก DB
   const fetchRoom = useCallback(async () => {
-    if (!token || !roomId) return;
+    if (!token)  { setError("กรุณาเข้าสู่ระบบก่อน"); setLoading(false); return; }
+    if (!roomId) { setError("ไม่พบ roomId"); setLoading(false); return; }
+
+    setLoading(true);
+    setError("");
+    const headers = { Authorization: `Bearer ${token}` };
+
     try {
-      const [roomRes, msgRes] = await Promise.all([
-        axios.get(`${API_URL}/api/chat/${roomId}`, { headers }),
-        axios.get(`${API_URL}/api/chat/${roomId}/messages`, { headers }),
-      ]);
+      const roomRes = await axios.get(`${API_URL}/api/chat/${roomId}`, { headers });
       setRoom(roomRes.data);
+    } catch (err) {
+      console.error("fetchRoom (room):", err);
+      const msg =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.message ||
+        "โหลดห้องแชทไม่สำเร็จ";
+      setError(msg);
+      setLoading(false);
+      return; // ออกก่อนถ้าโหลดห้องไม่ได้
+    }
+
+    try {
+      const msgRes = await axios.get(`${API_URL}/api/chat/${roomId}/messages`, { headers });
       setMessages(Array.isArray(msgRes.data) ? msgRes.data : []);
     } catch (err) {
-      console.error("fetchRoom:", err);
-    } finally {
-      setLoading(false);
+      console.error("fetchRoom (messages):", err);
+      setMessages([]); // ยังแสดงหน้าแชทได้ แค่ไม่มีข้อความเก่า
     }
-  }, [roomId, token]); // eslint-disable-line
+
+    setLoading(false); // เรียกเสมอ
+  }, [roomId, token]);
 
   useEffect(() => { fetchRoom(); }, [fetchRoom]);
 
-  // ── 2. scroll to bottom ───────────────────────────────
+  // ── 2. scroll to bottom
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── 3. Socket.io ──────────────────────────────────────
+  // ── 3. Socket.io
   useEffect(() => {
     if (!token || !roomId) return;
 
@@ -58,7 +78,10 @@ export default function ChatPage() {
       socket.emit("join_room", roomId);
     });
 
-    // ✅ ข้อความใหม่จาก socket — เพิ่มลิสต์โดยไม่ซ้ำ
+    socket.on("connect_error", (err) => {
+      console.error("Socket connect error:", err.message);
+    });
+
     socket.on("receive_message", (msg) => {
       setMessages((prev) => {
         if (prev.find((m) => String(m._id) === String(msg._id))) return prev;
@@ -71,7 +94,7 @@ export default function ChatPage() {
     socket.on("trade_updated",    ({ status })   =>
       setRoom((prev) => prev ? { ...prev, tradeStatus: status } : prev)
     );
-    socket.on("chat_error", ({ message }) => alert(message));
+    socket.on("chat_error", ({ message: msg }) => alert(msg));
 
     return () => {
       socket.emit("leave_room", roomId);
@@ -79,12 +102,13 @@ export default function ChatPage() {
     };
   }, [roomId, token]); // eslint-disable-line
 
-  // ── 4. ส่งข้อความ ─────────────────────────────────────
+  // ── 4. ส่งข้อความ
   const sendMessage = () => {
     const trimmed = text.trim();
     if (!trimmed || isClosed()) return;
-    socket?.emit("send_message", { roomId, sender: currentUser._id, text: trimmed });
-    socket?.emit("stop_typing",  { roomId, userId: currentUser._id });
+    if (!socket?.connected) { alert("ไม่ได้เชื่อมต่อ socket"); return; }
+    socket.emit("send_message", { roomId, sender: currentUser._id, text: trimmed });
+    socket.emit("stop_typing",  { roomId, userId: currentUser._id });
     setText("");
   };
 
@@ -97,7 +121,7 @@ export default function ChatPage() {
     }, 1500);
   };
 
-  // ── helpers ────────────────────────────────────────────
+  // ── helpers
   const isClosed = () => {
     if (!room) return false;
     if (room.type === "trade" && ["rejected","cancelled","completed"].includes(room.tradeStatus)) return true;
@@ -112,22 +136,27 @@ export default function ChatPage() {
     (p) => String(p._id || p) !== String(currentUser._id)
   );
 
-  const fmt = (d) =>
-    new Date(d).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+  const fmt = (d) => {
+    if (!d) return "";
+    return new Date(d).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+  };
 
-  const fmtDate = (d) =>
-    new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short" });
+  const fmtDate = (d) => {
+    if (!d) return "";
+    return new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short" });
+  };
 
   const STATUS = {
-    pending:     { t: "⏳ รอตอบรับ",     c: "#f59e0b" },
-    negotiating: { t: "💬 กำลังเจรจา",  c: "#3b82f6" },
-    accepted:    { t: "✅ ตกลงแล้ว",     c: "#10b981" },
-    rejected:    { t: "❌ ปฏิเสธแล้ว",   c: "#ef4444" },
-    cancelled:   { t: "🚫 ยกเลิกแล้ว",  c: "#6b7280" },
-    completed:   { t: "🎉 เสร็จสิ้น",    c: "#8b5cf6" },
+    pending:     { t: "⏳ รอตอบรับ",    c: "#f59e0b" },
+    negotiating: { t: "💬 กำลังเจรจา", c: "#3b82f6" },
+    accepted:    { t: "✅ ตกลงแล้ว",    c: "#10b981" },
+    rejected:    { t: "❌ ปฏิเสธแล้ว",  c: "#ef4444" },
+    cancelled:   { t: "🚫 ยกเลิกแล้ว", c: "#6b7280" },
+    completed:   { t: "🎉 เสร็จสิ้น",   c: "#8b5cf6" },
   };
 
   const tradeAction = async (action) => {
+    const headers = { Authorization: `Bearer ${token}` };
     try {
       await axios.put(`${API_URL}/api/chat/${roomId}/${action}`, {}, { headers });
       socket?.emit("trade_status_update", {
@@ -145,9 +174,27 @@ export default function ChatPage() {
     room?.participants?.length > 0 &&
     String(room.participants[1]?._id || room.participants[1]) === String(currentUser._id);
 
-  // ── render ─────────────────────────────────────────────
-  if (!token)   return <div className="cp-notice">กรุณาเข้าสู่ระบบก่อน</div>;
-  if (loading)  return <div className="cp-loading"><div className="cp-spin"/><p>กำลังโหลด...</p></div>;
+  // ── render
+  if (!token)  return <div className="cp-notice">กรุณาเข้าสู่ระบบก่อน</div>;
+
+  if (loading) return (
+    <div className="cp-loading">
+      <div className="cp-spin"/>
+      <p>กำลังโหลดห้องแชท...</p>
+    </div>
+  );
+
+  // ✅ แสดง error แทน spinner ค้าง
+  if (error) return (
+    <div className="cp-error-page">
+      <p className="cp-error-icon">⚠️</p>
+      <p className="cp-error-msg">{error}</p>
+      <div style={{ display:"flex", gap:"10px" }}>
+        <button className="cp-retry-btn" onClick={fetchRoom}>ลองใหม่</button>
+        <button className="cp-retry-btn back" onClick={() => navigate(-1)}>กลับ</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="cp-wrap">
@@ -173,14 +220,14 @@ export default function ChatPage() {
           <div className="cp-trade-row">
             <div className="cp-tcard">
               <span className="cp-tchip">ต้องการ</span>
-              <img src={room.lockedProductSnapshot?.images?.[0] || room.productId?.images?.[0] || "/no-img.png"} alt=""/>
+              <img src={room.lockedProductSnapshot?.images?.[0] || room.productId?.images?.[0] || "https://placehold.co/80x80/f3f4f6/9ca3af?text=N/A"} alt=""/>
               <p>{room.lockedProductSnapshot?.title || room.productId?.title}</p>
               <b>฿{(room.lockedProductSnapshot?.price || room.productId?.price || 0).toLocaleString()}</b>
             </div>
             <div className="cp-tswap">⇄</div>
             <div className="cp-tcard">
               <span className="cp-tchip alt">เสนอ</span>
-              <img src={room.lockedOfferedProductSnapshot?.images?.[0] || room.offeredProductId?.images?.[0] || "/no-img.png"} alt=""/>
+              <img src={room.lockedOfferedProductSnapshot?.images?.[0] || room.offeredProductId?.images?.[0] || "https://placehold.co/80x80/f3f4f6/9ca3af?text=N/A"} alt=""/>
               <p>{room.lockedOfferedProductSnapshot?.title || room.offeredProductId?.title}</p>
               <b>฿{(room.lockedOfferedProductSnapshot?.price || room.offeredProductId?.price || 0).toLocaleString()}</b>
             </div>
@@ -210,7 +257,7 @@ export default function ChatPage() {
       {/* PRODUCT BAR (normal) */}
       {room?.type === "normal" && room?.productId && (
         <div className="cp-pbar">
-          <img src={room.productId.images?.[0] || "/no-img.png"} alt=""/>
+          <img src={room.productId.images?.[0] || "https://placehold.co/44x44/f3f4f6/9ca3af?text=N/A"} alt=""/>
           <div>
             <p>{room.productId.title}</p>
             <span>฿{room.productId.price?.toLocaleString()}</span>
@@ -225,8 +272,8 @@ export default function ChatPage() {
         )}
 
         {messages.map((msg, i) => {
-          const me       = isMe(msg);
-          const isSys    = msg.messageType && msg.messageType !== "text";
+          const me    = isMe(msg);
+          const isSys = msg.messageType && msg.messageType !== "text";
           const showDate = i === 0 ||
             fmtDate(msg.createdAt) !== fmtDate(messages[i - 1].createdAt);
 

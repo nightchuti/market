@@ -17,17 +17,14 @@ const addressRoutes = require("./routes/addressRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const couponRoutes = require("./routes/couponRoutes"); 
 const tradeRoutes = require("./routes/tradeRoutes");
-const chatRoutes = require("./routes/chatRoutes"); // (ถ้ามี)
+const chatRoutes = require("./routes/chatRoutes");
+
 
 const app = express();
-
-// 1️⃣ สร้าง HTTP Server ครอบ Express App
 const server = http.createServer(app);
-
-// 2️⃣ ตั้งค่า Socket.io
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:5173"], // แก้ตาม Port Frontend
+    origin: ["http://localhost:3000"], // ระบุ Port React ให้ชัดเจน
     methods: ["GET", "POST"]
   }
 });
@@ -39,6 +36,7 @@ socketManager(io);
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
+
 
 // ===== Connect Database =====
 connectDB();
