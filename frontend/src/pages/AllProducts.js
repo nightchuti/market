@@ -63,6 +63,7 @@ function AllProducts() {
           <option value="หนังสือ">หนังสือ</option>
           <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
           <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
+          <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
           <option value="อาหาร">อาหาร</option>
           <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
           <option value="อื่นๆ">อื่นๆ</option>
