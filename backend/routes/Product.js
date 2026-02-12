@@ -90,7 +90,6 @@ router.get("/:id", async (req, res) => {
 
 
 // ================= UPDATE PRODUCT =================
-// ================= UPDATE PRODUCT =================
 router.put("/:id", protect, async (req, res) => {
   const product = await Product.findById(req.params.id);
 
