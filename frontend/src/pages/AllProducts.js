@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./AllProducts.css";
 import { useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 function AllProducts() {
   const [products, setProducts] = useState([]);
@@ -10,11 +11,12 @@ function AllProducts() {
   const [category, setCategory] = useState("");
   const [exchangeable, setExchangeable] = useState(false);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = parseInt(searchParams.get("page")) || 1;
 
   useEffect(() => {
-    fetchProducts({ page: 1 });
-  }, []);
-
+    fetchProducts({ page });
+  }, [page]);
 
   const fetchProducts = async (params = {}) => {
     try {
@@ -63,6 +65,7 @@ function AllProducts() {
           <option value="หนังสือ">หนังสือ</option>
           <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
           <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
+          <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
           <option value="อาหาร">อาหาร</option>
           <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
           <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
@@ -123,7 +126,7 @@ function AllProducts() {
             className="page-btn"
             disabled={pagination.page === 1}
             onClick={() =>
-              fetchProducts({ page: pagination.page - 1 })
+              setSearchParams({ page: pagination.page - 1 })
             }
           >
             ← ก่อนหน้า
@@ -137,13 +140,14 @@ function AllProducts() {
             className="page-btn"
             disabled={pagination.page === pagination.pages}
             onClick={() =>
-              fetchProducts({ page: pagination.page + 1 })
+              setSearchParams({ page: pagination.page + 1 })
             }
           >
             ถัดไป →
           </button>
         </div>
       )}
+
 
 
 

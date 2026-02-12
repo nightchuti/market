@@ -36,4 +36,4 @@ const chatRoomSchema = new mongoose.Schema({
 chatRoomSchema.index({ participants: 1 });
 chatRoomSchema.index({ lastMessageAt: -1 });
 
-module.exports = mongoose.model("ChatRoom", chatRoomSchema);
+module.exports = mongoose.model("ChatRoomTalk", chatRoomSchema);

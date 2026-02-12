@@ -31,29 +31,44 @@ router.get("/my", protect, async (req, res) => {
 });
 
 // ================= CREATE PRODUCT =================
-router.post("/", protect, async (req, res) => {
+router.post("/", protect, upload.array("images", 6), async (req, res) => {
   try {
-    const { 
-      title, description, price, category, quantity, images, 
-      deliveryType, tradeOption, lat, lng, locationName 
+    const {
+      title, description, price, category, quantity, images,
+      deliveryType, tradeOption, lat, lng, locationName
     } = req.body;
 
+    const imagePaths = req.files
+      ? req.files.map(file => `/uploads/${file.filename}`)
+      : [];
+
     // Validation
-    if (!title || !price || !category) {
-      return res.status(400).json({ 
-        message: "กรุณาระบุชื่อสินค้า ราคา และหมวดหมู่" 
+    if (!title || !category) {
+      return res.status(400).json({
+        message: "กรุณาระบุชื่อสินค้า และหมวดหมู่"
       });
     }
+
+    // ต้องมีราคา ยกเว้นแลกอย่างเดียว
+    if (
+      (tradeOption === "sell_only" || tradeOption === "negotiable") &&
+      (!price || Number(price) <= 0)
+    ) {
+      return res.status(400).json({
+        message: "สินค้าขายต้องมีราคามากกว่า 0"
+      });
+    }
+
 
     // ✅ สร้าง AI Embedding
     let vector = [];
     try {
       const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
       const textToEmbed = `Product: ${title}. Category: ${category}. Description: ${description || ''}. Delivery: ${deliveryType || 'delivery'}. Price: ${price}`;
-      
+
       const result = await model.embedContent(textToEmbed);
       vector = result.embedding.values;
-      
+
       console.log("✅ AI Embedding created, vector length:", vector.length);
     } catch (aiErr) {
       console.error("❌ AI Embedding failed:", aiErr.message);
@@ -64,10 +79,13 @@ router.post("/", protect, async (req, res) => {
       user: req.user.id,
       title,
       description,
-      price: Number(price),
+      price:
+        tradeOption === "trade_allowed"
+          ? 0
+          : Number(price),
       category: category.trim(), // ✅ ตัดช่องว่าง
       quantity: quantity || 1,
-      images: images || [],
+      images: imagePaths,
       deliveryType: deliveryType || "delivery",
       tradeOption: tradeOption || "sell_only",
       lat,
@@ -85,9 +103,9 @@ router.post("/", protect, async (req, res) => {
     });
   } catch (err) {
     console.error("Create Product Error:", err);
-    res.status(500).json({ 
-      message: "เกิดข้อผิดพลาดในการสร้างสินค้า", 
-      error: err.message 
+    res.status(500).json({
+      message: "เกิดข้อผิดพลาดในการสร้างสินค้า",
+      error: err.message
     });
   }
 });
@@ -123,10 +141,10 @@ router.put("/:id", protect, async (req, res) => {
       try {
         const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
         const textToEmbed = `Product: ${product.title}. Category: ${product.category}. Description: ${product.description || ''}. Price: ${product.price}`;
-        
+
         const result = await model.embedContent(textToEmbed);
         product.embeddings = result.embedding.values;
-        
+
         console.log("✅ Embedding updated");
       } catch (aiErr) {
         console.error("❌ Embedding update failed:", aiErr.message);
@@ -134,16 +152,16 @@ router.put("/:id", protect, async (req, res) => {
     }
 
     await product.save();
-    
-    res.json({ 
-      message: "อัพเดตสินค้าสำเร็จ", 
-      product 
+
+    res.json({
+      message: "อัพเดตสินค้าสำเร็จ",
+      product
     });
   } catch (err) {
     console.error("Update Product Error:", err);
-    res.status(500).json({ 
-      message: "เกิดข้อผิดพลาดในการอัพเดต", 
-      error: err.message 
+    res.status(500).json({
+      message: "เกิดข้อผิดพลาดในการอัพเดต",
+      error: err.message
     });
   }
 });
@@ -165,9 +183,9 @@ router.delete("/:id", protect, async (req, res) => {
 
     res.json({ message: "ลบสินค้าสำเร็จ" });
   } catch (err) {
-    res.status(500).json({ 
-      message: "เกิดข้อผิดพลาดในการลบ", 
-      error: err.message 
+    res.status(500).json({
+      message: "เกิดข้อผิดพลาดในการลบ",
+      error: err.message
     });
   }
 });
@@ -175,7 +193,7 @@ router.delete("/:id", protect, async (req, res) => {
 // ================= GET ALL PRODUCTS =================
 router.get("/", async (req, res) => {
   try {
-    const { search, category, minPrice, maxPrice, deliveryType, tradeOption, page = 1, limit = 20 } = req.query;
+    const { search, category, minPrice, maxPrice, deliveryType, tradeOption, page = 1, limit = 10 } = req.query;
 
     let filter = { isActive: true }; // แสดงเฉพาะสินค้าที่เปิดขาย
 
@@ -223,9 +241,9 @@ router.get("/", async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ 
-      message: "เกิดข้อผิดพลาดในการดึงข้อมูล", 
-      error: err.message 
+    res.status(500).json({
+      message: "เกิดข้อผิดพลาดในการดึงข้อมูล",
+      error: err.message
     });
   }
 });
@@ -242,9 +260,9 @@ router.get("/:id", async (req, res) => {
 
     res.json(product);
   } catch (err) {
-    res.status(500).json({ 
-      message: "เกิดข้อผิดพลาด", 
-      error: err.message 
+    res.status(500).json({
+      message: "เกิดข้อผิดพลาด",
+      error: err.message
     });
   }
 });
@@ -266,8 +284,8 @@ router.put("/:id/add-images", protect, upload.array("images", 6), async (req, re
 
     // จำกัดไม่ให้เกิน 6 รูป
     if (product.images.length + newImages.length > 6) {
-      return res.status(400).json({ 
-        message: "สามารถเพิ่มรูปได้สูงสุด 6 รูปต่อสินค้า" 
+      return res.status(400).json({
+        message: "สามารถเพิ่มรูปได้สูงสุด 6 รูปต่อสินค้า"
       });
     }
 
@@ -279,9 +297,9 @@ router.put("/:id/add-images", protect, upload.array("images", 6), async (req, re
       product
     });
   } catch (err) {
-    res.status(500).json({ 
-      message: "เกิดข้อผิดพลาด", 
-      error: err.message 
+    res.status(500).json({
+      message: "เกิดข้อผิดพลาด",
+      error: err.message
     });
   }
 });
@@ -310,9 +328,9 @@ router.put("/:id/remove-image", protect, async (req, res) => {
       product
     });
   } catch (err) {
-    res.status(500).json({ 
-      message: "เกิดข้อผิดพลาด", 
-      error: err.message 
+    res.status(500).json({
+      message: "เกิดข้อผิดพลาด",
+      error: err.message
     });
   }
 });
@@ -321,14 +339,14 @@ router.put("/:id/remove-image", protect, async (req, res) => {
 router.get("/config/categories", async (req, res) => {
   try {
     const categories = Product.schema.path('category').enumValues;
-    
+
     res.json({
       categories
     });
   } catch (err) {
-    res.status(500).json({ 
-      message: "เกิดข้อผิดพลาด", 
-      error: err.message 
+    res.status(500).json({
+      message: "เกิดข้อผิดพลาด",
+      error: err.message
     });
   }
 });

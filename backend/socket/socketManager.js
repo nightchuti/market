@@ -1,112 +1,85 @@
 const Message = require("../models/Message");
-const ChatRoom = require("../models/ChatRoomTalk");
+const ChatRoom = require("../models/ChatRoom");
 
 const socketManager = (io) => {
-
-  // เก็บ map userId -> socketId (สำหรับ online status)
-  const onlineUsers = new Map();
+  const onlineUsers = new Map(); // userId -> socketId
 
   io.on("connection", (socket) => {
     console.log(`🟢 Socket connected: ${socket.id}`);
 
-    // ===== USER ONLINE =====
     socket.on("user_online", (userId) => {
+      if (!userId) return;
       onlineUsers.set(String(userId), socket.id);
-      socket.userId = userId;
-      // แจ้งทุกคนว่า user นี้ online
+      socket.userId = String(userId);
       io.emit("user_status", { userId, status: "online" });
     });
 
-    // ===== JOIN ROOM =====
-    socket.on("join_room", (roomId) => {
-      socket.join(roomId);
-      console.log(`User ${socket.userId} joined room: ${roomId}`);
-    });
+    socket.on("join_room", (roomId) => { socket.join(roomId); });
+    socket.on("leave_room", (roomId) => { socket.leave(roomId); });
 
-    // ===== LEAVE ROOM =====
-    socket.on("leave_room", (roomId) => {
-      socket.leave(roomId);
-    });
-
-    // ===== SEND MESSAGE =====
+    // ✅ send_message: บันทึก DB + ส่ง real-time
     socket.on("send_message", async (data) => {
-      // data = { roomId, sender, text }
+      const { roomId, sender, text } = data || {};
+      if (!roomId || !sender || !String(text || "").trim()) return;
+
       try {
-        const { roomId, sender, text } = data;
+        const room = await ChatRoom.findById(roomId);
+        if (!room) return socket.emit("chat_error", { message: "ไม่พบห้องแชท" });
 
-        // ✅ ตรวจสอบว่าห้องยังเปิดอยู่และ sender มีสิทธิ์
-        const chatRoom = await ChatRoom.findById(roomId);
-        if (!chatRoom) return socket.emit("error", { message: "ไม่พบห้องแชท" });
+        const participants = room.participants.map(String);
+        if (!participants.includes(String(sender)))
+          return socket.emit("chat_error", { message: "คุณไม่มีสิทธิ์ในห้องนี้" });
 
-        // ปรับวิธีเช็คให้ชัวร์ขึ้น (ป้องกันกรณี participants เป็น Object)
-        const isParticipant = chatRoom.participants.some(p => String(p._id || p) === String(sender));
+        if (room.type === "trade" && ["rejected","cancelled","completed"].includes(room.tradeStatus))
+          return socket.emit("chat_error", { message: "ห้องนี้ปิดแล้ว" });
 
-        if (!isParticipant) {
-          console.log("Access Denied: Sender not in participants");
-          return socket.emit("error", { message: "คุณไม่มีสิทธิ์ในห้องนี้" });
-        }
-        // ถ้าเป็นห้องเทรดที่ถูก reject/cancelled/completed ห้ามส่งข้อความ
-        if (chatRoom.type === "trade" &&
-          ["rejected", "cancelled", "completed"].includes(chatRoom.tradeStatus)) {
-          return socket.emit("error", { message: "ห้องนี้ปิดแล้ว ไม่สามารถส่งข้อความได้" });
-        }
+        if (room.type === "normal" && room.inquiryStatus === "closed")
+          return socket.emit("chat_error", { message: "ห้องนี้ปิดแล้ว" });
 
-        // บันทึกข้อความ
-        const newMessage = await Message.create({ roomId, sender, text });
+        // บันทึกลง MongoDB
+        const saved = await Message.create({ roomId, sender, text: text.trim(), messageType: "text" });
 
-        // อัปเดตข้อมูลห้อง
-        const otherParticipants = chatRoom.participants.filter(p => String(p) !== String(sender));
+        // อัปเดต ChatRoom
+        const others = participants.filter((p) => p !== String(sender));
         await ChatRoom.findByIdAndUpdate(roomId, {
-          lastMessage: text,
+          lastMessage: text.trim(),
           lastMessageAt: new Date(),
-          $addToSet: { unreadBy: { $each: otherParticipants } } // mark unread สำหรับอีกฝ่าย
+          $addToSet: { unreadBy: { $each: others } },
         });
 
-        const populatedMessage = await newMessage.populate("sender", "username profileImage");
+        // Populate แล้ว broadcast
+        const populated = await saved.populate("sender", "username profileImage");
+        io.in(roomId).emit("receive_message", populated);
 
-        // ส่งให้ทุกคนในห้อง
-        io.in(roomId).emit("receive_message", populatedMessage);
-
-        // แจ้ง notification ให้อีกฝ่ายที่ไม่ได้อยู่ในห้อง
-        otherParticipants.forEach(participantId => {
-          const participantSocketId = onlineUsers.get(String(participantId));
-          if (participantSocketId) {
-            io.to(participantSocketId).emit("new_message_notification", {
-              roomId,
-              senderName: populatedMessage.sender.username,
-              text
-            });
-          }
+        // Push notification
+        others.forEach((uid) => {
+          const sid = onlineUsers.get(uid);
+          if (sid) io.to(sid).emit("new_message_notification", {
+            roomId, senderName: populated.sender?.username, text: text.trim(),
+          });
         });
-
       } catch (err) {
-        console.error("❌ Chat Error:", err);
-        socket.emit("error", { message: "เกิดข้อผิดพลาด" });
+        console.error("send_message error:", err);
+        socket.emit("chat_error", { message: "เกิดข้อผิดพลาด" });
       }
     });
 
-    // ===== TYPING INDICATOR =====
     socket.on("typing", ({ roomId, userId, username }) => {
       socket.to(roomId).emit("user_typing", { userId, username });
     });
-
     socket.on("stop_typing", ({ roomId, userId }) => {
       socket.to(roomId).emit("user_stop_typing", { userId });
     });
 
-    // ===== TRADE EVENTS (Real-time) =====
-    // เมื่อมีการยืนยัน/ปฏิเสธ/ยกเลิกเทรด จาก REST API ให้ emit event นี้
     socket.on("trade_status_update", ({ roomId, status, updatedBy }) => {
       io.in(roomId).emit("trade_updated", { roomId, status, updatedBy });
     });
 
-    // ===== DISCONNECT =====
     socket.on("disconnect", () => {
       if (socket.userId) {
-        onlineUsers.delete(String(socket.userId));
+        onlineUsers.delete(socket.userId);
         io.emit("user_status", { userId: socket.userId, status: "offline" });
       }
-      console.log(`🔴 Socket disconnected: ${socket.id}`);
     });
   });
 };

@@ -1,135 +1,292 @@
-import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import axios from "axios";
 import "./ChatPage.css";
 
-const API_URL = "http://localhost:5000";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 let socket;
 
-function ChatPage() {
-  const { sellerId } = useParams(); 
-  const roomId = sellerId; // แนะนำ: ในอนาคตควรเปลี่ยนชื่อใน App.js เป็น /chat/:roomId
+export default function ChatPage() {
+  const { roomId } = useParams();
+  const navigate   = useNavigate();
+  const bottomRef  = useRef(null);
+  const typingTimer = useRef(null);
 
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
-  const [seller, setSeller] = useState(null);
-  const [room, setRoom] = useState(null);
+  const [text, setText]         = useState("");
+  const [room, setRoom]         = useState(null);
+  const [typing, setTyping]     = useState("");
+  const [loading, setLoading]   = useState(true);
 
-  const token = localStorage.getItem("token");
+  const token       = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const headers     = { Authorization: `Bearer ${token}` };
 
-  // เช็คสถานะห้อง (ปิด/เสร็จสิ้น)
-  const isRoomClosed = () => {
-    if (!room) return false;
-    return room.status === "closed" || 
-           ["completed", "cancelled", "rejected"].includes(room.tradeStatus);
-  };
+  // ── 1. โหลดห้อง + ประวัติข้อความจาก DB ─────────────────
+  const fetchRoom = useCallback(async () => {
+    if (!token || !roomId) return;
+    try {
+      const [roomRes, msgRes] = await Promise.all([
+        axios.get(`${API_URL}/api/chat/${roomId}`, { headers }),
+        axios.get(`${API_URL}/api/chat/${roomId}/messages`, { headers }),
+      ]);
+      setRoom(roomRes.data);
+      setMessages(Array.isArray(msgRes.data) ? msgRes.data : []);
+    } catch (err) {
+      console.error("fetchRoom:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [roomId, token]); // eslint-disable-line
 
+  useEffect(() => { fetchRoom(); }, [fetchRoom]);
+
+  // ── 2. scroll to bottom ───────────────────────────────
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ── 3. Socket.io ──────────────────────────────────────
   useEffect(() => {
     if (!token || !roomId) return;
 
-    // 1. เชื่อมต่อ Socket
-    socket = io(API_URL, { auth: { token } });
+    socket = io(API_URL, { auth: { token }, transports: ["websocket"] });
 
     socket.on("connect", () => {
-      console.log("✅ Connected to Socket");
+      socket.emit("user_online", currentUser._id);
       socket.emit("join_room", roomId);
     });
 
+    // ✅ ข้อความใหม่จาก socket — เพิ่มลิสต์โดยไม่ซ้ำ
     socket.on("receive_message", (msg) => {
-      console.log("📩 New message received:", msg);
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => {
+        if (prev.find((m) => String(m._id) === String(msg._id))) return prev;
+        return [...prev, msg];
+      });
     });
 
-    socket.on("error", (err) => {
-      alert(err.message);
-    });
-
-    // 2. ฟังก์ชันดึงข้อมูลต่างๆ
-    const fetchData = async () => {
-      try {
-        const headers = { Authorization: `Bearer ${token}` };
-
-        // ดึงรายละเอียดห้อง (เอาไว้เช็ค status)
-        const roomRes = await axios.get(`${API_URL}/api/chat/${roomId}`, { headers });
-        setRoom(roomRes.data);
-
-        // ดึงประวัติข้อความ (เติม /messages)
-        const msgRes = await axios.get(`${API_URL}/api/chat/${roomId}/messages`, { headers });
-        setMessages(Array.isArray(msgRes.data) ? msgRes.data : []);
-
-        // ดึงข้อมูลคู่สนทนา (ดึงจากผู้ใช้คนอื่นในห้อง)
-        if (roomRes.data.participants) {
-          const otherId = roomRes.data.participants.find(p => 
-            (p._id || p) !== currentUser._id
-          );
-          if (otherId) {
-            const userRes = await axios.get(`${API_URL}/api/auth/user/${otherId._id || otherId}`);
-            setSeller(userRes.data);
-          }
-        }
-      } catch (err) {
-        console.error("Fetch Error:", err);
-      }
-    };
-
-    fetchData();
+    socket.on("user_typing",      ({ username }) => setTyping(username));
+    socket.on("user_stop_typing", ()             => setTyping(""));
+    socket.on("trade_updated",    ({ status })   =>
+      setRoom((prev) => prev ? { ...prev, tradeStatus: status } : prev)
+    );
+    socket.on("chat_error", ({ message }) => alert(message));
 
     return () => {
-      if (socket) socket.disconnect();
+      socket.emit("leave_room", roomId);
+      socket.disconnect();
     };
-  }, [roomId, token, currentUser._id]);
+  }, [roomId, token]); // eslint-disable-line
 
+  // ── 4. ส่งข้อความ ─────────────────────────────────────
   const sendMessage = () => {
-    if (!text.trim() || isRoomClosed()) return;
-
-    const messageData = {
-      roomId: roomId,
-      sender: currentUser._id,
-      text: text.trim(),
-    };
-
-    socket.emit("send_message", messageData);
+    const trimmed = text.trim();
+    if (!trimmed || isClosed()) return;
+    socket?.emit("send_message", { roomId, sender: currentUser._id, text: trimmed });
+    socket?.emit("stop_typing",  { roomId, userId: currentUser._id });
     setText("");
   };
 
-  if (!token) return <p className="chat-notice">กรุณาเข้าสู่ระบบก่อน</p>;
+  const handleInput = (e) => {
+    setText(e.target.value);
+    socket?.emit("typing", { roomId, userId: currentUser._id, username: currentUser.username });
+    clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => {
+      socket?.emit("stop_typing", { roomId, userId: currentUser._id });
+    }, 1500);
+  };
+
+  // ── helpers ────────────────────────────────────────────
+  const isClosed = () => {
+    if (!room) return false;
+    if (room.type === "trade" && ["rejected","cancelled","completed"].includes(room.tradeStatus)) return true;
+    if (room.type === "normal" && room.inquiryStatus === "closed") return true;
+    return false;
+  };
+
+  const isMe = (msg) =>
+    String(msg.sender?._id || msg.sender) === String(currentUser._id);
+
+  const otherUser = room?.participants?.find(
+    (p) => String(p._id || p) !== String(currentUser._id)
+  );
+
+  const fmt = (d) =>
+    new Date(d).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+
+  const fmtDate = (d) =>
+    new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short" });
+
+  const STATUS = {
+    pending:     { t: "⏳ รอตอบรับ",     c: "#f59e0b" },
+    negotiating: { t: "💬 กำลังเจรจา",  c: "#3b82f6" },
+    accepted:    { t: "✅ ตกลงแล้ว",     c: "#10b981" },
+    rejected:    { t: "❌ ปฏิเสธแล้ว",   c: "#ef4444" },
+    cancelled:   { t: "🚫 ยกเลิกแล้ว",  c: "#6b7280" },
+    completed:   { t: "🎉 เสร็จสิ้น",    c: "#8b5cf6" },
+  };
+
+  const tradeAction = async (action) => {
+    try {
+      await axios.put(`${API_URL}/api/chat/${roomId}/${action}`, {}, { headers });
+      socket?.emit("trade_status_update", {
+        roomId,
+        status: action === "accept" ? "accepted" : action === "reject" ? "rejected" : "cancelled",
+        updatedBy: currentUser._id,
+      });
+      fetchRoom();
+    } catch (err) {
+      alert(err.response?.data?.error || "เกิดข้อผิดพลาด");
+    }
+  };
+
+  const isOwner = () =>
+    room?.participants?.length > 0 &&
+    String(room.participants[1]?._id || room.participants[1]) === String(currentUser._id);
+
+  // ── render ─────────────────────────────────────────────
+  if (!token)   return <div className="cp-notice">กรุณาเข้าสู่ระบบก่อน</div>;
+  if (loading)  return <div className="cp-loading"><div className="cp-spin"/><p>กำลังโหลด...</p></div>;
 
   return (
-    <div className="chat-page">
-      <div className="chat-container">
-        <div className="chat-header">
-           <h2>แชทกับ {seller?.username || "กำลังโหลด..."}</h2>
-           {isRoomClosed() && <span className="closed-badge">การซื้อขายสิ้นสุดแล้ว</span>}
-        </div>
+    <div className="cp-wrap">
 
-        <div className="chat-box">
-          {messages.map((msg, index) => {
-            const isMe = (msg.sender?._id || msg.sender) === currentUser?._id;
-            return (
-              <div key={msg._id || index} className={`chat-message ${isMe ? "me" : "other"}`}>
-                <div className="bubble">{msg.text}</div>
-              </div>
-            );
-          })}
+      {/* HEADER */}
+      <header className="cp-header">
+        <button className="cp-back" onClick={() => navigate(-1)}>←</button>
+        <img className="cp-havatar"
+          src={otherUser?.profileImage ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser?.username || "U")}&background=random`}
+          alt="" />
+        <div className="cp-htxt">
+          <p className="cp-hname">{otherUser?.username || "..."}</p>
+          <p className="cp-htype">{room?.type === "trade" ? "🔄 เทรดสินค้า" : "💬 สอบถามสินค้า"}</p>
         </div>
+        {isClosed() && <span className="cp-closed-chip">ปิดแล้ว</span>}
+      </header>
 
-        <div className="chat-input">
+      {/* TRADE PANEL */}
+      {room?.type === "trade" && (
+        <div className="cp-trade">
+          <p className="cp-trade-title">🔒 สินค้าที่ล็อกในการเทรด</p>
+          <div className="cp-trade-row">
+            <div className="cp-tcard">
+              <span className="cp-tchip">ต้องการ</span>
+              <img src={room.lockedProductSnapshot?.images?.[0] || room.productId?.images?.[0] || "/no-img.png"} alt=""/>
+              <p>{room.lockedProductSnapshot?.title || room.productId?.title}</p>
+              <b>฿{(room.lockedProductSnapshot?.price || room.productId?.price || 0).toLocaleString()}</b>
+            </div>
+            <div className="cp-tswap">⇄</div>
+            <div className="cp-tcard">
+              <span className="cp-tchip alt">เสนอ</span>
+              <img src={room.lockedOfferedProductSnapshot?.images?.[0] || room.offeredProductId?.images?.[0] || "/no-img.png"} alt=""/>
+              <p>{room.lockedOfferedProductSnapshot?.title || room.offeredProductId?.title}</p>
+              <b>฿{(room.lockedOfferedProductSnapshot?.price || room.offeredProductId?.price || 0).toLocaleString()}</b>
+            </div>
+          </div>
+          {room.tradeStatus && (
+            <p className="cp-tstatus" style={{ color: STATUS[room.tradeStatus]?.c }}>
+              {STATUS[room.tradeStatus]?.t}
+            </p>
+          )}
+          {["pending","negotiating"].includes(room?.tradeStatus) && (
+            <div className="cp-tbtns">
+              {isOwner() && (
+                <>
+                  <button className="cp-btn accept" onClick={() => tradeAction("accept")}>✅ ยืนยันรับเทรด</button>
+                  <button className="cp-btn reject" onClick={() => tradeAction("reject")}>❌ ปฏิเสธ</button>
+                </>
+              )}
+              <button className="cp-btn cancel"
+                onClick={() => window.confirm("ยืนยันยกเลิกการเทรด?") && tradeAction("cancel")}>
+                🚫 ยกเลิก
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* PRODUCT BAR (normal) */}
+      {room?.type === "normal" && room?.productId && (
+        <div className="cp-pbar">
+          <img src={room.productId.images?.[0] || "/no-img.png"} alt=""/>
+          <div>
+            <p>{room.productId.title}</p>
+            <span>฿{room.productId.price?.toLocaleString()}</span>
+          </div>
+        </div>
+      )}
+
+      {/* MESSAGES */}
+      <main className="cp-msgs">
+        {messages.length === 0 && (
+          <p className="cp-empty">ยังไม่มีข้อความ — เริ่มสนทนาได้เลย 👋</p>
+        )}
+
+        {messages.map((msg, i) => {
+          const me       = isMe(msg);
+          const isSys    = msg.messageType && msg.messageType !== "text";
+          const showDate = i === 0 ||
+            fmtDate(msg.createdAt) !== fmtDate(messages[i - 1].createdAt);
+
+          return (
+            <React.Fragment key={msg._id || i}>
+              {showDate && (
+                <div className="cp-datesep"><span>{fmtDate(msg.createdAt)}</span></div>
+              )}
+              {isSys ? (
+                <div className="cp-sysmsg"><span>{msg.text}</span></div>
+              ) : (
+                <div className={`cp-row ${me ? "me" : "other"}`}>
+                  {!me && (
+                    <img className="cp-mavatar"
+                      src={msg.sender?.profileImage ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.sender?.username || "U")}&background=random`}
+                      alt="" />
+                  )}
+                  <div className="cp-bwrap">
+                    {!me && <p className="cp-mname">{msg.sender?.username}</p>}
+                    <div className="cp-bubble">
+                      <p>{msg.text}</p>
+                      <span className="cp-mtime">{fmt(msg.createdAt)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
+
+        {typing && (
+          <div className="cp-typing">
+            <span>{typing} กำลังพิมพ์</span>
+            <div className="cp-dots"><i/><i/><i/></div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </main>
+
+      {/* INPUT / CLOSED BAR */}
+      {isClosed() ? (
+        <div className="cp-closed-bar">
+          🔒 ห้องแชทนี้ปิดแล้ว
+          {room?.type === "trade" && ` — ${STATUS[room.tradeStatus]?.t}`}
+        </div>
+      ) : (
+        <footer className="cp-footer">
           <input
+            className="cp-input"
             value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder={isRoomClosed() ? "แชทถูกปิดแล้ว" : "พิมพ์ข้อความ..."}
-            disabled={isRoomClosed()}
+            onChange={handleInput}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+            placeholder="พิมพ์ข้อความ..."
           />
-          <button onClick={sendMessage} disabled={!text.trim() || isRoomClosed()}>
+          <button className="cp-send" onClick={sendMessage} disabled={!text.trim()}>
             ส่ง
           </button>
-        </div>
-      </div>
+        </footer>
+      )}
     </div>
   );
 }
-
-export default ChatPage;

@@ -7,22 +7,22 @@ function Home() {
   const [products, setProducts] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get(
-          "http://localhost:5000/api/products?limit=6"
-        );
-
-        setProducts(res.data.products); // ✅ แก้ตรงนี้
-      } catch (err) {
-        console.log(err);
+useEffect(() => {
+  axios
+    .get("http://localhost:5000/api/products")
+    .then((res) => {
+      if (Array.isArray(res.data)) {
+        setProducts(res.data);
+      } else if (Array.isArray(res.data.products)) {
+        setProducts(res.data.products);
+      } else {
+        console.error("Products is not an array:", res.data);
         setProducts([]);
       }
-    };
+    })
+    .catch((err) => console.log(err));
+}, []);
 
-    fetchProducts();
-  }, []);
 
   return (
     <div className="home">
@@ -44,26 +44,24 @@ function Home() {
               key={p._id}
               onClick={() => navigate(`/products/${p._id}`)}
             >
+
               <img
                 src={
                   p.images && p.images.length > 0
                     ? p.images[0].startsWith("http")
-                      ? p.images[0]
+                      ? p.images[0] // ถ้าเป็น URL เต็ม ใช้เลย
                       : `http://localhost:5000/uploads/${p.images[0].replace(/^\/?uploads\/?/, "")}`
                     : "https://via.placeholder.com/300"
                 }
                 alt={p.title}
               />
 
+
               <h4>{p.title}</h4>
               <p className="price">฿{p.price}</p>
             </div>
           ))}
         </div>
-
-        {products.length === 0 && (
-          <p className="empty">ยังไม่มีสินค้า</p>
-        )}
       </section>
     </div>
   );
