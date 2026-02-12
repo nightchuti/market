@@ -193,7 +193,7 @@ router.delete("/:id", protect, async (req, res) => {
 // ================= GET ALL PRODUCTS =================
 router.get("/", async (req, res) => {
   try {
-    const { search, category, minPrice, maxPrice, deliveryType, tradeOption, page = 1, limit = 20 } = req.query;
+    const { search, category, minPrice, maxPrice, deliveryType, tradeOption, page = 1, limit = 10 } = req.query;
 
     let filter = { isActive: true }; // แสดงเฉพาะสินค้าที่เปิดขาย
 
