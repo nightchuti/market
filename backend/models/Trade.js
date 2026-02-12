@@ -17,7 +17,7 @@ const tradeSchema = new mongoose.Schema({
   status: { 
     type: String, 
     default: "Open", 
-    enum: ["Open", "Matched", "Completed", "Cancelled"] },
+    enum: ["Open", "Matched", "Locked", "Completed", "Cancelled"] },
 
   // พิกัด (ไม่ใส่ required เพื่อกัน Error แต่แนะนำให้ส่งจากหน้าบ้าน)
   lat: { type: Number },
