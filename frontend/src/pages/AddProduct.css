@@ -1,0 +1,166 @@
+/* Background หน้าเว็บ */
+body {
+  background-color: #f4f6f8;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* กล่องฟอร์ม */
+.add-product-container {
+  max-width: 800px;
+  margin: 60px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* หัวข้อ */
+.add-product-container h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #000000;
+}
+
+/* กลุ่มฟอร์ม */
+.form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Input, textarea, select */
+.add-product-container input,
+.add-product-container textarea,
+.add-product-container select {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+/* Focus effect */
+.add-product-container input:focus,
+.add-product-container textarea:focus,
+.add-product-container select:focus {
+  border-color: #2e7d32;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+}
+
+/* Hover effect */
+.add-product-container input:hover,
+.add-product-container textarea:hover,
+.add-product-container select:hover {
+  border-color: #43a047;
+}
+
+/* Textarea */
+.add-product-container textarea {
+  resize: none;
+  min-height: 100px;
+}
+
+/* ปุ่ม */
+.submit-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  background: linear-gradient(135deg, #2e7d32, #43a047);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(46, 125, 50, 0.3);
+}
+
+.submit-btn:active {
+  transform: scale(0.98);
+}
+
+/* แถว input คู่ (lat/lng) */
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.form-row input {
+  flex: 1;
+  margin-bottom: 15px;
+}
+
+/* Responsive มือถือ */
+@media (max-width: 600px) {
+  .add-product-container {
+    margin: 20px;
+    padding: 20px;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+}
+
+.form-group label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #000000;
+  font-size: 14px;
+}
+
+.form-group label::after {
+  content: "";
+}
+
+.form-group label span {
+  color: red;
+}
+
+.image-preview {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.image-preview img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.location-btn {
+  width: auto;
+  padding: 5px 12px;
+  font-size: 12px;
+  background: #f0f2f5;
+  margin: 0 0 20px 10px; 
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.location-btn:hover {
+  background: #e4e6eb;
+}
