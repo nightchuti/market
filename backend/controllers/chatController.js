@@ -144,12 +144,16 @@ exports.initiateTradeChat = async (req, res) => {
 };
 
 exports.sendMessage = async (req, res) => {
-  const { roomId } = req.params;
-  const { text } = req.body;
-  const senderId = req.user.id; // มาจาก Middleware Auth
+  const { roomId } = req.params; //
+  const { text } = req.body; //
+  const senderId = req.user.id; 
 
   try {
-    // 1. บันทึกข้อความลง DB
+    // 1. ตรวจสอบว่ามีห้องแชทนี้จริงและผู้ส่งอยู่ในห้อง
+    const chatRoom = await ChatRoom.findById(roomId);
+    if (!chatRoom) return res.status(404).json({ error: "ไม่พบห้องแชท" });
+
+    // 2. บันทึกข้อความลง Database
     const newMessage = await Message.create({
       roomId,
       sender: senderId,
@@ -157,27 +161,21 @@ exports.sendMessage = async (req, res) => {
       messageType: "text"
     });
 
-    // 2. อัปเดตสถานะห้องแชท (Last Message)
-    const chatRoom = await ChatRoom.findById(roomId);
-    if (!chatRoom) return res.status(404).json({ error: "ไม่พบห้องแชท" });
-
+    // 3. อัปเดตข้อมูล Last Message ในห้องแชท
     chatRoom.lastMessage = text;
     chatRoom.lastMessageAt = Date.now();
     
-    // ตั้งค่าคนอื่นในห้องให้เป็น "ยังไม่ได้อ่าน"
+    // ตั้งค่าให้ฝ่ายตรงข้ามมีสถานะ "ยังไม่ได้อ่าน"
     const others = chatRoom.participants.filter(p => String(p) !== String(senderId));
     chatRoom.unreadBy = others;
-    
     await chatRoom.save();
 
-    // 3. Populate ข้อมูลผู้ส่ง (เพื่อส่งไปแสดงรูป/ชื่อใน Socket)
+    // 4. Populate ข้อมูลผู้ส่งเพื่อให้ฝั่ง Frontend แสดงรูปและชื่อได้ทันที
     await newMessage.populate("sender", "username profileImage");
 
-    // ส่งกลับไปให้ Frontend เพื่อเอาไปใส่ใน socket.emit
     res.status(201).json(newMessage);
   } catch (err) {
-    console.error("SendMessage Error:", err);
-    res.status(500).json({ error: "ไม่สามารถส่งข้อความได้" });
+    res.status(500).json({ error: "ส่งข้อความไม่สำเร็จ: " + err.message });
   }
 };
 
