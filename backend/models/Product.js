@@ -81,7 +81,10 @@ const productSchema = new mongoose.Schema({
 
 
 // Index
-productSchema.index({ title: "text", category: 1 });
+productSchema.index({
+  title: "text",
+  description: "text"
+});
 productSchema.index({ user: 1 });
 productSchema.index({ status: 1 });
 productSchema.index({ createdAt: -1 });

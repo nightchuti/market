@@ -193,42 +193,68 @@ router.delete("/:id", protect, async (req, res) => {
 // ================= GET ALL PRODUCTS =================
 router.get("/", async (req, res) => {
   try {
-    const { search, category, minPrice, maxPrice, deliveryType, tradeOption, page = 1, limit = 10 } = req.query;
+    const {
+      search,
+      category,
+      minPrice,
+      maxPrice,
+      deliveryType,
+      tradeOption,
+      page = 1,
+      limit = 10
+    } = req.query;
 
-    let filter = { isActive: true }; // แสดงเฉพาะสินค้าที่เปิดขาย
+    let filter = {
+      isActive: true,
+      status: "available"
+    };
 
-    // 🔍 ค้นตามชื่อ
+    // 🔍 ค้นหาชื่อ/รายละเอียด (ถ้าใช้ text index)
     if (search) {
-      filter.title = { $regex: search, $options: "i" };
+      filter.$text = { $search: search };
     }
 
-    // 📂 ค้นตามหมวดหมู่
+    // 📂 หมวดหมู่
     if (category) {
       filter.category = category.trim();
     }
 
-    // 💰 ค้นตามราคา
+    // 🔄 ประเภทการแลกเปลี่ยน
+    if (tradeOption) {
+      filter.tradeOption = tradeOption;
+    }
+
+    // 🚚 ประเภทการส่ง
+    if (deliveryType) {
+      if (deliveryType === "delivery") {
+        // ถ้าเลือก delivery → เอาทั้ง delivery และ both
+        filter.deliveryType = { $in: ["delivery", "both"] };
+      } else if (deliveryType === "meetup") {
+        // ถ้าเลือก meetup → เอาทั้ง meetup และ both
+        filter.deliveryType = { $in: ["meetup", "both"] };
+      } else {
+        filter.deliveryType = deliveryType;
+      }
+    }
+
+    // 💰 ราคา
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
-    // 🚚 ค้นตามประเภทการจัดส่ง
-    if (deliveryType) {
-      filter.deliveryType = deliveryType;
-    }
-
-    // 🔄 ค้นตามตัวเลือกการแลก
-    if (tradeOption) {
-      filter.tradeOption = tradeOption;
-    }
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const products = await Product.find(filter)
       .populate("user", "username email")
-      .sort({ createdAt: -1 })
-      .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit));
+      .sort(
+        search
+          ? { score: { $meta: "textScore" } }
+          : { createdAt: -1 }
+      )
+      .skip(skip)
+      .limit(parseInt(limit));
 
     const total = await Product.countDocuments(filter);
 
@@ -240,6 +266,7 @@ router.get("/", async (req, res) => {
         pages: Math.ceil(total / parseInt(limit))
       }
     });
+
   } catch (err) {
     res.status(500).json({
       message: "เกิดข้อผิดพลาดในการดึงข้อมูล",
@@ -247,6 +274,7 @@ router.get("/", async (req, res) => {
     });
   }
 });
+
 
 // ================= GET SINGLE PRODUCT =================
 router.get("/:id", async (req, res) => {

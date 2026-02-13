@@ -2,27 +2,20 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./Home.css";
 import { useNavigate } from "react-router-dom";
+import ProductCard from "../components/ProductCard";
 
 function Home() {
   const [products, setProducts] = useState([]);
   const navigate = useNavigate();
 
-useEffect(() => {
-  axios
-    .get("http://localhost:5000/api/products")
-    .then((res) => {
-      if (Array.isArray(res.data)) {
-        setProducts(res.data);
-      } else if (Array.isArray(res.data.products)) {
-        setProducts(res.data.products);
-      } else {
-        console.error("Products is not an array:", res.data);
-        setProducts([]);
-      }
-    })
-    .catch((err) => console.log(err));
-}, []);
-
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/api/products")
+      .then((res) => {
+        setProducts(res.data.products || []);
+      })
+      .catch((err) => console.log(err));
+  }, []);
 
   return (
     <div className="home">
@@ -39,27 +32,7 @@ useEffect(() => {
 
         <div className="product-grid">
           {products.slice(0, 6).map((p) => (
-            <div
-              className="product-card"
-              key={p._id}
-              onClick={() => navigate(`/products/${p._id}`)}
-            >
-
-              <img
-                src={
-                  p.images && p.images.length > 0
-                    ? p.images[0].startsWith("http")
-                      ? p.images[0] // ถ้าเป็น URL เต็ม ใช้เลย
-                      : `http://localhost:5000/uploads/${p.images[0].replace(/^\/?uploads\/?/, "")}`
-                    : "https://via.placeholder.com/300"
-                }
-                alt={p.title}
-              />
-
-
-              <h4>{p.title}</h4>
-              <p className="price">฿{p.price}</p>
-            </div>
+            <ProductCard key={p._id} product={p} />
           ))}
         </div>
       </section>
