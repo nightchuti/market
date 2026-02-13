@@ -13,6 +13,9 @@ function AllProducts() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get("page")) || 1;
+  const [deliveryType, setDeliveryType] = useState("");
+  const [tradeOption, setTradeOption] = useState("");
+
 
   useEffect(() => {
     fetchProducts({ page });
@@ -72,14 +75,25 @@ function AllProducts() {
           <option value="อื่นๆ">อื่นๆ</option>
         </select>
 
-        <label className="exchange-filter">
-          <input
-            type="checkbox"
-            checked={exchangeable}
-            onChange={() => setExchangeable(!exchangeable)}
-          />
-          แลกเปลี่ยนได้
-        </label>
+        <select
+          value={tradeOption}
+          onChange={(e) => setTradeOption(e.target.value)}
+        >
+          <option value="">ทุกประเภทการขาย</option>
+          <option value="sell_only">ขายเท่านั้น</option>
+          <option value="trade_allowed">แลกเปลี่ยนเท่านั้น</option>
+          <option value="negotiable">ต่อรองได้</option>
+        </select>
+
+        <select
+          value={deliveryType}
+          onChange={(e) => setDeliveryType(e.target.value)}
+        >
+          <option value="">ทุกประเภทการส่ง</option>
+          <option value="delivery">จัดส่ง</option>
+          <option value="meetup">นัดรับ</option>
+        </select>
+
 
         <button className="btn-main" onClick={handleSearch}>
           ค้นหา
