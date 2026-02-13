@@ -209,10 +209,20 @@ router.get("/", async (req, res) => {
       status: "available"
     };
 
-    // 🔍 ค้นหาชื่อ/รายละเอียด (ถ้าใช้ text index)
-    if (search) {
-      filter.$text = { $search: search };
+    // 🔥 ค้นหาแบบใกล้เคียงมากขึ้น
+    if (search && search.trim() !== "") {
+
+      const keyword = search.trim();
+
+      // สร้าง regex แบบยืดหยุ่น
+      const regex = new RegExp(keyword.split("").join(".*"), "i");
+
+      filter.$or = [
+        { title: { $regex: regex } },
+        { description: { $regex: regex } }
+      ];
     }
+
 
     // 📂 หมวดหมู่
     if (category) {
@@ -227,10 +237,8 @@ router.get("/", async (req, res) => {
     // 🚚 ประเภทการส่ง
     if (deliveryType) {
       if (deliveryType === "delivery") {
-        // ถ้าเลือก delivery → เอาทั้ง delivery และ both
         filter.deliveryType = { $in: ["delivery", "both"] };
       } else if (deliveryType === "meetup") {
-        // ถ้าเลือก meetup → เอาทั้ง meetup และ both
         filter.deliveryType = { $in: ["meetup", "both"] };
       } else {
         filter.deliveryType = deliveryType;
@@ -248,11 +256,7 @@ router.get("/", async (req, res) => {
 
     const products = await Product.find(filter)
       .populate("user", "username email")
-      .sort(
-        search
-          ? { score: { $meta: "textScore" } }
-          : { createdAt: -1 }
-      )
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 

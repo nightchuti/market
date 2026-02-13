@@ -48,12 +48,12 @@ function ProductCard({ product }) {
       )}
 
       {tradeOption === "trade_allowed" && (
-        <p className="exchange">🔄 แลกเปลี่ยนได้</p>
+        <p className="exchange">แลกเปลี่ยนได้</p>
       )}
 
       {/* ประเภทส่ง */}
       <p className="delivery">
-        🚚{" "}
+        {" "}
         {deliveryType === "both"
           ? "จัดส่ง / นัดรับ"
           : deliveryType === "delivery"
