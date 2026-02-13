@@ -1,21 +1,19 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./AllProducts.css";
-import { useNavigate } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
+import ProductCard from "../components/ProductCard";
 
 function AllProducts() {
   const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
-  const [exchangeable, setExchangeable] = useState(false);
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const page = parseInt(searchParams.get("page")) || 1;
   const [deliveryType, setDeliveryType] = useState("");
   const [tradeOption, setTradeOption] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const page = parseInt(searchParams.get("page")) || 1;
 
   useEffect(() => {
     fetchProducts({ page });
@@ -29,22 +27,21 @@ function AllProducts() {
       );
 
       setProducts(res.data.products);
-      setPagination(res.data.pagination); // ✅ ใช้จริงตรงนี้
+      setPagination(res.data.pagination);
     } catch (err) {
       console.log(err);
       setProducts([]);
     }
   };
 
-
   const handleSearch = () => {
-    const params = {
+    fetchProducts({
       search,
       category,
-      ...(exchangeable && { tradeOption: "exchange" })
-    };
-
-    fetchProducts(params);
+      tradeOption,
+      deliveryType,
+      page: 1
+    });
   };
 
   return (
@@ -58,42 +55,31 @@ function AllProducts() {
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
+        <select value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="">ทุกหมวดหมู่</option>
           <option value="เสื้อผ้า">เสื้อผ้า</option>
           <option value="เครื่องใช้ไฟฟ้า">เครื่องใช้ไฟฟ้า</option>
           <option value="หนังสือ">หนังสือ</option>
           <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
           <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
-          <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
           <option value="อาหาร">อาหาร</option>
           <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
           <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
           <option value="อื่นๆ">อื่นๆ</option>
         </select>
 
-        <select
-          value={tradeOption}
-          onChange={(e) => setTradeOption(e.target.value)}
-        >
+        <select value={tradeOption} onChange={(e) => setTradeOption(e.target.value)}>
           <option value="">ทุกประเภทการขาย</option>
           <option value="sell_only">ขายเท่านั้น</option>
           <option value="trade_allowed">แลกเปลี่ยนเท่านั้น</option>
           <option value="negotiable">ต่อรองได้</option>
         </select>
 
-        <select
-          value={deliveryType}
-          onChange={(e) => setDeliveryType(e.target.value)}
-        >
+        <select value={deliveryType} onChange={(e) => setDeliveryType(e.target.value)}>
           <option value="">ทุกประเภทการส่ง</option>
           <option value="delivery">จัดส่ง</option>
           <option value="meetup">นัดรับ</option>
         </select>
-
 
         <button className="btn-main" onClick={handleSearch}>
           ค้นหา
@@ -102,69 +88,13 @@ function AllProducts() {
 
       <div className="product-grid">
         {products.map((p) => (
-          <div
-            className="product-card"
-            key={p._id}
-            onClick={() => navigate(`/products/${p._id}`)}
-          >
-            <img
-              src={
-                p.images && p.images.length > 0
-                  ? p.images[0].startsWith("http")
-                    ? p.images[0]
-                    : `http://localhost:5000/uploads/${p.images[0].replace(/^\/?uploads\/?/, "")}`
-                  : "https://via.placeholder.com/300"
-              }
-              alt={p.title}
-            />
-
-            <h4>{p.title}</h4>
-            <p className="price">฿{p.price}</p>
-            <p className="seller">ผู้ขาย: {p.user?.username}</p>
-
-            {p.tradeOption === "exchange" && (
-              <span className="exchange-badge">🔄 แลกเปลี่ยนได้</span>
-            )}
-          </div>
+          <ProductCard key={p._id} product={p} />
         ))}
       </div>
 
       {products.length === 0 && (
         <p className="empty">ไม่พบสินค้า</p>
       )}
-
-      {/* ===== PAGINATION ===== */}
-      {pagination && (
-        <div className="pagination">
-          <button
-            className="page-btn"
-            disabled={pagination.page === 1}
-            onClick={() =>
-              setSearchParams({ page: pagination.page - 1 })
-            }
-          >
-            ← ก่อนหน้า
-          </button>
-
-          <div className="page-info">
-            หน้า <span>{pagination.page}</span> จาก {pagination.pages}
-          </div>
-
-          <button
-            className="page-btn"
-            disabled={pagination.page === pagination.pages}
-            onClick={() =>
-              setSearchParams({ page: pagination.page + 1 })
-            }
-          >
-            ถัดไป →
-          </button>
-        </div>
-      )}
-
-
-
-
     </div>
   );
 }

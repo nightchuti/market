@@ -1,7 +1,7 @@
 .all-products {
   padding: 40px;
   font-family: "Prompt", sans-serif;
-  max-width: 1200px;          /* ⭐ ไม่ให้กว้างเกิน */
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -16,7 +16,7 @@
   gap: 12px;
   margin-bottom: 30px;
   flex-wrap: wrap;
-  justify-content: center;    /* ⭐ อยู่กลาง */
+  justify-content: center;
 }
 
 .filter-bar input,
@@ -26,12 +26,11 @@
   border-radius: 10px;
   border: 1px solid #ddd;
   min-width: 220px;
-  height: 44px;               /* ⭐ สูงเท่ากัน */
+  height: 44px;
   box-sizing: border-box;
   font-size: 14px;
 }
 
-/* ปุ่มค้นหา */
 .filter-bar button {
   background: #f7b733;
   border: none;
@@ -43,97 +42,11 @@
   opacity: 0.9;
 }
 
-/* ===== PRODUCT GRID ===== */
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-}
-
-.product-card {
-  background: white;
-  border-radius: 16px;
-  padding: 12px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-}
-
-.product-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-}
-
-.product-card img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-  border-radius: 12px;
-}
-
-.product-card h4 {
-  margin: 8px 0 4px;
-}
-
-.price {
-  font-weight: bold;
-  margin-top: 4px;
-  color: #2f5d1e;
-}
-
-.seller {
-  font-size: 13px;
-  color: #777;
-}
-
+/* ===== EMPTY ===== */
 .empty {
   margin-top: 40px;
   text-align: center;
   color: #777;
-}
-
-.exchange-filter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 20px;
-  font-size: 14px;
-}
-
-.badge-exchange {
-  display: inline-block;
-  margin-top: 6px;
-  font-size: 13px;
-  color: #2f5d1e;
-  font-weight: bold;
-}
-
-.exchange-filter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  font-size: 13px;
-  background: #fff;
-  cursor: pointer;
-  height: 22px;
-}
-
-.exchange-filter input {
-  min-width: auto;
-}
-
-.exchange-badge {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: #eaf7ea;
-  color: #2f5d1e;
-  font-size: 12px;
-  font-weight: 600;
 }
 
 /* ===== PAGINATION ===== */
