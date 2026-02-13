@@ -11,6 +11,7 @@ import ChatFloating from "./pages/ChatFloating";
 function App() {
   return (
     <BrowserRouter>
+        <ChatFloating/>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
@@ -19,7 +20,6 @@ function App() {
           <Route path="/add-product" element={<AddProduct />} />
           <Route path="/chat/:sellerId" element={<ChatPage />} />
           <Route path="/my-shop" element={<MyShop />} />
-          <Route path="/chat-floating" element={<ChatFloating />} />
         </Route>
       </Routes>
     </BrowserRouter>
