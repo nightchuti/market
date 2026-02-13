@@ -6,7 +6,7 @@
 .cf-wrap {
   position: fixed;
   bottom: 28px;
-  left: 24px;       /* ซ้ายล่าง */
+  right: 24px;       /* ซ้ายล่าง */
   z-index: 999;
   font-family: 'Prompt', 'Sarabun', sans-serif;
 }
@@ -48,7 +48,7 @@
 /* ── popup panel ────────────────────────── */
 .cf-popup {
   position: absolute;
-  bottom: 70px; left: 0;
+  bottom: 70px; right: 24px;
   width: 310px;
   background: #fff;
   border-radius: 16px;
