@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./AllProducts.css";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 
 function AllProducts() {
@@ -9,15 +9,34 @@ function AllProducts() {
   const [pagination, setPagination] = useState(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
-  const [deliveryType, setDeliveryType] = useState("");
   const [tradeOption, setTradeOption] = useState("");
+  const [deliveryType, setDeliveryType] = useState("");
+
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const page = parseInt(searchParams.get("page")) || 1;
-
+  // ✅ โหลดข้อมูลทุกครั้งที่ URL เปลี่ยน
   useEffect(() => {
-    fetchProducts({ page });
-  }, [page]);
+    const page = parseInt(searchParams.get("page")) || 1;
+    const searchQuery = searchParams.get("search") || "";
+    const categoryQuery = searchParams.get("category") || "";
+    const tradeQuery = searchParams.get("tradeOption") || "";
+    const deliveryQuery = searchParams.get("deliveryType") || "";
+
+    // sync state กับ URL
+    setSearch(searchQuery);
+    setCategory(categoryQuery);
+    setTradeOption(tradeQuery);
+    setDeliveryType(deliveryQuery);
+
+    fetchProducts({
+      page,
+      search: searchQuery,
+      category: categoryQuery,
+      tradeOption: tradeQuery,
+      deliveryType: deliveryQuery
+    });
+  }, [searchParams]);
 
   const fetchProducts = async (params = {}) => {
     try {
@@ -34,13 +53,14 @@ function AllProducts() {
     }
   };
 
+  // ✅ กดค้นหา = เปลี่ยน URL
   const handleSearch = () => {
-    fetchProducts({
+    setSearchParams({
+      page: 1,
       search,
       category,
       tradeOption,
-      deliveryType,
-      page: 1
+      deliveryType
     });
   };
 
@@ -48,6 +68,7 @@ function AllProducts() {
     <div className="all-products">
       <h1>สินค้าทั้งหมด</h1>
 
+      {/* ===== FILTER BAR ===== */}
       <div className="filter-bar">
         <input
           placeholder="ค้นหาสินค้า..."
@@ -86,6 +107,7 @@ function AllProducts() {
         </button>
       </div>
 
+      {/* ===== PRODUCT GRID ===== */}
       <div className="product-grid">
         {products.map((p) => (
           <ProductCard key={p._id} product={p} />
@@ -94,6 +116,47 @@ function AllProducts() {
 
       {products.length === 0 && (
         <p className="empty">ไม่พบสินค้า</p>
+      )}
+
+      {/* ===== PAGINATION ===== */}
+      {pagination && (
+        <div className="pagination">
+          <button
+            className="page-btn"
+            disabled={pagination.page === 1}
+            onClick={() =>
+              setSearchParams({
+                page: pagination.page - 1,
+                search,
+                category,
+                tradeOption,
+                deliveryType
+              })
+            }
+          >
+            ← ก่อนหน้า
+          </button>
+
+          <div className="page-info">
+            หน้า <span>{pagination.page}</span> จาก {pagination.pages}
+          </div>
+
+          <button
+            className="page-btn"
+            disabled={pagination.page === pagination.pages}
+            onClick={() =>
+              setSearchParams({
+                page: pagination.page + 1,
+                search,
+                category,
+                tradeOption,
+                deliveryType
+              })
+            }
+          >
+            ถัดไป →
+          </button>
+        </div>
       )}
     </div>
   );
