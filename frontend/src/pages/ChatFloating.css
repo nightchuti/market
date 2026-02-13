@@ -1,58 +1,39 @@
-/* ══════════════════════════════════════════
-   ChatFloating.css — floating chat button
-══════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap');
 
 .cf-wrap {
   position: fixed;
-  bottom: 28px;
-  right: 24px;       /* ซ้ายล่าง */
+  bottom: 28px; right: 24px;
   z-index: 999;
   font-family: 'Prompt', 'Sarabun', sans-serif;
 }
 
-/* ── FAB button ─────────────────────────── */
+/* ── FAB ────────────────────────────────── */
 .cf-fab {
-  width: 56px; height: 56px;
-  border-radius: 50%;
+  width: 56px; height: 56px; border-radius: 50%;
   background: linear-gradient(135deg, #6366f1, #818cf8);
-  color: #fff;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
+  color: #fff; border: none; font-size: 22px; cursor: pointer;
   box-shadow: 0 4px 16px rgba(99,102,241,.45);
   display: flex; align-items: center; justify-content: center;
-  position: relative;
-  transition: transform .2s, box-shadow .2s;
+  position: relative; transition: transform .2s, box-shadow .2s;
 }
-.cf-fab:hover {
-  transform: scale(1.07);
-  box-shadow: 0 6px 22px rgba(99,102,241,.55);
-}
+.cf-fab:hover { transform: scale(1.07); box-shadow: 0 6px 22px rgba(99,102,241,.55); }
 .cf-fab:active { transform: scale(.96); }
 
-/* ── unread badge ───────────────────────── */
 .cf-badge {
-  position: absolute;
-  top: -2px; right: -2px;
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  background: #ef4444;
-  color: #fff;
+  position: absolute; top: -2px; right: -2px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #ef4444; color: #fff;
   font-size: 10px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   border: 2px solid #fff;
-  font-family: inherit;
 }
 
-/* ── popup panel ────────────────────────── */
+/* ── Popup ──────────────────────────────── */
 .cf-popup {
-  position: absolute;
-  bottom: 70px; right: 24px;
-  width: 310px;
-  background: #fff;
+  position: absolute; bottom: 70px; right: 0;
+  width: 320px; background: #fff;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.14);
+  box-shadow: 0 8px 32px rgba(0,0,0,.15);
   overflow: hidden;
   animation: popIn .18s ease;
 }
@@ -61,87 +42,92 @@
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── popup header ───────────────────────── */
 .cf-popup-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 13px 16px;
   background: linear-gradient(135deg, #6366f1, #818cf8);
-  color: #fff;
-  font-size: 14px; font-weight: 600;
+  color: #fff; font-size: 14px; font-weight: 600;
 }
 .cf-refresh {
-  background: rgba(255,255,255,.2);
-  border: none; color: #fff;
-  width: 28px; height: 28px;
-  border-radius: 50%;
+  background: rgba(255,255,255,.2); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 50%;
   font-size: 15px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background .15s, transform .3s;
 }
 .cf-refresh:hover { background: rgba(255,255,255,.35); transform: rotate(180deg); }
 
-/* ── list ───────────────────────────────── */
-.cf-list {
-  max-height: 340px;
-  overflow-y: auto;
-}
+/* ── List ───────────────────────────────── */
+.cf-list { max-height: 380px; overflow-y: auto; }
 .cf-list::-webkit-scrollbar { width: 3px; }
 .cf-list::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 3px; }
 
 .cf-empty {
   text-align: center; color: #9ca3af;
-  font-size: 13px; padding: 24px;
+  font-size: 13px; padding: 28px;
 }
 
-/* ── chat item ──────────────────────────── */
+/* ── Item ───────────────────────────────── */
 .cf-item {
   display: flex; align-items: center; gap: 10px;
-  padding: 11px 14px;
-  cursor: pointer;
+  padding: 11px 14px; cursor: pointer;
   border-bottom: 1px solid #f3f4f6;
-  transition: background .12s;
-  position: relative;
+  transition: background .12s; position: relative;
 }
 .cf-item:hover { background: #f9fafb; }
 .cf-item.unread { background: #eef2ff; }
 .cf-item.unread:hover { background: #e0e7ff; }
 .cf-item:last-child { border-bottom: none; }
 
+/* ── Avatar + Product thumb ─────────────── */
+.cf-avatar-wrap {
+  position: relative; flex-shrink: 0;
+  width: 44px; height: 44px;
+}
 .cf-avatar {
-  width: 40px; height: 40px;
+  width: 44px; height: 44px;
   border-radius: 50%; object-fit: cover;
-  border: 2px solid #e5e7eb; flex-shrink: 0;
+  border: 2px solid #e5e7eb;
+}
+/* ✅ รูปสินค้าเล็กๆ มุมขวาล่าง */
+.cf-product-thumb {
+  position: absolute; bottom: -3px; right: -3px;
+  width: 20px; height: 20px;
+  border-radius: 5px; object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15);
 }
 
+/* ── Item body ──────────────────────────── */
 .cf-item-body { flex: 1; min-width: 0; }
+
 .cf-item-top {
   display: flex; align-items: center;
-  justify-content: space-between;
-  margin-bottom: 3px;
+  justify-content: space-between; margin-bottom: 2px;
 }
 .cf-item-name {
   font-size: 13px; font-weight: 600; color: #111827;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .cf-item-time {
-  font-size: 10px; color: #9ca3af; white-space: nowrap; flex-shrink: 0; margin-left: 6px;
+  font-size: 10px; color: #9ca3af;
+  white-space: nowrap; flex-shrink: 0; margin-left: 6px;
 }
-.cf-item-bottom {
-  display: flex; align-items: center; gap: 5px;
+
+/* ✅ ชื่อสินค้า */
+.cf-product-name {
+  font-size: 11px; color: #6366f1; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 2px;
 }
-.cf-type-chip {
-  font-size: 9px; background: #ede9fe; color: #6d28d9;
-  padding: 1px 5px; border-radius: 3px; font-weight: 600;
-  white-space: nowrap; flex-shrink: 0;
-}
+
 .cf-last-msg {
-  font-size: 11.5px; color: #6b7280;
+  font-size: 11.5px; color: #9ca3af;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .cf-item.unread .cf-last-msg { color: #4b5563; font-weight: 500; }
 
 .cf-unread-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%; background: #6366f1;
-  flex-shrink: 0; margin-left: 4px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #6366f1; flex-shrink: 0; margin-left: 4px;
 }
