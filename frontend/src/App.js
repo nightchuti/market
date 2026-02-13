@@ -12,13 +12,14 @@ import Cart from "./pages/Cart";
 function App() {
   return (
     <BrowserRouter>
+        <ChatFloating/>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<AllProducts />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/add-product" element={<AddProduct />} />
-          <Route path="/chat/:sellerId" element={<ChatPage />} />
+          <Route path="/chat/:roomId" element={<ChatPage />} />
           <Route path="/my-shop" element={<MyShop />} />
           <Route path="/chat-floating" element={<ChatFloating />} />
           <Route path="/cart" element={<Cart />} />
