@@ -5,7 +5,7 @@ import AllProducts from "./pages/AllProducts";
 import ProductDetail from "./pages/ProductDetail";
 import AddProduct from "./pages/AddProduct";
 import ChatPage from "./pages/ChatPage";
-import MyShop from "./pages/MyShop";
+import MyShop from "./pages/MyShop/MyShop";
 import ChatFloating from "./pages/ChatFloating";
 
 function App() {
