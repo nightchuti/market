@@ -5,7 +5,11 @@ import AllProducts from "./pages/AllProducts";
 import ProductDetail from "./pages/ProductDetail";
 import AddProduct from "./pages/AddProduct";
 import ChatPage from "./pages/ChatPage";
+<<<<<<< HEAD
 import ChatFloating from "./pages/ChatFloating";
+=======
+import MyShop from "./pages/MyShop/MyShop";
+>>>>>>> 8432e73e143bb2f8927126ebc0d768bd99948ad8
 
 function App() {
   return (
@@ -18,7 +22,11 @@ function App() {
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/add-product" element={<AddProduct />} />
           <Route path="/chat/:sellerId" element={<ChatPage />} />
+<<<<<<< HEAD
           
+=======
+          <Route path="/my-shop" element={<MyShop />} />
+>>>>>>> 8432e73e143bb2f8927126ebc0d768bd99948ad8
         </Route>
       </Routes>
     </BrowserRouter>

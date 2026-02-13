@@ -27,14 +27,12 @@ export default function Navbar({ onLogin, onRegister }) {
           สินค้าทั้งหมด
         </Link>
 
-        {user?.role === "shop" && (
-          <Link
-            to="/add-product"
-            className={`nav-link ${isActive("/add-product") ? "active" : ""}`}
-          >
-            ลงขาย
-          </Link>
-        )}
+        <Link
+          to="/my-shop"
+          className={`nav-link ${isActive("/my-shop") ? "active" : ""}`}
+        >
+          ร้านค้าของฉัน
+        </Link>
       </div>
 
       <div className="nav-btn">
@@ -45,7 +43,7 @@ export default function Navbar({ onLogin, onRegister }) {
               className="btn-add"
               onClick={() => navigate("/add-product")}
             >
-              + เพิ่มสินค้า
+              🛒ตะกร้าสินค้า
             </button>
 
             <span className="username">{user.username}</span>
