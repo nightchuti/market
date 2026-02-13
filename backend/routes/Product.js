@@ -201,7 +201,7 @@ router.get("/", async (req, res) => {
       deliveryType,
       tradeOption,
       page = 1,
-      limit = 10
+      limit = 18
     } = req.query;
 
     let filter = {
