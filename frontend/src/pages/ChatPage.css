@@ -5,7 +5,7 @@
 .cp-wrap {
   display: flex;
   flex-direction: column;
-  height: 90dvh;
+  height: 95dvh;
   background: linear-gradient(135deg, #f0f2f5 0%, #e5e7eb 100%);
   font-family: 'Prompt', sans-serif;
   max-width: 600px;
