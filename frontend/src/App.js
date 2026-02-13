@@ -7,6 +7,7 @@ import AddProduct from "./pages/AddProduct";
 import ChatPage from "./pages/ChatPage";
 import MyShop from "./pages/MyShop/MyShop";
 import ChatFloating from "./pages/ChatFloating";
+import Cart from "./pages/Cart";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/chat/:sellerId" element={<ChatPage />} />
           <Route path="/my-shop" element={<MyShop />} />
           <Route path="/chat-floating" element={<ChatFloating />} />
+          <Route path="/cart" element={<Cart />} />
         </Route>
       </Routes>
     </BrowserRouter>

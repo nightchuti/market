@@ -23,6 +23,7 @@ function ProductCard({ product }) {
                 : `http://localhost:5000/uploads/${images[0].replace(/^\/?uploads\/?/, "")}`
             : "https://via.placeholder.com/300";
 
+            
     return (
         <div
             className="product-card"

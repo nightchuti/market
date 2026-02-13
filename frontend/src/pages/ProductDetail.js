@@ -63,9 +63,38 @@ function ProductDetail() {
     }
   };
 
-  const handleAddToCart = () => {
-    alert("เพิ่มลงตะกร้าแล้ว");
+  const handleAddToCart = async () => {
+    if (!token) {
+      alert("กรุณาเข้าสู่ระบบก่อน");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${API_URL}/api/cart/add`,
+        {
+          productId: product._id,
+          quantity: 1
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+
+      // 👇 เด้งถามก่อนจะไปหน้า cart
+      if (window.confirm("เพิ่มลงตะกร้าแล้ว ไปที่ตะกร้าเลยไหม?")) {
+        navigate("/cart");
+      }
+
+    } catch (err) {
+      const msg = err.response?.data?.message || "เพิ่มสินค้าไม่สำเร็จ";
+      alert(msg);
+    }
   };
+
+
 
   if (!product) return <p className="loading">กำลังโหลดข้อมูลสินค้า...</p>;
 
@@ -126,7 +155,14 @@ function ProductDetail() {
           </div>
 
           <div className="button-group">
-            <button className="btn-cart" onClick={handleAddToCart}>🛒 เพิ่มลงตะกร้า</button>
+            <button
+              className="btn-cart"
+              onClick={handleAddToCart}
+              disabled={isOwnProduct}
+            >
+              {isOwnProduct ? "สินค้าของคุณ" : "🛒 เพิ่มลงตะกร้า"}
+            </button>
+
             {!isOwnProduct && (
               <button className="btn-chat" onClick={handleChat} disabled={chatLoading}>
                 {chatLoading ? "⏳ กำลังเปิด..." : "💬 แชทผู้ขาย"}

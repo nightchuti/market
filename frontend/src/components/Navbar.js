@@ -38,12 +38,11 @@ export default function Navbar({ onLogin, onRegister }) {
       <div className="nav-btn">
         {user ? (
           <>
-
             <button
               className="btn-add"
-              onClick={() => navigate("/add-product")}
+              onClick={() => navigate("/cart")}
             >
-              🛒ตะกร้าสินค้า
+              🛒 ตะกร้าสินค้า
             </button>
 
             <span className="username">{user.username}</span>
