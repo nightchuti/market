@@ -109,9 +109,15 @@ function ProductDetail() {
           <p className="stock">คงเหลือ {product.quantity} ชิ้น</p>
 
           <div className="badges">
-            {product.deliveryType === "meetup" && <span>📍 นัดรับเท่านั้น</span>}
-            {product.deliveryType === "delivery" && <span>📦 จัดส่งเท่านั้น</span>}
-            {product.deliveryType === "both" && <span>🔁 นัดรับหรือจัดส่ง</span>}
+            {product.deliveryType === "meetup" && <span>นัดรับเท่านั้น</span>}
+            {product.deliveryType === "delivery" && <span>จัดส่งเท่านั้น</span>}
+            {product.deliveryType === "both" && <span>นัดรับหรือจัดส่ง</span>}
+          </div>
+
+          <div className="badges-sales">
+            {product.tradeOption === "sell_only" && <span>ขายเท่านั้น</span>}
+            {product.tradeOption === "trade_allowed" && <span>รับแลกเท่านั้น</span>}
+            {product.tradeOption === "negotiable" && <span>รับแลกหรือซื้อ</span>}
           </div>
 
           <div className="seller-card">
