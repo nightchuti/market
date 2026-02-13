@@ -17,7 +17,10 @@ export default function ChatFloating() {
   const token       = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
+
   // ── ดึงรายการห้องแชทของฉัน ──────────────────────────────
+  // ใน ChatFloating.js
+// ── ดึงรายการห้องแชท (แบบรวมกลุ่มรายบุคคล) ──────────────────────────────
   const fetchRooms = async () => {
     if (!token) return;
     setLoading(true);
@@ -25,20 +28,42 @@ export default function ChatFloating() {
       const res = await axios.get(`${API_URL}/api/chat`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = Array.isArray(res.data) ? res.data : [];
-      setRooms(data);
-      // นับห้องที่มีข้อความยังไม่อ่าน
-      const u = data.filter((r) =>
+      
+      const allData = Array.isArray(res.data) ? res.data : [];
+      
+      // ✅ LOGIC: ยุบรวมข้อความให้เหลือ 1 คนต่อ 1 แถว (คนละห้อง)
+      // โดยใช้ ID ของ "อีกฝ่าย" เป็นตัวกำหนดความซ้ำ
+      const processedRooms = Object.values(allData.reduce((acc, current) => {
+        const other = current.participants?.find(
+          (p) => String(p._id || p) !== String(currentUser._id)
+        );
+        
+        const otherId = other ? String(other._id || other) : "unknown";
+        
+        // ถ้ายังไม่มีคนนี้ในรายการ หรือเจออันที่ใหม่กว่า ให้เก็บอันนี้ไว้
+        if (!acc[otherId] || new Date(current.lastMessageAt) > new Date(acc[otherId].lastMessageAt)) {
+          acc[otherId] = current;
+        }
+        return acc;
+      }, {}));
+
+      // เรียงลำดับให้คนที่ทักมาล่าสุดอยู่บนสุด
+      processedRooms.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
+
+      setRooms(processedRooms);
+
+      // นับจำนวนห้องที่ยังไม่อ่าน
+      const u = processedRooms.filter((r) =>
         r.unreadBy?.some((uid) => String(uid) === String(currentUser._id))
       ).length;
       setUnread(u);
+
     } catch (err) {
-      console.error("fetchRooms:", err);
+      console.error("fetchRooms Error:", err);
     } finally {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchRooms();
   }, [token]); // eslint-disable-line
@@ -58,8 +83,12 @@ export default function ChatFloating() {
   }, [token, currentUser._id]); // eslint-disable-line
 
   // ── helpers ────────────────────────────────────────────────
-  const getOther = (room) =>
-    room.participants?.find((p) => String(p._id || p) !== String(currentUser._id));
+const getOther = (room) => {
+  // กรองหา participant ที่ ID ไม่ตรงกับเรา
+  return room.participants?.find(
+    (p) => String(p._id || p) !== String(currentUser._id)
+  );
+};
 
   const hasUnread = (room) =>
     room.unreadBy?.some((uid) => String(uid) === String(currentUser._id));
@@ -76,11 +105,11 @@ export default function ChatFloating() {
   const typeLabel = (room) =>
     room.type === "trade" ? "🔄 เทรด" : "💬 สอบถาม";
 
-const openRoom = (room) => {
+const openRoom = (roomId) => {
   setOpen(false);
-  const other = getOther(room);
-  // แนะนำให้ใช้ ID ห้องที่มีอยู่แล้ว (room._id)
-  navigate(`/chat/${room._id}`); 
+  if (roomId) {
+    navigate(`/chat/${roomId}`); // roomId คือค่าจาก room._id ใน Database
+  }
 };
 
   if (!token) return null; // ไม่ login ไม่แสดง
