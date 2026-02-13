@@ -76,10 +76,12 @@ export default function ChatFloating() {
   const typeLabel = (room) =>
     room.type === "trade" ? "🔄 เทรด" : "💬 สอบถาม";
 
-  const openRoom = (roomId) => {
-    setOpen(false);
-    navigate(`/chat/${roomId}`);
-  };
+const openRoom = (room) => {
+  setOpen(false);
+  const other = getOther(room);
+  // แนะนำให้ใช้ ID ห้องที่มีอยู่แล้ว (room._id)
+  navigate(`/chat/${room._id}`); 
+};
 
   if (!token) return null; // ไม่ login ไม่แสดง
 

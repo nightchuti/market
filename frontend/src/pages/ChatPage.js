@@ -27,23 +27,23 @@ export default function ChatPage() {
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
   // ── โหลดห้อง + ประวัติข้อความ ──
-  const fetchRoom = useCallback(async () => {
-    if (!token || !roomId) return;
-    const headers = { Authorization: `Bearer ${token}` };
-    setLoading(true);
-    try {
-      const roomRes = await axios.get(`${API_URL}/api/chat/${roomId}`, { headers });
-      setRoom(roomRes.data);
-      const msgRes = await axios.get(`${API_URL}/api/chat/${roomId}/messages`, { headers });
-      setMessages(msgRes.data);
-      setError("");
-    } catch (err) {
-      console.error("FetchRoom Error:", err);
-      setError("ไม่สามารถโหลดข้อมูลห้องแชทได้");
-    } finally {
-      setLoading(false);
-    }
-  }, [roomId, token]);
+const fetchRoom = useCallback(async () => {
+  if (!token || !roomId) return;
+  const headers = { Authorization: `Bearer ${token}` };
+  setLoading(true);
+  try {
+    // API นี้ต้องคืนค่าประวัติแชทเฉพาะ roomId นี้เท่านั้น (ซึ่งเก็บ participants แค่ 2 คน)
+    const roomRes = await axios.get(`${API_URL}/api/chat/${roomId}`, { headers });
+    setRoom(roomRes.data);
+    
+    const msgRes = await axios.get(`${API_URL}/api/chat/${roomId}/messages`, { headers });
+    setMessages(msgRes.data);
+  } catch (err) {
+    setError("ไม่สามารถโหลดแชทรายบุคคลได้");
+  } finally {
+    setLoading(false);
+  }
+}, [roomId, token]);
 
   useEffect(() => { fetchRoom(); }, [fetchRoom]);
 
