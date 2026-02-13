@@ -1,14 +1,14 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const http = require("http"); // สร้าง HTTP Server
-const { Server } = require("socket.io"); // Socket.io
+const http = require("http");
+const { Server } = require("socket.io");
 const connectDB = require("./config/db");
 
-// ✅ Import Logic แชทที่เราแยกไว้
+// ✅ 1. Import Socket Logic
 const socketManager = require("./socket/socketManager"); 
 
-// ===== ROUTES =====
+// ===== 2. ROUTES IMPORT =====
 const authRoutes = require("./routes/auth");
 const productRoutes = require("./routes/Product");
 const cartRoutes = require("./routes/Cart");
@@ -19,29 +19,31 @@ const couponRoutes = require("./routes/couponRoutes");
 const tradeRoutes = require("./routes/tradeRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 
-
 const app = express();
 const server = http.createServer(app);
+
+// ✅ 3. SOCKET.IO SETUP (ประกาศแค่ครั้งเดียวพอ)
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000"], // ระบุ Port React ให้ชัดเจน
-    methods: ["GET", "POST"]
-  }
+    origin: "http://localhost:3000", // ✅ ตรวจสอบว่าพอร์ต 3000 ตรงกับหน้าเว็บที่รันอยู่
+    methods: ["GET", "POST"],
+    credentials: true // ✅ เพิ่มตัวนี้เพื่อให้ส่ง Token/Cookie ได้ราบรื่นขึ้น
+  },
+  allowEIO3: true // ✅ เพิ่มเพื่อรองรับ Socket.io version เก่า-ใหม่ให้คุยกันได้
 });
 
-// 3️⃣ เรียกใช้ Logic แชท (ส่งตัวแปร io เข้าไปทำงาน)
+// ✅ 4. INITIALIZE SOCKET LOGIC
 socketManager(io);
 
-// ===== Middleware =====
+// ===== 5. MIDDLEWARE =====
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
-
-// ===== Connect Database =====
+// ===== 6. CONNECT DATABASE =====
 connectDB();
 
-// ===== Use Routes =====
+// ===== 7. USE ROUTES =====
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
@@ -56,10 +58,10 @@ app.get("/", (req, res) => {
   res.send("API Running");
 });
 
-// ===== Start server =====
+// ===== 8. START SERVER =====
 const PORT = process.env.PORT || 5000;
 
-// ⚠️ ใช้ server.listen แทน app.listen
+// ⚠️ ใช้ server.listen เพื่อให้ Socket.io และ Express ทำงานบนพอร์ตเดียวกันได้
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

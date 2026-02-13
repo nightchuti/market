@@ -4,19 +4,26 @@ const chatRoomSchema = new mongoose.Schema({
     type: { 
       type: String, 
       enum: ["trade", "normal"], 
-      default: "normal" },
+      default: "normal" 
+    },
+    // ✅ ปรับปรุงโครงสร้าง Array ของ Participants
     participants: [{ 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: "User", 
-      required: true }],
-    productId: { type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true 
+    }],
+    productId: { 
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Product", 
-      required: true },
+      required: true 
+    },
     
     // Trade Fields
-    offeredProductId: { type: mongoose.Schema.Types.ObjectId, 
+    offeredProductId: { 
+      type: mongoose.Schema.Types.ObjectId, 
       ref: "Product", 
-      efault: null },
+      default: null 
+    },
     tradeStatus: { 
         type: String, 
         enum: ["pending", "negotiating", "accepted", "rejected", "cancelled", "completed"], 
@@ -32,7 +39,11 @@ const chatRoomSchema = new mongoose.Schema({
     unreadBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
 }, { timestamps: true });
 
-// เพิ่ม Index เพื่อความเร็วในการ Query
+// ✅ เพิ่ม Validation ตรวจสอบจำนวนผู้เข้าร่วม (ป้องกัน participants.1 required)
+chatRoomSchema.path('participants').validate(function (value) {
+    return value.length === 2;
+}, 'ต้องมีผู้เข้าร่วมแชท 2 คน (ผู้ซื้อและผู้ขาย)');
+
 chatRoomSchema.index({ participants: 1 });
 chatRoomSchema.index({ lastMessageAt: -1 });
 
