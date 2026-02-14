@@ -29,6 +29,7 @@ function MyShop() {
     }
   }, []);
 
+
   const fetchMyProducts = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/products/my`, {
@@ -69,6 +70,31 @@ function MyShop() {
     }
   };
 
+  const publishProduct = async (id) => {
+    try {
+      await axios.put(
+        `${API_URL}/api/products/${id}/publish`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
+
+      // อัปเดต state ทันที (ไม่ต้อง reload ใหม่)
+      setProducts(prev =>
+        prev.map(p =>
+          p._id === id ? { ...p, status: "available" } : p
+        )
+      );
+
+    } catch (err) {
+      alert("เกิดข้อผิดพลาด");
+    }
+  };
+
+
   if (loading) {
     return (
       <div style={{ padding: "100px 20px", textAlign: "center" }}>
@@ -91,6 +117,7 @@ function MyShop() {
     );
   }
 
+  const inventoryProducts = products.filter(p => p.status !== "sold");
   const available = products.filter(p => p.status === "available");
   const sold = products.filter(p => p.status === "sold");
   const totalIncome = sold.reduce((sum, p) => sum + (p.price || 0), 0);
@@ -160,6 +187,7 @@ function MyShop() {
             setOpenId={setOpenId}
             handleDelete={handleDelete}
             navigate={navigate}
+            publishProduct={publishProduct}
           />
         )}
 

@@ -202,3 +202,25 @@
 .publish-btn:hover {
   background: #5a4bcf;
 }
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.available {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.pending {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.status-badge.sold {
+  background: #eeeeee;
+  color: #616161;
+}

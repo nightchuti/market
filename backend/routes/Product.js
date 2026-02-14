@@ -3,6 +3,7 @@ const router = express.Router();
 const Product = require("../models/Product");
 const protect = require("../middleware/authMiddleware");
 const upload = require("../middleware/upload");
+const authMiddleware = require("../middleware/authMiddleware");
 
 // ✅ เพิ่มบรรทัดนี้
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -382,5 +383,24 @@ router.get("/config/categories", async (req, res) => {
     });
   }
 });
+
+router.put("/products/:id/publish", authMiddleware, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: "ไม่พบสินค้า" });
+    }
+
+    product.status = "available";
+    await product.save();
+
+    res.json({ message: "ลงขายสำเร็จ" });
+
+  } catch (err) {
+    res.status(500).json({ message: "error" });
+  }
+});
+
 
 module.exports = router;
