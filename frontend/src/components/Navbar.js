@@ -62,11 +62,18 @@ export default function Navbar({ onLogin, onRegister }) {
 
             <div className="user-mini" onClick={() => navigate("/profile")} style={{ cursor: 'pointer' }}>
               <img
-                src={user.profileImage ? `${API_URL}${user.profileImage}` : "/default-avatar.png"}
+                src={
+                  user?.profileImage
+                    ? `${API_URL}${user.profileImage}`
+                    : "/images/default-avatar.png"
+                }
                 alt="profile"
                 className="mini-avatar"
-                onError={(e) => { e.target.src = "/default-avatar.png"; }} 
+                onError={(e) => {
+                  e.currentTarget.src = "/images/default-avatar.png";
+                }}
               />
+
               <div className="user-mini-info">
                 {/* ดึงชื่อมาแสดง */}
                 <span className="user-mini-name">{user.username}</span>

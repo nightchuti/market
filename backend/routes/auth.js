@@ -75,6 +75,20 @@ router.put("/profile", protect, upload.single("profileImage"), async (req, res) 
     if (bio !== undefined) user.bio = bio;
     if (birthday !== undefined) user.birthday = birthday;
 
+    // ===== ลบรูปโปรไฟล์ =====
+    if (req.body.removeProfileImage === "true") {
+      if (user.profileImage) {
+        const oldPath = path.join(__dirname, "..", user.profileImage);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+
+        changedFields.profileImage = { from: user.profileImage, to: null };
+        user.profileImage = null;
+      }
+    }
+
+
     if (req.file) {
       const imagePath = `/uploads/profiles/${req.file.filename}`;
       changedFields.profileImage = { from: user.profileImage, to: imagePath };
@@ -95,14 +109,5 @@ router.put("/profile", protect, upload.single("profileImage"), async (req, res) 
   }
 });
 
-// ต้องแยกกันแบบนี้ ห้ามซ้อนใน router.put
-router.get("/profile", protect, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select("username profileImage"); // ดึงแค่ชื่อและรูป
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ message: "Error" });
-  }
-});
 
 module.exports = router;
