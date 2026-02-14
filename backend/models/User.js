@@ -59,7 +59,14 @@ const userSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product"
       }
-    ]
+    ],
+    membershipTier: {
+      type: String,
+      enum: ["FREE", "PRO"],
+      default: "FREE"
+    },
+
+    shopId: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" }
   },
   { timestamps: true }
 );

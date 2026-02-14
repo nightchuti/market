@@ -33,7 +33,6 @@ const productSchema = new mongoose.Schema({
       "อื่นๆ"
     ],
     required: true
-    // ✅ ลบ trim: true ออก (ใช้ไม่ได้กับ enum)
   },
   quantity: {
     type: Number,
@@ -76,9 +75,21 @@ const productSchema = new mongoose.Schema({
     type: String,
     enum: ["available", "pending", "exchanged", "sold"],
     default: "available"
-  }
-}, { timestamps: true });
+  },
 
+  // ============================================
+  // ✅ เพิ่ม 2 Fields นี้ เพื่อรองรับระบบ Boost
+  // ============================================
+  isBoosted: { 
+    type: Boolean, 
+    default: false 
+  },
+  boostExpireAt: { 
+    type: Date,
+    default: null
+  }
+
+}, { timestamps: true });
 
 // Index
 productSchema.index({
@@ -87,6 +98,9 @@ productSchema.index({
 });
 productSchema.index({ user: 1 });
 productSchema.index({ status: 1 });
-productSchema.index({ createdAt: -1 });
+
+// ✅ แก้ Index ตรงนี้: ให้ MongoDB เรียงข้อมูลเร็วขึ้นเวลาเราดึงหน้า Feed
+// (เรียงคนจ่ายเงินขึ้นก่อน -> ตามด้วยของใหม่ล่าสุด)
+productSchema.index({ isBoosted: -1, createdAt: -1 });
 
 module.exports = mongoose.model("Product", productSchema);
