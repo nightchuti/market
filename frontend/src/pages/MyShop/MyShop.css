@@ -16,15 +16,26 @@
 .sub-text {
   font-size: 14px;
   color: #777;
+  margin-top: 10px;
 }
 
 .btn-main {
-  background: #222;
+  background: #1a202c;
   color: white;
-  padding: 8px 18px;
-  border-radius: 8px;
+  padding: 8px 14px; /* ลดความกว้างซ้าย-ขวา */
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;   /* ปรับตัวอักษรให้เล็กลงนิดหน่อย */
   border: none;
   cursor: pointer;
+  white-space: nowrap; /* กันข้อความตกบรรทัด */
+  width: 100px;
+  transition: all 0.2s;
+}
+
+.btn-main:hover {
+  background: #2d3748;
+  transform: translateY(-1px);
 }
 
 /* SUMMARY */
