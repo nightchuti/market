@@ -112,7 +112,8 @@ router.post("/", protect, upload.array("images", 6), async (req, res) => {
 });
 
 // ================= UPDATE PRODUCT =================
-router.put("/:id", protect, async (req, res) => {
+// 1. เพิ่ม upload.array("images", 6) เพื่อให้แกะข้อมูลจาก FormData ได้
+router.put("/:id", protect, upload.array("images", 6), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 
@@ -124,20 +125,48 @@ router.put("/:id", protect, async (req, res) => {
       return res.status(403).json({ message: "คุณไม่มีสิทธิ์แก้ไขสินค้านี้" });
     }
 
-    // อัปเดตฟิลด์
+    // --- 1. จัดการเรื่องรูปภาพ ---
+    let finalImages = product.images; // เริ่มต้นด้วยรูปเดิม
+
+    // ถ้ามีการส่ง existingImages กลับมา (รูปเดิมที่ผู้ใช้ยังเก็บไว้)
+    if (req.body.existingImages) {
+      try {
+        finalImages = JSON.parse(req.body.existingImages);
+      } catch (e) {
+        console.error("JSON parse existingImages failed");
+      }
+    }
+
+    // ถ้ามีการอัปโหลดรูปใหม่เข้ามาเพิ่ม
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(file => `/uploads/${file.filename}`);
+      finalImages = [...finalImages, ...newImages];
+    }
+
+    // --- 2. อัปเดตฟิลด์ข้อมูล ---
     product.title = req.body.title || product.title;
     product.description = req.body.description || product.description;
-    product.price = req.body.price || product.price;
+    
+    // จัดการราคา (ถ้าแลกอย่างเดียวให้เป็น 0)
+    if (req.body.tradeOption === "trade_allowed") {
+      product.price = 0;
+    } else {
+      product.price = req.body.price !== undefined ? Number(req.body.price) : product.price;
+    }
+
     product.category = req.body.category ? req.body.category.trim() : product.category;
-    product.quantity = req.body.quantity !== undefined ? req.body.quantity : product.quantity;
+    product.quantity = req.body.quantity !== undefined ? Number(req.body.quantity) : product.quantity;
     product.deliveryType = req.body.deliveryType || product.deliveryType;
     product.tradeOption = req.body.tradeOption || product.tradeOption;
-    product.lat = req.body.lat !== undefined ? req.body.lat : product.lat;
-    product.lng = req.body.lng !== undefined ? req.body.lng : product.lng;
+    product.lat = req.body.lat !== undefined ? Number(req.body.lat) : product.lat;
+    product.lng = req.body.lng !== undefined ? Number(req.body.lng) : product.lng;
     product.locationName = req.body.locationName || product.locationName;
-    product.isActive = req.body.isActive !== undefined ? req.body.isActive : product.isActive;
+    product.images = finalImages;
 
-    // ✅ อัพเดต Embedding ถ้ามีการเปลี่ยนข้อมูลสำคัญ
+    // ✅ บังคับเป็น pending ทุกครั้งที่กดบันทึกแก้ไข
+    product.status = "pending";
+
+    // --- 3. อัพเดต Embedding (AI) ---
     if (req.body.title || req.body.description || req.body.category) {
       try {
         const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
@@ -145,7 +174,6 @@ router.put("/:id", protect, async (req, res) => {
 
         const result = await model.embedContent(textToEmbed);
         product.embeddings = result.embedding.values;
-
         console.log("✅ Embedding updated");
       } catch (aiErr) {
         console.error("❌ Embedding update failed:", aiErr.message);
@@ -164,6 +192,24 @@ router.put("/:id", protect, async (req, res) => {
       message: "เกิดข้อผิดพลาดในการอัพเดต",
       error: err.message
     });
+  }
+});
+
+// ================= PUBLISH PRODUCT (กดลงขาย) =================
+// เพิ่ม Route นี้เพื่อให้หน้า Inventory เรียกใช้เมื่อกดปุ่ม "ลงขาย"
+router.put("/:id/publish", protect, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "ไม่มีสิทธิ์" });
+
+    product.status = "available"; // เปลี่ยนสถานะเป็น available
+    await product.save();
+
+    res.json({ message: "ลงขายสินค้าสำเร็จ", status: "available" });
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
   }
 });
 
@@ -381,24 +427,6 @@ router.get("/config/categories", async (req, res) => {
       message: "เกิดข้อผิดพลาด",
       error: err.message
     });
-  }
-});
-
-router.put("/products/:id/publish", authMiddleware, async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({ message: "ไม่พบสินค้า" });
-    }
-
-    product.status = "available";
-    await product.save();
-
-    res.json({ message: "ลงขายสำเร็จ" });
-
-  } catch (err) {
-    res.status(500).json({ message: "error" });
   }
 });
 

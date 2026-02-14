@@ -9,8 +9,8 @@ function EditProduct() {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    const [images, setImages] = useState([]);        // รูปใหม่ที่เพิ่ม
-    const [existingImages, setExistingImages] = useState([]); // รูปเดิมจาก DB
+    const [images, setImages] = useState([]);
+    const [existingImages, setExistingImages] = useState([]);
 
     const [form, setForm] = useState({
         title: "",
@@ -23,14 +23,14 @@ function EditProduct() {
         lat: "",
         lng: "",
         locationName: "",
-        status: "pending"
+        status: "pending" // กำหนดเป็น pending รอไว้
     });
 
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchProduct();
-    }, []);
+    }, [id]);
 
     const fetchProduct = async () => {
         try {
@@ -48,12 +48,12 @@ function EditProduct() {
                 lat: data.lat || "",
                 lng: data.lng || "",
                 locationName: data.locationName || "",
-                status: "pending"
+                status: "pending" // เมื่อโหลดมาแก้ไข ให้เตรียมสถานะเป็น pending เสมอ
             });
 
             setExistingImages(data.images || []);
-
-        } catch {
+        } catch (err) {
+            console.error(err);
             alert("โหลดข้อมูลไม่สำเร็จ");
         } finally {
             setLoading(false);
@@ -80,54 +80,37 @@ function EditProduct() {
     const submit = async (e) => {
         e.preventDefault();
 
-        const mustHavePrice =
-            form.tradeOption === "sell_only" ||
-            form.tradeOption === "negotiable";
-
-        if (
-            !form.title ||
-            !form.category ||
-            !form.deliveryType ||
-            !form.tradeOption ||
-            !form.locationName ||
-            form.quantity === "" ||
-            (mustHavePrice && !form.price)
-        ) {
-            alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");
-            return;
-        }
-
-        if (mustHavePrice && Number(form.price) <= 0) {
-            alert("ราคาต้องมากกว่า 0");
+        // ตรวจสอบข้อมูลที่จำเป็น
+        if (!form.title || !form.category || !form.locationName) {
+            alert("กรุณากรอกข้อมูลที่จำเป็น (ชื่อสินค้า, หมวดหมู่, สถานที่)");
             return;
         }
 
         try {
             const formData = new FormData();
 
+            // ส่งข้อมูลจาก form (ยกเว้นรูปภาพ)
             Object.keys(form).forEach((key) => {
                 if (key === "price") {
-                    formData.append(
-                        "price",
-                        form.tradeOption === "trade_allowed"
-                            ? 0
-                            : Number(form.price)
-                    );
-                } else {
+                    const priceValue = (form.tradeOption === "trade_allowed") ? 0 : Number(form.price);
+                    formData.append("price", priceValue);
+                } else if (form[key] !== null && form[key] !== undefined) {
                     formData.append(key, form[key]);
                 }
             });
 
+            // ยืนยันสถานะเป็น pending อีกครั้งเพื่อให้ Backend อัปเดตลง DB
             formData.set("status", "pending");
 
-            // ส่งรูปเดิมที่ยังเหลือ
+            // ส่งรายชื่อรูปเดิมที่ยังเก็บไว้
             formData.append("existingImages", JSON.stringify(existingImages));
 
-            // เพิ่มรูปใหม่
+            // เพิ่มรูปใหม่ (ถ้ามี)
             images.forEach((img) => {
                 formData.append("images", img);
             });
 
+            const token = localStorage.getItem("token");
             await axios.put(
                 `${API_URL}/api/products/${id}`,
                 formData,
@@ -139,191 +122,123 @@ function EditProduct() {
                 }
             );
 
-            alert("อัปเดตข้อมูลสำเร็จ");
-            navigate("/myshop");
+            alert("อัปเดตข้อมูลสำเร็จ (กรุณากด 'ลงขาย' อีกครั้งในหน้าคลังสินค้า)");
+            navigate("/my-shop");
 
         } catch (err) {
-            console.error(err.response?.data || err);
-            alert("อัปเดตไม่สำเร็จ");
+            console.error("Update Error:", err.response?.data || err.message);
+            alert(`อัปเดตไม่สำเร็จ: ${err.response?.data?.message || "เกิดข้อผิดพลาดภายในระบบ"}`);
         }
     };
 
-    if (loading) return <div>กำลังโหลด...</div>;
+    if (loading) return <div className="edit-page">กำลังโหลดข้อมูล...</div>;
 
     return (
         <div className="edit-page">
             <h2>แก้ไขสินค้า</h2>
-
             <form onSubmit={submit} className="edit-form">
-
                 <div className="form-group">
                     <label>ชื่อสินค้า</label>
-                    <input
-                        name="title"
-                        value={form.title}
-                        onChange={handleChange}
-                    />
+                    <input name="title" value={form.title} onChange={handleChange} required />
                 </div>
 
                 <div className="form-group">
                     <label>รายละเอียดสินค้า</label>
-                    <textarea
-                        name="description"
-                        value={form.description}
-                        onChange={handleChange}
-                    />
+                    <textarea name="description" value={form.description} onChange={handleChange} />
                 </div>
 
-                {/* ===== รูปเดิม ===== */}
                 <div className="image-section">
                     <h4>รูปปัจจุบัน</h4>
                     <div className="image-preview">
                         {existingImages.map((img, index) => (
                             <div key={index} className="image-card">
                                 <img src={`${API_URL}/${img}`} alt="old" />
-                                <button
-                                    type="button"
-                                    onClick={() => removeOldImage(index)}
-                                >
-                                    ✕
-                                </button>
+                                <button type="button" onClick={() => removeOldImage(index)}>✕</button>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* ===== เพิ่มรูปใหม่ ===== */}
                 <div className="image-section">
                     <h4>เพิ่มรูปใหม่</h4>
                     <input type="file" multiple onChange={handleImageChange} />
-
                     <div className="image-preview">
                         {images.map((img, index) => (
                             <div key={index} className="image-card">
                                 <img src={URL.createObjectURL(img)} alt="new" />
-                                <button
-                                    type="button"
-                                    onClick={() => removeNewImage(index)}
-                                >
-                                    ✕
-                                </button>
+                                <button type="button" onClick={() => removeNewImage(index)}>✕</button>
                             </div>
                         ))}
                     </div>
                 </div>
 
-
-                {(form.tradeOption === "sell_only" ||
-                    form.tradeOption === "negotiable") && (
-                        <div className="form-group">
-                            <label>ราคา (บาท)</label>
-                            <input
-                                name="price"
-                                type="number"
-                                value={form.price}
-                                onChange={handleChange}
-                            />
-                        </div>
-                    )}
+                {(form.tradeOption !== "trade_allowed") && (
+                    <div className="form-group">
+                        <label>ราคา (บาท)</label>
+                        <input name="price" type="number" value={form.price} onChange={handleChange} />
+                    </div>
+                )}
 
                 <div className="form-group">
                     <label>จำนวนสินค้า</label>
-                    <input
-                        name="quantity"
-                        type="number"
-                        value={form.quantity}
-                        onChange={handleChange}
-                    />
+                    <input name="quantity" type="number" value={form.quantity} onChange={handleChange} />
                 </div>
 
                 <div className="form-group">
                     <label>หมวดหมู่</label>
-                    <select
-                        name="category"
-                        value={form.category}
-                        onChange={handleChange}
-                    >
+                    <select name="category" value={form.category} onChange={handleChange}>
                         <option value="">-- เลือกหมวดหมู่ --</option>
                         <option value="เสื้อผ้า">เสื้อผ้า</option>
                         <option value="เครื่องใช้ไฟฟ้า">เครื่องใช้ไฟฟ้า</option>
                         <option value="หนังสือ">หนังสือ</option>
                         <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
+                        <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
+                        <option value="อาหาร">อาหาร</option>
+                        <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
+                        <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
                         <option value="อื่นๆ">อื่นๆ</option>
                     </select>
                 </div>
 
                 <div className="form-group">
                     <label>รูปแบบการจัดส่ง</label>
-                    <select
-                        name="deliveryType"
-                        value={form.deliveryType}
-                        onChange={handleChange}
-                    >
-                        <option value="delivery">จัดส่ง</option>
-                        <option value="meetup">นัดรับ</option>
-                        <option value="both">ทั้งสองแบบ</option>
+                    <select name="deliveryType" value={form.deliveryType} onChange={handleChange}>
+                        <option value="delivery">จัดส่งเท่านั้น</option>
+                        <option value="meetup">นัดรับเท่านั้น</option>
+                        <option value="both">จัดส่งหรือนัดรับ</option>
                     </select>
                 </div>
 
                 <div className="form-group">
                     <label>ตัวเลือกการขาย</label>
-                    <select
-                        name="tradeOption"
-                        value={form.tradeOption}
-                        onChange={handleChange}
-                    >
+                    <select name="tradeOption" value={form.tradeOption} onChange={handleChange}>
                         <option value="sell_only">ขายเท่านั้น</option>
                         <option value="trade_allowed">รับแลกเท่านั้น</option>
-                        <option value="negotiable">รับแลก/ต่อรอง</option>
+                        <option value="negotiable">รับแลก / ต่อรองได้</option>
                     </select>
                 </div>
 
                 <div className="form-group">
-                    <label>สถานที่</label>
-                    <input
-                        name="locationName"
-                        value={form.locationName}
-                        onChange={handleChange}
-                    />
+                    <label>ชื่อสถานที่</label>
+                    <input name="locationName" value={form.locationName} onChange={handleChange} required />
                 </div>
 
-                <div className="form-group">
-                    <label>Latitude</label>
-                    <input
-                        name="lat"
-                        type="number"
-                        value={form.lat}
-                        onChange={handleChange}
-                    />
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>Latitude</label>
+                        <input name="lat" type="number" step="any" value={form.lat} onChange={handleChange} />
+                    </div>
+                    <div className="form-group">
+                        <label>Longitude</label>
+                        <input name="lng" type="number" step="any" value={form.lng} onChange={handleChange} />
+                    </div>
                 </div>
 
-                <div className="form-group">
-                    <label>Longitude</label>
-                    <input
-                        name="lng"
-                        type="number"
-                        value={form.lng}
-                        onChange={handleChange}
-                    />
-                </div>
-
-                {/* ปุ่ม */}
                 <div className="form-actions">
-                    <button
-                        type="button"
-                        className="cancel-btn"
-                        onClick={() => navigate(-1)}
-                    >
-                        ยกเลิก
-                    </button>
-
-                    <button type="submit" className="save-btn">
-                        บันทึกการแก้ไข
-                    </button>
+                    <button type="button" className="cancel-btn" onClick={() => navigate(-1)}>ยกเลิก</button>
+                    <button type="submit" className="save-btn">บันทึกการแก้ไข</button>
                 </div>
-
             </form>
-
         </div>
     );
 }

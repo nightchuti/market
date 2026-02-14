@@ -117,12 +117,10 @@ function MyShop() {
     );
   }
 
-  const inventoryProducts = products.filter(p => p.status !== "sold");
-  const available = products.filter(p => p.status === "available");
+  // ปรับการกรองข้อมูล: คลังสินค้าต้องมีทั้ง 'พร้อมขาย' และ 'รอลงขาย'
+  const inventoryProducts = products.filter(p => p.status === "available" || p.status === "pending");
   const sold = products.filter(p => p.status === "sold");
   const totalIncome = sold.reduce((sum, p) => sum + (p.price || 0), 0);
-
-  const list = activeTab === "inventory" ? available : sold;
 
   return (
     <div className="shop-wrapper">
@@ -148,8 +146,9 @@ function MyShop() {
         </div>
 
         <div className="summary-card">
-          <h3>{available.length}</h3>
-          <span>พร้อมขาย</span>
+          {/* แสดงจำนวนสินค้าที่รวมทั้งพร้อมขายและรอลงขาย */}
+          <h3>{inventoryProducts.length}</h3>
+          <span>ในคลังสินค้า</span>
         </div>
 
         <div className="summary-card">
@@ -182,7 +181,7 @@ function MyShop() {
       <div className="shop-list">
         {activeTab === "inventory" && (
           <Inventory
-            products={available}
+            products={inventoryProducts} // ใช้ตัวแปรที่กรองใหม่
             openId={openId}
             setOpenId={setOpenId}
             handleDelete={handleDelete}
