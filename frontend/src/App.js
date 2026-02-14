@@ -3,17 +3,18 @@ import Layout from "./layouts/Layout";
 import Home from "./pages/Home";
 import AllProducts from "./pages/AllProducts";
 import ProductDetail from "./pages/ProductDetail";
-import AddProduct from "./pages/AddProduct";
+import AddProduct from "./pages/MyShop/AddProduct";
 import ChatPage from "./pages/ChatPage";
 import MyShop from "./pages/MyShop/MyShop";
 import ChatFloating from "./pages/ChatFloating";
 import Cart from "./pages/Cart";
 import ProfilePage from "./pages/ProfilePage/ProfilePage";
+import EditProduct from "./pages/MyShop/EditProduct";
 
 function App() {
   return (
     <BrowserRouter>
-        <ChatFloating/>
+      <ChatFloating />
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
@@ -24,7 +25,8 @@ function App() {
           <Route path="/my-shop" element={<MyShop />} />
           <Route path="/chat-floating" element={<ChatFloating />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/profile"     element={<ProfilePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/edit-product/:id" element={<EditProduct />} />
         </Route>
       </Routes>
     </BrowserRouter>

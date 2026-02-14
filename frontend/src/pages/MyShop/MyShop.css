@@ -178,3 +178,27 @@
   border-radius: 6px;
   cursor: pointer;
 }
+
+.status.draft {
+  background: #ffeaa7;
+  color: #b7791f;
+}
+
+.status.available {
+  background: #d4f8e8;
+  color: #0f9d58;
+}
+
+.status.sold {
+  background: #fde2e2;
+  color: #c62828;
+}
+
+.publish-btn {
+  background: #6c5ce7;
+  color: white;
+}
+
+.publish-btn:hover {
+  background: #5a4bcf;
+}
