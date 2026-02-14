@@ -73,10 +73,10 @@ const productSchema = new mongoose.Schema({
     default: []
   },
   status: {
-  type: String,
-  enum: ["draft", "available", "sold"],
-  default: "draft"
-}
+    type: String,
+    enum: ["available", "pending", "exchanged", "sold"],
+    default: "available"
+  }
 }, { timestamps: true });
 
 

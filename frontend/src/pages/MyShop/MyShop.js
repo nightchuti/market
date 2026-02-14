@@ -91,12 +91,11 @@ function MyShop() {
     );
   }
 
-  const draft = products.filter(p => p.status === "draft");
   const available = products.filter(p => p.status === "available");
   const sold = products.filter(p => p.status === "sold");
-
   const totalIncome = sold.reduce((sum, p) => sum + (p.price || 0), 0);
 
+  const list = activeTab === "inventory" ? available : sold;
 
   return (
     <div className="shop-wrapper">
@@ -139,13 +138,6 @@ function MyShop() {
 
       <div className="shop-tabs">
         <button
-          className={activeTab === "draft" ? "active" : ""}
-          onClick={() => setActiveTab("draft")}
-        >
-          ฉบับร่าง
-        </button>
-
-        <button
           className={activeTab === "inventory" ? "active" : ""}
           onClick={() => setActiveTab("inventory")}
         >
@@ -160,20 +152,7 @@ function MyShop() {
         </button>
       </div>
 
-
       <div className="shop-list">
-
-        {activeTab === "draft" && (
-          <Inventory
-            products={draft}
-            openId={openId}
-            setOpenId={setOpenId}
-            handleDelete={handleDelete}
-            navigate={navigate}
-            type="draft"
-          />
-        )}
-
         {activeTab === "inventory" && (
           <Inventory
             products={available}
@@ -181,15 +160,14 @@ function MyShop() {
             setOpenId={setOpenId}
             handleDelete={handleDelete}
             navigate={navigate}
-            type="available"
           />
         )}
 
         {activeTab === "sales" && (
           <SalesHistory products={sold} />
         )}
-
       </div>
+
 
     </div>
   );
