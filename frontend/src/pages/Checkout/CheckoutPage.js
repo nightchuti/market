@@ -30,6 +30,10 @@ const CheckoutPage = () => {
     const [couponCode, setCouponCode] = useState("");
     const [discount, setDiscount] = useState(0);
 
+    const [showCouponModal, setShowCouponModal] = useState(false);
+    const [availableCoupons, setAvailableCoupons] = useState([]);
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
+
     // ================= REDIRECT IF EMPTY =================
     useEffect(() => {
         if (!location.state?.items || location.state.items.length === 0) {
@@ -146,7 +150,78 @@ const CheckoutPage = () => {
         }
     }, [addresses, location.state]);
 
+    const fetchCoupons = async () => {
+        try {
+            const token = localStorage.getItem("token");
 
+            const res = await axios.get(
+                `${API_URL}/api/coupons/my`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setAvailableCoupons(res.data);
+
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const openCouponModal = () => {
+        fetchCoupons();
+        setShowCouponModal(true);
+    };
+
+    const applyCouponCode = async (code) => {
+        try {
+            const token = localStorage.getItem("token");
+
+            const res = await axios.post(
+                `${API_URL}/api/coupons/check`,
+                {
+                    code,
+                    subTotal
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            setDiscount(res.data.discount);
+            setCouponCode(code);
+            setAppliedCoupon(res.data.coupon);
+            setShowCouponModal(false);
+
+        } catch (err) {
+            alert(err.response?.data?.message || "ใช้คูปองไม่ได้");
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setDiscount(0);
+        setCouponCode("");
+        setAppliedCoupon(null);
+    };
+
+    const evaluateCoupon = (coupon) => {
+        if (!coupon) return { usable: false, reason: "" };
+
+        if (coupon.isAlreadyUsed) {
+            return { usable: false, reason: "ใช้แล้ว" };
+        }
+
+        if (coupon.isFull) {
+            return { usable: false, reason: "โควตาเต็ม" };
+        }
+
+        if (subTotal < coupon.minSpend) {
+            return {
+                usable: false,
+                reason: `ขั้นต่ำ ฿${coupon.minSpend}`
+            };
+        }
+
+        return { usable: true, reason: "ใช้ได้" };
+    };
 
     // ================= TOTAL =================
     const subTotal = cartItems.reduce(
@@ -339,7 +414,7 @@ const CheckoutPage = () => {
                     <div className="section-title">รูปแบบการรับสินค้า</div>
 
                     {!deliveryMode && (
-                        <p style={{ color: "red" }}>
+                        <p style={{ color: "red" , marginBottom: "12px"}}>
                             กรุณาเลือกรูปแบบการรับสินค้า
                         </p>
                     )}
@@ -384,37 +459,37 @@ const CheckoutPage = () => {
                 </div>
             )}
 
-            <div className="sh-card coupon-section">
-                <div className="section-title">คูปองส่วนลด</div>
+            {/* COUPON TAB */}
+            <div className="sh-card coupon-tab">
+                <div className="coupon-tab-row">
 
-                <div style={{ display: "flex", gap: "8px" }}>
-                    <input
-                        type="text"
-                        placeholder="กรอกโค้ดคูปอง"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        style={{ flex: 1, padding: "8px" }}
-                    />
+                    <div onClick={openCouponModal} style={{ cursor: "pointer" }}>
+                        ใช้โค้ดส่วนลด
+                    </div>
 
-                    <button
-                        onClick={handleApplyCoupon}
-                        style={{
-                            background: "#ee4d2d",
-                            color: "#fff",
-                            border: "none",
-                            padding: "8px 14px",
-                            cursor: "pointer"
-                        }}
-                    >
-                        ใช้คูปอง
-                    </button>
+                    {appliedCoupon ? (
+                        <div className="coupon-applied">
+                            <span>
+                                {appliedCoupon.code} - ลด ฿{discount}
+                            </span>
+
+                            <button
+                                className="remove-coupon-btn"
+                                onClick={handleRemoveCoupon}
+                            >
+                                ยกเลิก
+                            </button>
+                        </div>
+                    ) : (
+                        <div
+                            className="coupon-select"
+                            onClick={openCouponModal}
+                        >
+                            เลือกคูปอง ❯
+                        </div>
+                    )}
+
                 </div>
-
-                {discount > 0 && (
-                    <p style={{ color: "green", marginTop: "8px" }}>
-                        ใช้คูปองสำเร็จ ลดไป ฿{discount.toLocaleString()}
-                    </p>
-                )}
             </div>
 
             {/* BILLING */}
@@ -427,6 +502,14 @@ const CheckoutPage = () => {
                     <span>ค่าจัดส่ง</span>
                     <span>฿{deliveryFee}</span>
                 </div>
+                {discount > 0 && (
+                    <div className="bill-row discount-row">
+                        <span>ส่วนลด ({couponCode})</span>
+                        <span className="discount-amount">
+                            - ฿{discount.toLocaleString()}
+                        </span>
+                    </div>
+                )}
                 <div className="bill-row total">
                     <span>ยอดชำระสุทธิ</span>
                     <span className="total-price">฿{total.toLocaleString()}</span>
@@ -442,6 +525,74 @@ const CheckoutPage = () => {
                     สั่งซื้อสินค้า
                 </button>
             </div>
+
+
+            {showCouponModal && (
+                <div className="coupon-modal-overlay">
+                    <div className="coupon-modal">
+
+                        <div className="coupon-header">
+                            <h3>เลือกคูปอง</h3>
+                            <button onClick={() => setShowCouponModal(false)}>✕</button>
+                        </div>
+
+                        {/* กรอกโค้ด */}
+                        <div className="coupon-input">
+                            <input
+                                type="text"
+                                placeholder="กรอกรหัสโค้ด"
+                                value={couponCode}
+                                onChange={(e) => setCouponCode(e.target.value)}
+                            />
+                            <button onClick={() => applyCouponCode(couponCode)}>
+                                ใช้
+                            </button>
+                        </div>
+
+                        {/* List คูปอง */}
+                        <div className="coupon-list">
+                            {availableCoupons
+                                .sort((a, b) => {
+                                    const aValid = evaluateCoupon(a).usable;
+                                    const bValid = evaluateCoupon(b).usable;
+                                    return bValid - aValid; // usable ขึ้นก่อน
+                                })
+                                .map((c) => {
+                                    const { usable, reason } = evaluateCoupon(c);
+
+                                    return (
+                                        <div
+                                            key={c._id}
+                                            className={`coupon-item ${!usable ? "disabled" : ""}`}
+                                        >
+                                            <div>
+                                                <strong>{c.code}</strong>
+
+                                                {c.discountType === "PERCENT"
+                                                    ? <p>ลด {c.discountValue}%</p>
+                                                    : <p>ลด ฿{c.discountValue}</p>
+                                                }
+
+                                                <p style={{ color: usable ? "green" : "red" }}>
+                                                    {reason}
+                                                </p>
+                                            </div>
+
+                                            <button
+                                                disabled={!usable}
+                                                onClick={() => usable && applyCouponCode(c.code)}
+                                            >
+                                                ใช้
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+
+                        </div>
+
+                    </div>
+                </div>
+            )}
 
         </div>
     );

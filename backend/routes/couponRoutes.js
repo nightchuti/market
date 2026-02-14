@@ -15,8 +15,8 @@ router.get("/", protect, async (req, res) => {
     if (userTier === 'PRO') allowedTiers.push('PRO');
 
     // ดึงคูปองที่ยังใช้งานได้
-    const coupons = await Coupon.find({ 
-      isActive: true, 
+    const coupons = await Coupon.find({
+      isActive: true,
       expireAt: { $gt: new Date() },
       requiredTier: { $in: allowedTiers }
     }).sort({ createdAt: -1 }).lean();
@@ -77,7 +77,7 @@ router.post("/claim/:id", protect, async (req, res) => {
 router.post("/check", protect, async (req, res) => {
   try {
     const { code, subTotal } = req.body;
-    
+
     const coupon = await Coupon.findOne({
       code: code.toUpperCase(),
       isActive: true,
@@ -85,6 +85,10 @@ router.post("/check", protect, async (req, res) => {
     });
 
     if (!coupon) return res.status(404).json({ message: "โค้ดไม่ถูกต้องหรือหมดอายุ" });
+
+    if (coupon.quotaLimit > 0 && coupon.quotaUsed >= coupon.quotaLimit) {
+      return res.status(400).json({ message: "คูปองถูกใช้ครบจำนวนแล้ว" });
+    }
 
     // เช็คว่าเคยเก็บคูปองนี้หรือยัง (บังคับต้องเก็บก่อนใช้เหมือน Shopee)
     const claimData = await ClaimedCoupon.findOne({ userId: req.user.id, couponId: coupon._id });
@@ -96,8 +100,8 @@ router.post("/check", protect, async (req, res) => {
     }
 
     // คำนวณส่วนลด
-    let discount = coupon.discountType === 'PERCENT' 
-      ? (subTotal * coupon.discountValue) / 100 
+    let discount = coupon.discountType === 'PERCENT'
+      ? (subTotal * coupon.discountValue) / 100
       : coupon.discountValue;
 
     if (coupon.maxDiscountAmount > 0 && discount > coupon.maxDiscountAmount) discount = coupon.maxDiscountAmount;
@@ -168,5 +172,29 @@ router.post("/", protect, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+// ================= 6. GET MY CLAIMED COUPONS =================
+router.get("/my", protect, async (req, res) => {
+  try {
+    const claimed = await ClaimedCoupon.find({
+      userId: req.user.id,
+      isUsed: false
+    }).populate("couponId");
+
+    const validCoupons = claimed
+      .map(c => c.couponId)
+      .filter(c =>
+        c &&
+        c.isActive &&
+        c.expireAt > new Date()
+      );
+
+    res.json(validCoupons);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 module.exports = router;

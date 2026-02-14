@@ -265,3 +265,277 @@ body {
   opacity: 0.9;
 }
 
+/* ================= OVERLAY ================= */
+.coupon-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 999;
+    animation: fadeIn 0.25s ease;
+}
+
+/* ================= MODAL ================= */
+.coupon-modal {
+    background: #ffffff;
+    width: 100%;
+    max-width: 820px;
+    height: 92vh;
+    max-height: 95vh;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 18px 18px 18px;
+    overflow-y: auto;
+    font-size: 14px;
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.25);
+    animation: slideUp 0.3s cubic-bezier(.22,1,.36,1);
+    position: relative;
+}
+
+/* drag handle */
+.coupon-modal::before {
+    content: "";
+    width: 46px;
+    height: 5px;
+    background: #e0e0e0;
+    border-radius: 20px;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* ================= HEADER ================= */
+.coupon-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 22px 0 16px 0;
+}
+
+.coupon-header h3 {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin: 0;
+}
+
+.coupon-header button {
+    background: #f5f5f5;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.coupon-header button:hover {
+    background: #eaeaea;
+}
+
+/* ================= INPUT ================= */
+.coupon-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.coupon-input input {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 13px;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.coupon-input input:focus {
+    outline: none;
+    border-color: #ee4d2d;
+    box-shadow: 0 0 0 3px rgba(238,77,45,0.12);
+}
+
+.coupon-input button {
+    background: linear-gradient(135deg, #ff6a3d, #ee4d2d);
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    font-size: 13px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 500;
+}
+
+.coupon-input button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(238,77,45,0.25);
+}
+
+/* ================= COUPON CARD (Ticket Style) ================= */
+.coupon-item {
+    position: relative;
+    background: linear-gradient(135deg, #fff7f5, #ffffff);
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.25s ease;
+    overflow: hidden;
+}
+
+/* dotted cut line */
+.coupon-item::after {
+    content: "";
+    position: absolute;
+    right: 90px;
+    top: 10%;
+    bottom: 10%;
+    border-right: 2px dashed #f1d2ca;
+}
+
+/* hover */
+.coupon-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+    border-color: #ee4d2d;
+}
+
+/* selected */
+.coupon-item.active {
+    border: 2px solid #ee4d2d;
+    background: #fff0eb;
+}
+
+/* text area */
+.coupon-item strong {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.coupon-item p {
+    margin: 4px 0 0 0;
+    font-size: 12px;
+    color: #666;
+}
+
+/* button */
+.coupon-item button {
+    background: #ee4d2d;
+    color: white;
+    border: none;
+    padding: 7px 14px;
+    font-size: 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.coupon-item button:hover {
+    background: #d83c1d;
+    transform: scale(1.05);
+}
+
+/* ================= TAB AREA ================= */
+.coupon-tab-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.coupon-applied {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.coupon-applied span {
+    font-size: 13px;
+    color: #ee4d2d;
+    font-weight: 600;
+}
+
+.remove-coupon-btn {
+    background: #fff;
+    border: 1px solid #ffd5cc;
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.remove-coupon-btn:hover {
+    background: #fff0eb;
+    border-color: #ee4d2d;
+    color: #ee4d2d;
+}
+
+.coupon-select {
+    font-size: 13px;
+    color: #999;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.coupon-select:hover {
+    color: #ee4d2d;
+}
+
+/* ================= SCROLLBAR ================= */
+.coupon-modal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.coupon-modal::-webkit-scrollbar-thumb {
+    background: #e0e0e0;
+    border-radius: 10px;
+}
+
+/* ================= ANIMATIONS ================= */
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+    .coupon-modal {
+        padding: 18px 14px;
+        border-radius: 20px 20px 0 0;
+    }
+}
+
+.discount-row {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.discount-amount {
+    color: #ee4d2d;
+    font-weight: 600;
+}
+
+.coupon-item.disabled {
+    opacity: 0.5;
+    background: #f5f5f5;
+    pointer-events: none;
+}
+
+.coupon-item button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
