@@ -134,37 +134,106 @@
 
 /* ══ PROFILE CARD ════════════════════════════ */
 .pp-card {
-  background: var(--white); border-radius: var(--radius);
-  box-shadow: var(--shadow); overflow: hidden;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
+
+/* header */
 .pp-card-top {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 20px; border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
 }
-.pp-ct { font-size: 15px; font-weight: 700; color: var(--ink); }
+
+.pp-ct {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* action group */
+.pp-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ===== EDIT ===== */
 .pp-btn-edit {
-  padding: 7px 16px; border-radius: 10px;
-  background: var(--green2); color: var(--ink);
-  border: none; font-size: 13px; font-weight: 600;
-  cursor: pointer; font-family: inherit; transition: background .15s;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--green2);
+  color: var(--ink);
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s ease;
 }
-.pp-btn-edit:hover:not(:disabled) { background: #bbf7d0; }
-.pp-btn-edit:disabled { opacity: .5; cursor: default; }
-.pp-edit-actions { display: flex; gap: 8px; }
+
+.pp-btn-edit:hover:not(:disabled) {
+  background: #bbf7d0;
+  transform: translateY(-1px);
+}
+
+.pp-btn-edit:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+/* ===== SAVE ===== */
+/* ใช้ --grey แทน --green เพราะ --green เป็นสีขาว */
 .pp-btn-save {
-  padding: 7px 18px; border-radius: 10px;
-  background: var(--green); color: #fff;
-  border: none; font-size: 13px; font-weight: 600;
-  cursor: pointer; font-family: inherit;
-  box-shadow: 0 2px 8px rgba(22,163,74,.3);
+  padding: 8px 18px;
+  border-radius: 12px;
+  background: var(--grey);
+  color: var(--white);
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  transition: all .15s ease;
 }
-.pp-btn-save:disabled { opacity: .6; cursor: default; }
+
+.pp-btn-save:hover:not(:disabled) {
+  opacity: .9;
+  transform: translateY(-1px);
+}
+
+.pp-btn-save:active:not(:disabled) {
+  transform: scale(.97);
+}
+
+.pp-btn-save:disabled {
+  opacity: .6;
+  cursor: default;
+  transform: none;
+}
+
+/* ===== CANCEL ===== */
 .pp-btn-cancel {
-  padding: 7px 14px; border-radius: 10px;
-  background: #f1f5f9; color: var(--muted);
-  border: none; font-size: 13px; font-weight: 500;
-  cursor: pointer; font-family: inherit;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .15s ease;
 }
+
+.pp-btn-cancel:hover {
+  background: #e2e8f0;
+}
+
 
 .pp-msg {
   margin: 0 20px 4px; padding: 9px 14px; border-radius: 10px;
@@ -324,10 +393,12 @@
 .pp-avatar-large {
   width: 250px;
   height: 250px;
-  border-radius: 50%;
+  border-radius: 18px; /* ใช้ตัวแปรระบบ */
   object-fit: cover;
   margin-bottom: 20px;
+  border: 1px solid var(--line);
 }
+
 
 .pp-avatar-close {
   position: absolute;
@@ -340,8 +411,14 @@
 }
 
 .pp-avatar-actions {
-  margin-top: 10px;
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px; /* ระยะห่างระหว่างปุ่ม */
+  flex-wrap: wrap;
 }
+
 .pp-btn-delete {
   background: #fee2e2;
   color: #dc2626;
