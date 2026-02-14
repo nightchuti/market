@@ -56,6 +56,18 @@ exports.activateBoost = async (req, res) => {
     const user = await User.findById(req.user.id);
     const product = await Product.findById(req.params.productId);
 
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+
+    // ✅ 1. เช็คว่าเป็นเจ้าของสินค้าจริงไหม
+    if (product.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "คุณไม่มีสิทธิ์บูสสินค้าชิ้นนี้" });
+    }
+
+    // ✅ 2. เช็คว่าสินค้ากำลังบูสอยู่หรือไม่ (ถ้ายังไม่หมดอายุ ไม่ต้องให้บูสซ้ำ)
+    if (product.isBoosted && new Date(product.boostExpireAt) > new Date()) {
+      return res.status(400).json({ message: "สินค้านี้กำลังถูกบูสอยู่แล้ว" });
+    }
+
     if (user.boostQuota > 0) {
       user.boostQuota -= 1;
       product.isBoosted = true;
@@ -65,8 +77,8 @@ exports.activateBoost = async (req, res) => {
       await product.save();
       return res.json({ success: true, quotaLeft: user.boostQuota });
     }
-    res.status(402).json({ message: "Quota empty" });
+    res.status(402).json({ message: "โควตาของคุณหมดแล้ว กรุณาสมัครเพิ่ม" });
   } catch (err) {
-    res.status(500).json({ message: "Error" });
+    res.status(500).json({ message: "เกิดข้อผิดพลาด" });
   }
 };

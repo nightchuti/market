@@ -1,13 +1,71 @@
 const express = require("express");
-const router  = express.Router();
+const router = express.Router();
 const Product = require("../models/Product");
+const User = require("../models/User"); // ✅ เพิ่มการ Import User สำหรับเช็คโควตา
 
 // ✅ destructure เพราะ authMiddleware export เป็น { protect, admin }
 const { protect } = require("../middleware/authMiddleware");
-const upload       = require("../middleware/upload");
+const upload = require("../middleware/upload");
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// ================= [NEW] TEST UPGRADE PRO =================
+// ใช้สำหรับจำลองการซื้อโปร 99 บาท (เติม 10 สิทธิ์)
+router.post("/test-upgrade-pro", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
+
+    user.membershipTier = "PRO";
+    user.boostQuota = (user.boostQuota || 0) + 10;
+    
+    await user.save();
+    res.json({ success: true, message: "อัปเกรด PRO สำเร็จ (Test Mode)", quota: user.boostQuota });
+  } catch (err) {
+    res.status(500).json({ message: "Error", error: err.message });
+  }
+});
+
+// ================= [NEW] ACTIVATE BOOST =================
+// ฟังก์ชันที่ Frontend (Inventory.js) เรียกเพื่อหักโควตาและดันโพสต์
+router.post("/activate-boost/:id", protect, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    const user = await User.findById(req.user.id);
+
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    if (product.user.toString() !== req.user.id) 
+      return res.status(403).json({ message: "คุณไม่ใช่เจ้าของสินค้านี้" });
+
+    // 1. ตรวจสอบโควตา
+    if (user.boostQuota <= 0) {
+      return res.status(400).json({ success: false, message: "โควตาบูสของคุณหมดแล้ว" });
+    }
+
+    // 2. ตั้งค่าการบูส (3 วันนับจากปัจจุบัน)
+    const expireDate = new Date();
+    expireDate.setDate(expireDate.getDate() + 3);
+
+    product.isBoosted = true;
+    product.boostExpireAt = expireDate;
+    
+    // 3. หักโควตา User
+    user.boostQuota -= 1;
+
+    await product.save();
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      message: "บูสสินค้าสำเร็จ! สินค้าจะอยู่ลำดับแรกๆ เป็นเวลา 3 วัน", 
+      boostExpireAt: expireDate,
+      remainingQuota: user.boostQuota
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error", error: err.message });
+  }
+});
 
 // ================= UPLOAD IMAGES =================
 router.post("/upload", upload.array("images", 6), (req, res) => {
@@ -26,7 +84,6 @@ router.get("/my", protect, async (req, res) => {
 });
 
 // ================= GET CATEGORIES =================
-// ⚠️ ต้องอยู่ก่อน /:id ไม่งั้น "config" จะถูกตีความเป็น id
 router.get("/config/categories", async (req, res) => {
   try {
     const categories = Product.schema.path("category").enumValues;
@@ -62,7 +119,7 @@ router.get("/", async (req, res) => {
     const skip     = (parseInt(page) - 1) * parseInt(limit);
     const products = await Product.find(filter)
       .populate("user", "username email membershipTier")
-      .sort({ isBoosted: -1, createdAt: -1 })
+      .sort({ isBoosted: -1, createdAt: -1 }) // ✅ บูสแล้วจะอยู่บนสุด
       .skip(skip).limit(parseInt(limit));
     const total    = await Product.countDocuments(filter);
 
@@ -127,18 +184,18 @@ router.put("/:id", protect, upload.array("images", 6), async (req, res) => {
     }
     if (req.files?.length > 0) finalImages = [...finalImages, ...req.files.map(f => `/uploads/${f.filename}`)];
 
-    product.title        = req.body.title        || product.title;
-    product.description  = req.body.description  || product.description;
-    product.price        = req.body.tradeOption === "trade_allowed" ? 0 : (req.body.price !== undefined ? Number(req.body.price) : product.price);
-    product.category     = req.body.category     ? req.body.category.trim() : product.category;
-    product.quantity     = req.body.quantity     !== undefined ? Number(req.body.quantity) : product.quantity;
+    product.title         = req.body.title         || product.title;
+    product.description   = req.body.description   || product.description;
+    product.price         = req.body.tradeOption === "trade_allowed" ? 0 : (req.body.price !== undefined ? Number(req.body.price) : product.price);
+    product.category      = req.body.category      ? req.body.category.trim() : product.category;
+    product.quantity      = req.body.quantity      !== undefined ? Number(req.body.quantity) : product.quantity;
     product.deliveryType = req.body.deliveryType || product.deliveryType;
     product.tradeOption  = req.body.tradeOption  || product.tradeOption;
-    product.lat          = req.body.lat          !== undefined ? Number(req.body.lat)  : product.lat;
-    product.lng          = req.body.lng          !== undefined ? Number(req.body.lng)  : product.lng;
+    product.lat           = req.body.lat           !== undefined ? Number(req.body.lat)  : product.lat;
+    product.lng           = req.body.lng           !== undefined ? Number(req.body.lng)  : product.lng;
     product.locationName = req.body.locationName || product.locationName;
-    product.images       = finalImages;
-    product.status       = "pending";
+    product.images        = finalImages;
+    product.status        = "pending";
 
     if (req.body.title || req.body.description || req.body.category) {
       try {
@@ -155,7 +212,8 @@ router.put("/:id", protect, upload.array("images", 6), async (req, res) => {
   }
 });
 
-// ================= PUBLISH PRODUCT =================
+// ================= PUBLISH / DELETE / IMAGE MGMT =================
+// (ส่วนนี้เหมือนเดิมตามที่คุณส่งมา)
 router.put("/:id/publish", protect, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -169,7 +227,6 @@ router.put("/:id/publish", protect, async (req, res) => {
   }
 });
 
-// ================= DELETE PRODUCT =================
 router.delete("/:id", protect, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -182,7 +239,6 @@ router.delete("/:id", protect, async (req, res) => {
   }
 });
 
-// ================= ADD / REMOVE IMAGE =================
 router.put("/:id/add-images", protect, upload.array("images", 6), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -211,7 +267,7 @@ router.put("/:id/remove-image", protect, async (req, res) => {
   }
 });
 
-// ================= BOOST PRODUCT =================
+// ✅ รักษาฟังก์ชันเดิมไว้เผื่อใช้งานในรูปแบบอื่น
 router.post("/:id/boost", protect, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -227,7 +283,7 @@ router.post("/:id/boost", protect, async (req, res) => {
     product.boostExpireAt = expireDate;
     await product.save();
 
-    res.json({ message: `ดันโพสต์สำเร็จ! สินค้าจะอยู่บนหน้าแรกถึง ${expireDate.toLocaleDateString()}`, boostExpireAt: expireDate });
+    res.json({ message: `ดันโพสต์สำเร็จ! ถึงวันที่ ${expireDate.toLocaleDateString()}`, boostExpireAt: expireDate });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

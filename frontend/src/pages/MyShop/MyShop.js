@@ -29,16 +29,18 @@ function MyShop() {
     }
   }, []);
 
-  const fetchUserProfile = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      setUser(res.data);
-    } catch (err) {
-      console.error("โหลดโปรไฟล์ไม่สำเร็จ");
-    }
-  };
+// 📄 แก้ไขไฟล์ MyShop.js
+
+const fetchUserProfile = async () => {
+  try {
+    const res = await axios.get(`${API_URL}/api/auth/profile`, { // ✅ เปลี่ยนจาก /me เป็น /profile
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    setUser(res.data); // ตอนนี้ค่า user จะมีข้อมูล boostQuota แล้วครับ
+  } catch (err) {
+    console.error("โหลดโปรไฟล์ไม่สำเร็จ", err);
+  }
+};
 
   const fetchMyProducts = async () => {
     try {
@@ -167,6 +169,13 @@ function MyShop() {
             handleDelete={handleDelete}
             navigate={navigate}
             publishProduct={publishProduct}
+            // ✅ ส่งค่าที่ดึงมาจาก State user
+            userQuota={user?.boostQuota || 0}
+            // ✅ ส่งฟังก์ชันโหลดข้อมูลใหม่ เพื่อให้ Quota และรายการสินค้าอัปเดตหลังกดบูส
+            refreshProducts={() => {
+              fetchMyProducts();
+              fetchUserProfile();
+            }}
           />
         )}
         {activeTab === "sales" && <SalesHistory products={soldProducts} />}

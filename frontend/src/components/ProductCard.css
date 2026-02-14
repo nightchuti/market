@@ -79,3 +79,57 @@
   font-size: 12px;
   color: #888;
 }
+
+/* ===== BOOSTED CARD (เพิ่มต่อจาก .product-card เดิม) ===== */
+
+/* กรณีสินค้ามีการบูส จะเพิ่มขอบสีส้มทองและพื้นหลังให้นวลขึ้น */
+.product-card.boosted-card {
+  border: 2px solid #ff8c00; 
+  background: linear-gradient(180deg, #fffaf0 0%, #ffffff 100%);
+  position: relative;
+  overflow: visible; /* เพื่อให้ Tag ยื่นออกมาได้ถ้าต้องการ */
+}
+
+/* เอฟเฟกต์ Glow รอบการ์ดที่ถูกบูส */
+.product-card.boosted-card:hover {
+  box-shadow: 0 12px 30px rgba(255, 140, 0, 0.25);
+}
+
+/* ===== BOOST TAG ===== */
+.boost-tag-mini {
+  position: absolute;
+  top: -8px; 
+  left: 14px;
+  background: linear-gradient(45deg, #ff8c00, #ffc107);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(255, 140, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ใส่แอนิเมชันให้ไอคอนจรวดนิดหน่อย */
+.boost-tag-mini::before {
+  content: "🚀";
+}
+
+/* ปรับราคาใน Card ที่บูสให้ดูเด่นขึ้น */
+.product-card.boosted-card .price-badge {
+  color: #e65100;
+}
+
+/* ===== Responsive Adjustment ===== */
+@media (max-width: 600px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 16px;
+  }
+  .product-image {
+    height: 150px;
+  }
+}
