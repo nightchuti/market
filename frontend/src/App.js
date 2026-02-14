@@ -13,6 +13,8 @@ import EditProduct from "./pages/MyShop/EditProduct";
 import PremiumMember from "./pages/PreMember/PremiumMember";
 import AdminDashboard from "./pages/AdminDashboard";
 import CheckoutPage from "./pages/Checkout/CheckoutPage";
+import CouponCenter from "./pages/coupon/CouponCenter";
+import AdminCoupon from "./pages/AdminCoupon";
 
 function App() {
   return (
@@ -33,6 +35,8 @@ function App() {
           <Route path="/premium" element={<PremiumMember />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/coupons" element={<CouponCenter />} />
+          <Route path="/admin/coupons" element={<AdminCoupon />} />
         </Route>
       </Routes>
     </BrowserRouter>
