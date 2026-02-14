@@ -64,42 +64,58 @@ function ProductDetail() {
   };
 
   const handleAddToCart = async () => {
+
+    // ✅ ต้อง login ก่อน
     if (!token) {
       alert("กรุณาเข้าสู่ระบบก่อน");
       navigate("/login");
       return;
     }
 
+    // ✅ กันเพิ่มสินค้าของตัวเอง (ตรงกับ backend)
+    if (String(product.user?._id || product.user) === String(currentUser?._id)) {
+      alert("ไม่สามารถเพิ่มสินค้าของตัวเองลงตะกร้าได้");
+      return;
+    }
+
     try {
-      await axios.post(
+      const res = await axios.post(
         `${API_URL}/api/cart/add`,
         {
           productId: product._id,
           quantity: 1
         },
         {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
       );
 
+      alert("เพิ่มลงตะกร้าเรียบร้อยแล้ว");
 
-      // 👇 เด้งถามก่อนจะไปหน้า cart
-      if (window.confirm("เพิ่มลงตะกร้าแล้ว ไปที่ตะกร้าเลยไหม?")) {
+      // ✅ ถามก่อนจะไปหน้า cart
+      const confirmGo = window.confirm(
+        "เพิ่มลงตะกร้าแล้ว ไปที่ตะกร้าเลยไหม?"
+      );
+
+      if (confirmGo) {
         navigate("/cart");
       }
 
     } catch (err) {
-      const msg = err.response?.data?.message || "เพิ่มสินค้าไม่สำเร็จ";
+      const msg =
+        err.response?.data?.message || "เพิ่มสินค้าไม่สำเร็จ";
       alert(msg);
     }
   };
 
-
-
   if (!product) return <p className="loading">กำลังโหลดข้อมูลสินค้า...</p>;
 
-  // ตรวจสอบเจ้าของสินค้าเพื่อซ่อนปุ่มแชท
-  const isOwnProduct = String(product.user?._id || product.user) === String(currentUser._id);
+  const isOwnProduct =
+  currentUser &&
+  String(product.user?._id || product.user) === String(currentUser._id);
+
 
   return (
     <div className="product-detail">

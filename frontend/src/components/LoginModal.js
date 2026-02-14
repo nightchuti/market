@@ -18,7 +18,7 @@ function LoginModal({ close, switchToRegister }) {
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      close();
+      window.location.reload();
     } catch (err) {
       alert("Login failed");
     }

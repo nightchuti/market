@@ -64,7 +64,7 @@ function RegisterModal({ close }) {
         localStorage.setItem("user", JSON.stringify(res.data.user));
       }
 
-      close();
+      window.location.reload();
 
     } catch (err) {
       setError(err.response?.data?.message || "สมัครไม่สำเร็จ");
