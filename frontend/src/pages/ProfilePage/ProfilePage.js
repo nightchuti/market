@@ -29,16 +29,26 @@ export default function ProfilePage() {
   // --- States ---
   const [tab, setTab] = useState("profile");
   const [orderTab, setOrderTab] = useState("all");
+  
+  // profile: ใช้สำหรับแสดงผล (Display)
   const [profile, setProfile] = useState({});
-  const [form, setForm] = useState({ username: "", email: "", phonenumber: "", gender: "", bio: "", birthday: "" });
+  
+  // form: ใช้สำหรับแก้ไขข้อมูล (Edit) - ตั้งค่าเริ่มต้นให้เป็น string ว่างกัน error
+  const [form, setForm] = useState({ 
+    username: "", 
+    email: "", 
+    phonenumber: "", 
+    gender: "", 
+    bio: "", 
+    birthday: "" 
+  });
+
   const [editing, setEditing] = useState(false);
   const [orders, setOrders] = useState([]);
   const [previewImg, setPreviewImg] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [ordersLoading, setOrdersLoading] = useState(false);
-  const [logs, setLogs] = useState([]);
-  const [showLogs, setShowLogs] = useState(false);
 
   // --- Fetch Functions ---
   const fetchProfile = useCallback(async () => {
@@ -47,16 +57,31 @@ export default function ProfilePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = res.data;
+      
+      // 1. อัปเดตข้อมูลสำหรับแสดงผล
       setProfile(data);
+
+      // 2. จัดการ Format วันที่สำหรับ Input (yyyy-mm-dd)
+      let formattedBirthday = "";
+      if (data.birthday) {
+        const dateObj = new Date(data.birthday);
+        if (!isNaN(dateObj)) {
+            formattedBirthday = dateObj.toISOString().split('T')[0];
+        }
+      }
+
+      // 3. อัปเดตข้อมูลลงฟอร์มเพื่อให้แก้ไขได้ทันที
       setForm({
         username: data.username || "",
         email: data.email || "",
-        phonenumber: data.phonenumber || "",
+        phonenumber: data.phonenumber || "", 
         gender: data.gender || "",
         bio: data.bio || "",
-        birthday: data.birthday ? new Date(data.birthday).toISOString().split('T')[0] : "",
+        birthday: formattedBirthday,
       });
-    } catch (err) { console.error("Profile Error:", err); }
+    } catch (err) { 
+      console.error("Profile Error:", err); 
+    }
   }, [token]);
 
   const fetchOrders = useCallback(async () => {
@@ -71,24 +96,14 @@ export default function ProfilePage() {
     finally { setOrdersLoading(false); }
   }, [token]);
 
-  const fetchLogs = useCallback(async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/auth/profile/logs`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setLogs(res.data);
-    } catch (err) { console.error("Logs Error:", err); }
-  }, [token]);
-
   useEffect(() => {
     if (!token) {
       navigate("/login");
     } else {
       fetchProfile();
       fetchOrders();
-      fetchLogs();
     }
-  }, [token, navigate, fetchProfile, fetchOrders, fetchLogs]);
+  }, [token, navigate, fetchProfile, fetchOrders]);
 
   // --- Logic Functions ---
   const safeTabChange = (targetTab, targetOrderTab = null) => {
@@ -105,8 +120,9 @@ export default function ProfilePage() {
     setSaveMsg("");
     const formData = new FormData();
     
+    // Mapping ให้ตรงกับ Backend
     formData.append("username", form.username);
-    formData.append("phone", form.phonenumber); // ส่ง 'phone' ให้ตรงกับ Backend
+    formData.append("phonenumber", form.phonenumber); // Backend รอรับ field ชื่อ 'phone'
     formData.append("gender", form.gender);
     formData.append("bio", form.bio);
     formData.append("birthday", form.birthday);
@@ -124,14 +140,24 @@ export default function ProfilePage() {
       });
       
       const updatedUser = res.data.user || res.data;
+      
+      // อัปเดตข้อมูลหน้าจอทันทีหลังจากบันทึกเสร็จ
       setProfile(updatedUser);
+      
+      // อัปเดตฟอร์มด้วยข้อมูลใหม่
+      setForm(prev => ({
+         ...prev,
+         username: updatedUser.username,
+         phonenumber: updatedUser.phonenumber,
+         gender: updatedUser.gender,
+         bio: updatedUser.bio,
+         birthday: updatedUser.birthday ? new Date(updatedUser.birthday).toISOString().split('T')[0] : ""
+      }));
+
       setEditing(false);
       setPreviewImg(null);
       setSaveMsg("บันทึกข้อมูลสำเร็จ ✓");
       
-      // ดึง Logs ใหม่ทันที
-      fetchLogs();
-
       setTimeout(() => setSaveMsg(""), 3000);
     } catch (err) {
       setSaveMsg(err.response?.data?.message || "เกิดข้อผิดพลาดในการบันทึก");
@@ -209,14 +235,33 @@ export default function ProfilePage() {
                   <label>อีเมล (แก้ไขไม่ได้)</label>
                   <p>{profile.email}</p>
                 </div>
+                
                 <div className="pp-field">
                   <label>ชื่อผู้ใช้</label>
-                  {editing ? <input className="pp-inp" value={form.username} onChange={e => setForm({...form, username: e.target.value})} /> : <p>{profile.username}</p>}
+                  {editing ? (
+                    <input 
+                      className="pp-inp" 
+                      value={form.username} 
+                      onChange={e => setForm({...form, username: e.target.value})} 
+                    />
+                  ) : (
+                    <p>{profile.username}</p>
+                  )}
                 </div>
+
                 <div className="pp-field">
                   <label>เบอร์โทรศัพท์</label>
-                  {editing ? <input className="pp-inp" value={form.phonenumber} onChange={e => setForm({...form, phonenumber: e.target.value})} /> : <p>{profile.phonenumber || "-"}</p>}
+                  {editing ? (
+                    <input 
+                      className="pp-inp" 
+                      value={form.phonenumber} 
+                      onChange={e => setForm({...form, phonenumber: e.target.value})} 
+                    />
+                  ) : (
+                    <p>{profile.phonenumber || "-"}</p>
+                  )}
                 </div>
+
                 <div className="pp-field">
                   <label>เพศ</label>
                   {editing ? (
@@ -227,46 +272,36 @@ export default function ProfilePage() {
                     </select>
                   ) : <p>{profile.gender || "ไม่ได้ระบุ"}</p>}
                 </div>
+
                 <div className="pp-field">
                   <label>วันเกิด</label>
-                  {editing ? <input className="pp-inp" type="date" value={form.birthday} onChange={e => setForm({...form, birthday: e.target.value})} /> : 
-                  <p>{profile.birthday ? new Date(profile.birthday).toLocaleDateString('th-TH') : "-"}</p>}
+                  {editing ? (
+                    <input 
+                      className="pp-inp" 
+                      type="date" 
+                      value={form.birthday} 
+                      onChange={e => setForm({...form, birthday: e.target.value})} 
+                    />
+                  ) : (
+                    <p>{profile.birthday ? new Date(profile.birthday).toLocaleDateString('th-TH') : "-"}</p>
+                  )}
                 </div>
+
                 <div className="pp-field full">
                   <label>แนะนำตัว</label>
-                  {editing ? <textarea className="pp-inp pp-ta" value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /> : <p>{profile.bio || "ยังไม่มีข้อมูล..."}</p>}
+                  {editing ? (
+                    <textarea 
+                      className="pp-inp pp-ta" 
+                      value={form.bio} 
+                      onChange={e => setForm({...form, bio: e.target.value})} 
+                    />
+                  ) : (
+                    <p>{profile.bio || "ยังไม่มีข้อมูล..."}</p>
+                  )}
                 </div>
               </div>
             </div>
-
-            {/* ══ HISTORY LOGS ══════════════════════════ */}
-            <div className="pp-logs-section">
-              <button className="pp-logs-toggle" onClick={() => setShowLogs(!showLogs)}>
-                {showLogs ? "🔼 ปิดประวัติการแก้ไข" : "📜 ดูประวัติการแก้ไขโปรไฟล์"}
-              </button>
-              
-              {showLogs && (
-                <div className="pp-logs-list">
-                  {logs.length === 0 ? <p className="pp-empty-msg">ยังไม่มีประวัติการบันทึก</p> : 
-                    logs.map(log => (
-                      <div key={log._id} className="pp-log-card">
-                        <div className="pp-log-date">{new Date(log.updatedAt).toLocaleString('th-TH')}</div>
-                        <div className="pp-log-details">
-                          {Object.keys(log.changedFields).map(key => (
-                            <div key={key} className="pp-log-line">
-                              <span className="pp-log-key">• {key}:</span>
-                              <span className="pp-log-old">{log.changedFields[key].from || "ว่าง"}</span>
-                              <span className="pp-log-arrow">→</span>
-                              <span className="pp-log-new">{log.changedFields[key].to || "ว่าง"}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))
-                  }
-                </div>
-              )}
-            </div>
+            {/* เอาส่วน Log ออกตามที่ต้องการแล้ว */}
           </div>
         ) : (
           <div className="pp-fade">
