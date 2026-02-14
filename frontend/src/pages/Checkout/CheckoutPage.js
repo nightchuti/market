@@ -8,32 +8,38 @@ const API_URL = "http://127.0.0.1:5000";
 
 const CheckoutPage = () => {
     const navigate = useNavigate();
-    const [cart, setCart] = useState(null);
+    const location = useLocation();
+
+    const selectedItems = location.state?.items || [];
+
+    const [cartItems, setCartItems] = useState(selectedItems);
     const [addresses, setAddresses] = useState([]);
     const [selectedAddr, setSelectedAddr] = useState(null);
     const [shippingService, setShippingService] = useState("GRAB");
-    const [distance, setDistance] = useState(0);
     const [deliveryFee, setDeliveryFee] = useState(0);
     const [loading, setLoading] = useState(true);
     const [deliveryMode, setDeliveryMode] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState("PROMPTPAY");
-
     const [couponCode, setCouponCode] = useState("");
     const [discount, setDiscount] = useState(0);
+    const [distance, setDistance] = useState(0);
 
 
-    // ดึงข้อมูลเบื้องต้น
+    useEffect(() => {
+        if (!location.state?.items || location.state.items.length === 0) {
+            navigate("/cart");
+        }
+    }, [location.state, navigate]);
+
+    // ================= FETCH ADDRESS ONLY =================
     const fetchData = useCallback(async () => {
         try {
             const token = localStorage.getItem("token");
             const headers = { Authorization: `Bearer ${token}` };
-            const [cartRes, addrRes] = await Promise.all([
-                axios.get(`${API_URL}/api/cart`, { headers }),
-                axios.get(`${API_URL}/api/address`, { headers })
-            ]);
-            setCart(cartRes.data);
+
+            const addrRes = await axios.get(`${API_URL}/api/address`, { headers });
+
             setAddresses(addrRes.data);
-            setSelectedAddr(addrRes.data.find(a => a.isDefault) || addrRes.data[0]);
             setLoading(false);
         } catch (err) {
             console.error(err);
@@ -42,121 +48,97 @@ const CheckoutPage = () => {
     }, []);
 
     useEffect(() => {
-        if (cart?.items?.length > 0) {
-            const type = cart.items[0].product.deliveryType;
+        fetchData();
+    }, [fetchData]);
 
-            if (type === "PICKUP") {
-                setDeliveryMode("PICKUP");
-            } else if (type === "DELIVERY") {
-                setDeliveryMode("DELIVERY");
-            } else {
-                setDeliveryMode(null); // ให้ผู้ใช้เลือก
-            }
-        }
-    }, [cart]);
-
-    const location = useLocation();
-
+    // ================= SET DEFAULT ADDRESS =================
     useEffect(() => {
-        if (location.state?.selectedAddress) {
-            setSelectedAddr(location.state.selectedAddress);
+        if (addresses.length > 0 && !selectedAddr) {
+            const defaultAddr =
+                addresses.find(a => a.isDefault) || addresses[0];
+            setSelectedAddr(defaultAddr);
         }
-    }, [location.state]);
+    }, [addresses, selectedAddr]);
 
-
-    useEffect(() => { fetchData(); }, [fetchData]);
-
-    // คำนวณระยะทางและค่าส่ง
+    // ================= DETERMINE DELIVERY MODE =================
     useEffect(() => {
-        if (
-            deliveryMode === "DELIVERY" &&
-            selectedAddr &&
-            cart?.items?.length > 0
-        ) {
-            const shopLat = cart.items[0].product.lat || 14.0235;
-            const shopLng = cart.items[0].product.lng || 99.9744;
+        if (cartItems.length > 0) {
+            const type = cartItems[0].deliveryType;
 
-            const R = 6371;
-            const dLat = (selectedAddr.lat - shopLat) * Math.PI / 180;
-            const dLng = (selectedAddr.lng - shopLng) * Math.PI / 180;
+            if (type === "PICKUP") setDeliveryMode("PICKUP");
+            else if (type === "DELIVERY") setDeliveryMode("DELIVERY");
+            else setDeliveryMode("DELIVERY"); // default
+        }
+    }, [cartItems]);
 
-            const a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(shopLat * Math.PI / 180) *
-                Math.cos(selectedAddr.lat * Math.PI / 180) *
-                Math.sin(dLng / 2) *
-                Math.sin(dLng / 2);
-
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const dist = R * c;
-
-            let fee =
-                shippingService === "GRAB"
-                    ? Math.round(25 + dist * 7)
-                    : Math.round(20 + dist * 6);
-
+    // ================= CALCULATE DELIVERY FEE =================
+    useEffect(() => {
+        if (deliveryMode === "DELIVERY" && selectedAddr) {
+            // mock ค่าส่งแบบง่าย
+            const fee = shippingService === "GRAB" ? 40 : 35;
             setDeliveryFee(fee);
         } else {
             setDeliveryFee(0);
         }
-    }, [deliveryMode, selectedAddr, shippingService, cart]);
+    }, [deliveryMode, selectedAddr, shippingService]);
 
+    // ================= CALCULATE TOTAL =================
+    const subTotal = cartItems.reduce(
+        (sum, i) => sum + (i.price * i.qty),
+        0
+    );
 
-    const subTotal = cart?.items?.reduce((sum, i) => sum + (i.product.price * i.quantity), 0) || 0;
     const total = subTotal + deliveryFee - discount;
-
 
     if (loading) return <div className="loading">กำลังเตรียมคำสั่งซื้อ...</div>;
 
-    // ฟังก์ชันสำหรับส่งข้อมูลไปบันทึกใน Database
+    // ================= PLACE ORDER =================
     const handlePlaceOrder = async () => {
         try {
             const token = localStorage.getItem("token");
-            if (!selectedAddr) return alert("กรุณาเลือกที่อยู่จัดส่ง");
+            if (!selectedAddr && deliveryMode === "DELIVERY")
+                return alert("กรุณาเลือกที่อยู่จัดส่ง");
 
-            if (deliveryMode === "PICKUP" && paymentMethod === "COD") {
+            if (deliveryMode === "PICKUP" && paymentMethod === "COD")
                 return alert("นัดรับสินค้าไม่สามารถเก็บเงินปลายทางได้");
-            }
 
             const orderData = {
-                items: cart.items.map(i => ({
-                    product: i.product._id,
-                    quantity: i.quantity,
-                    price: i.product.price
+                items: cartItems.map(i => ({
+                    product: i._id,
+                    quantity: i.qty,
+                    price: i.price
                 })),
-
-                shippingAddress: deliveryMode === "DELIVERY" ? {
-                    dormName: selectedAddr.dormName,
-                    room: selectedAddr.room,
-                    note: selectedAddr.note,
-                    lat: selectedAddr.lat,
-                    lng: selectedAddr.lng
-                } : null,
-
-                deliveryMode: deliveryMode,        // 🆕 เพิ่ม
-                deliveryFee: deliveryFee,
-                shippingService: deliveryMode === "DELIVERY" ? shippingService : null,
-
-                couponCode: couponCode,            // 🆕 เพิ่ม
-                discount: discount,                // 🆕 เพิ่ม
-
-                paymentMethod: paymentMethod,
-                subTotal: subTotal,
-                totalPrice: total                  // 🆕 ใช้ total ใหม่ที่หักส่วนลดแล้ว
+                shippingAddress:
+                    deliveryMode === "DELIVERY"
+                        ? {
+                            dormName: selectedAddr.dormName,
+                            room: selectedAddr.room,
+                            note: selectedAddr.note,
+                            lat: selectedAddr.lat,
+                            lng: selectedAddr.lng
+                        }
+                        : null,
+                deliveryMode,
+                deliveryFee,
+                shippingService:
+                    deliveryMode === "DELIVERY" ? shippingService : null,
+                couponCode,
+                discount,
+                paymentMethod,
+                subTotal,
+                totalPrice: total
             };
 
-
-            const res = await axios.post(`${API_URL}/api/orders`, orderData, {
+            await axios.post(`${API_URL}/api/orders`, orderData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            // เมื่อสั่งสำเร็จ ให้ไปหน้าชำระเงิน หรือหน้าประวัติคำสั่งซื้อ
             alert("สั่งซื้อสำเร็จ!");
-            navigate(`/profile`); // หรือ navigate(`/payment/${res.data._id}`)
+            navigate("/profile");
 
         } catch (err) {
             console.error(err);
-            alert(err.response?.data?.message || "เกิดข้อผิดพลาดในการสั่งซื้อ");
+            alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
         }
     };
 
@@ -172,7 +154,6 @@ const CheckoutPage = () => {
             <div className="sh-address-section" onClick={() => navigate("/address")}>
                 <div className="address-border"></div>
                 <div className="address-content">
-                    <div className="addr-icon">📍</div>
                     <div className="addr-info">
                         <p className="addr-user">ที่อยู่จัดส่ง</p>
                         {selectedAddr ? (
@@ -188,15 +169,20 @@ const CheckoutPage = () => {
 
             {/* 3. รายการสินค้า */}
             <div className="sh-card product-list">
-                <div className="shop-name">🏪 ร้านค้าผู้ขาย</div>
-                {cart?.items.map((item) => (
+                <div className="shop-name">ร้านค้าผู้ขาย</div>
+                {cartItems.map((item) => (
                     <div key={item._id} className="sh-item">
-                        <img src={`${API_URL}${item.product.images[0]}`} alt="product" />
+                        <img
+                            src={item.images?.[0] ? `${API_URL}${item.images[0]}` : ""}
+                            alt="product"
+                        />
                         <div className="item-detail">
-                            <p className="item-title">{item.product.title}</p>
+                            <p className="item-title">{item.title}</p>
                             <div className="item-price-qty">
-                                <span className="price">฿{item.product.price.toLocaleString()}</span>
-                                <span className="qty">x{item.quantity}</span>
+                                <span className="price">
+                                    ฿{item.price?.toLocaleString()}
+                                </span>
+                                <span className="qty">x{item.qty}</span>
                             </div>
                         </div>
                     </div>
@@ -204,7 +190,7 @@ const CheckoutPage = () => {
             </div>
 
             {/* เลือกประเภทการรับสินค้า */}
-            {cart?.items[0]?.product.deliveryType === "BOTH" && (
+            {cartItems?.[0]?.deliveryType === "BOTH" && (
                 <div className="sh-card">
                     <div className="section-title">รูปแบบการรับสินค้า</div>
                     <div className="shipping-methods">
