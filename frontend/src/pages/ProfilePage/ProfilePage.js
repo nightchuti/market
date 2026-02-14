@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ProfilePage.css";
@@ -6,307 +6,312 @@ import "./ProfilePage.css";
 const API_URL = "http://127.0.0.1:5000";
 
 const ORDER_TABS = [
-  { key: "all",      label: "ทั้งหมด",      icon: "📋" },
-  { key: "pending",  label: "รอจัดส่ง",     icon: "📦" },
-  { key: "shipping", label: "กำลังจัดส่ง",  icon: "🚚" },
-  { key: "received", label: "รอรับสินค้า",  icon: "📬" },
-  { key: "success",  label: "สำเร็จ",        icon: "✅" },
+  { key: "all",       label: "ทั้งหมด",      icon: "📋" },
+  { key: "Preparing", label: "ที่ต้องจัดส่ง", icon: "📦" },
+  { key: "Shipping",  label: "ที่ต้องได้รับ", icon: "🚚" },
+  { key: "Completed", label: "สำเร็จแล้ว",   icon: "✅" },
 ];
 
 const STATUS_MAP = {
-  pending:   { label: "รอจัดส่ง",    color: "#f59e0b", bg: "#fffbeb" },
-  shipping:  { label: "กำลังจัดส่ง", color: "#3b82f6", bg: "#eff6ff" },
-  received:  { label: "รอรับสินค้า", color: "#8b5cf6", bg: "#f5f3ff" },
-  success:   { label: "สำเร็จ",       color: "#10b981", bg: "#ecfdf5" },
-  cancelled: { label: "ยกเลิก",       color: "#ef4444", bg: "#fef2f2" },
+  Paid:           { label: "ชำระเงินแล้ว", color: "#059669", bg: "#d1fae5" },
+  Preparing:      { label: "กำลังเตรียมของ", color: "#7c3aed", bg: "#ede9fe" },
+  ReadyToShip:    { label: "รอขนส่งรับของ", color: "#4f46e5", bg: "#e0e7ff" },
+  Shipping:       { label: "กำลังจัดส่ง",  color: "#0284c7", bg: "#e0f2fe" },
+  Completed:      { label: "สำเร็จ",      color: "#059669", bg: "#d1fae5" },
+  Cancelled:      { label: "ยกเลิก",      color: "#dc2626", bg: "#fee2e2" },
 };
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const token       = localStorage.getItem("token");
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const myId        = currentUser._id || currentUser.id;
+  const fileInputRef = useRef(null);
+  const token = localStorage.getItem("token");
 
-  const [tab, setTab]         = useState("profile"); // "profile" | "orders"
+  // --- States ---
+  const [tab, setTab] = useState("profile");
   const [orderTab, setOrderTab] = useState("all");
-  const [orders, setOrders]   = useState([]);
+  const [profile, setProfile] = useState({});
+  const [form, setForm] = useState({ username: "", email: "", phonenumber: "", gender: "", bio: "", birthday: "" });
+  const [editing, setEditing] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [previewImg, setPreviewImg] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
   const [ordersLoading, setOrdersLoading] = useState(false);
-  const [profile, setProfile] = useState({
-    username:    currentUser.username || "",
-    email:       currentUser.email || "",
-    phone:       currentUser.phone || "",
-    bio:         currentUser.bio || "",
-    profileImage: currentUser.profileImage || "",
-  });
-  const [editing, setEditing]   = useState(false);
-  const [form, setForm]         = useState({ ...profile });
-  const [saving, setSaving]     = useState(false);
-  const [saveMsg, setSaveMsg]   = useState("");
+  const [logs, setLogs] = useState([]);
+  const [showLogs, setShowLogs] = useState(false);
 
-  useEffect(() => {
-    if (!token) { navigate("/login"); return; }
-    fetchOrders();
-  }, []); // eslint-disable-line
-
-  const fetchOrders = async () => {
-    setOrdersLoading(true);
+  // --- Fetch Functions ---
+  const fetchProfile = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/order/my-orders`, {
+      const res = await axios.get(`${API_URL}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setOrders(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      console.error("fetchOrders:", err);
-      setOrders([]);
-    } finally {
-      setOrdersLoading(false);
+      const data = res.data;
+      setProfile(data);
+      setForm({
+        username: data.username || "",
+        email: data.email || "",
+        phonenumber: data.phonenumber || "",
+        gender: data.gender || "",
+        bio: data.bio || "",
+        birthday: data.birthday ? new Date(data.birthday).toISOString().split('T')[0] : "",
+      });
+    } catch (err) { console.error("Profile Error:", err); }
+  }, [token]);
+
+  const fetchOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await axios.get(`${API_URL}/api/order/my`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.data?.orders || res.data;
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (err) { setOrders([]); }
+    finally { setOrdersLoading(false); }
+  }, [token]);
+
+  const fetchLogs = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/auth/profile/logs`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setLogs(res.data);
+    } catch (err) { console.error("Logs Error:", err); }
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+    } else {
+      fetchProfile();
+      fetchOrders();
+      fetchLogs();
     }
+  }, [token, navigate, fetchProfile, fetchOrders, fetchLogs]);
+
+  // --- Logic Functions ---
+  const safeTabChange = (targetTab, targetOrderTab = null) => {
+    if (editing) {
+      alert("⚠️ กรุณาบันทึกหรือยกเลิกการแก้ไขก่อนเปลี่ยนหน้า เพื่อป้องกันข้อมูลหาย");
+      return;
+    }
+    setTab(targetTab);
+    if (targetOrderTab) setOrderTab(targetOrderTab);
   };
 
-  const filteredOrders = orderTab === "all"
-    ? orders
-    : orders.filter((o) => o.status === orderTab);
-
-  const countByStatus = (key) =>
-    key === "all" ? orders.length : orders.filter((o) => o.status === key).length;
-
-  const handleSave = async () => {
+  const handleSaveProfile = async () => {
     setSaving(true);
     setSaveMsg("");
+    const formData = new FormData();
+    
+    formData.append("username", form.username);
+    formData.append("phone", form.phonenumber); // ส่ง 'phone' ให้ตรงกับ Backend
+    formData.append("gender", form.gender);
+    formData.append("bio", form.bio);
+    formData.append("birthday", form.birthday);
+
+    if (form.imageFile instanceof File) {
+      formData.append("profileImage", form.imageFile);
+    }
+
     try {
-      const res = await axios.put(
-        `${API_URL}/api/auth/profile`,
-        { username: form.username, phone: form.phone, bio: form.bio },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const updated = res.data.user || res.data;
-      const newUser = { ...currentUser, ...updated };
-      localStorage.setItem("user", JSON.stringify(newUser));
-      setProfile({ ...profile, username: form.username, phone: form.phone, bio: form.bio });
+      const res = await axios.put(`${API_URL}/api/auth/profile`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`, 
+          "Content-Type": "multipart/form-data" 
+        },
+      });
+      
+      const updatedUser = res.data.user || res.data;
+      setProfile(updatedUser);
       setEditing(false);
-      setSaveMsg("บันทึกสำเร็จ ✓");
+      setPreviewImg(null);
+      setSaveMsg("บันทึกข้อมูลสำเร็จ ✓");
+      
+      // ดึง Logs ใหม่ทันที
+      fetchLogs();
+
       setTimeout(() => setSaveMsg(""), 3000);
     } catch (err) {
-      setSaveMsg(err.response?.data?.error || "เกิดข้อผิดพลาด");
+      setSaveMsg(err.response?.data?.message || "เกิดข้อผิดพลาดในการบันทึก");
     } finally {
       setSaving(false);
     }
   };
 
-  const fmt = (d) =>
-    d ? new Date(d).toLocaleDateString("th-TH", {
-      day: "numeric", month: "short", year: "numeric",
-    }) : "";
+  const handleConfirmReceipt = async (orderId) => {
+    if (!window.confirm("คุณได้รับสินค้าเรียบร้อยแล้วใช่หรือไม่?")) return;
+    try {
+      await axios.patch(`${API_URL}/api/order/${orderId}/complete`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchOrders();
+    } catch (err) { alert("เกิดข้อผิดพลาด"); }
+  };
 
-  const initials = (name) =>
-    (name || "U").split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-
-  if (!token) return null;
+  const getFilteredOrders = () => {
+    if (orderTab === "all") return orders;
+    if (orderTab === "Preparing") return orders.filter(o => ["Paid", "Preparing", "ReadyToShip"].includes(o.status));
+    return orders.filter(o => o.status === orderTab);
+  };
 
   return (
-    <div className="pp-wrap">
-
-      {/* ── PROFILE HERO ── */}
+    <div className="pp-root">
+      {/* ══ HERO ═══════════════════════════════════ */}
       <div className="pp-hero">
-        <div className="pp-hero-bg" />
-        <div className="pp-hero-content">
-          <div className="pp-avatar-ring">
-            {profile.profileImage ? (
-              <img className="pp-avatar" src={
-                profile.profileImage.startsWith("http")
-                  ? profile.profileImage
-                  : `${API_URL}${profile.profileImage}`
-              } alt="" />
-            ) : (
-              <div className="pp-avatar-init">{initials(profile.username)}</div>
-            )}
+        <div className="pp-hero-body">
+          <div className={`pp-avatar-wrap ${editing ? "clickable" : ""}`} onClick={() => editing && fileInputRef.current?.click()}>
+            {previewImg ? <img className="pp-avatar" src={previewImg} alt="Preview Avatar" /> :
+             profile.profileImage ? <img className="pp-avatar" src={`${API_URL}${profile.profileImage}`} alt="User Avatar" /> :
+             <div className="pp-avatar-init">{(profile.username || "U")[0].toUpperCase()}</div>}
           </div>
-          <div className="pp-hero-info">
-            <h2 className="pp-username">{profile.username}</h2>
-            <p className="pp-email">{profile.email}</p>
-            {profile.bio && <p className="pp-bio">{profile.bio}</p>}
+          <div className="pp-hero-text">
+            <h1 className="pp-hname">{profile.username || "กำลังโหลด..."}</h1>
+            <p className="pp-hemail">{profile.email}</p>
           </div>
         </div>
-
-        {/* ── ORDER SUMMARY STRIP ── */}
         <div className="pp-strip">
-          {ORDER_TABS.filter((t) => t.key !== "all").map((t) => (
-            <button
-              key={t.key}
-              className="pp-strip-item"
-              onClick={() => { setTab("orders"); setOrderTab(t.key); }}
-            >
-              <span className="pp-strip-icon">{t.icon}</span>
-              <span className="pp-strip-count">{countByStatus(t.key)}</span>
-              <span className="pp-strip-label">{t.label}</span>
+          {ORDER_TABS.filter(t => t.key !== "all").map(t => (
+            <button key={t.key} className="pp-strip-btn" onClick={() => safeTabChange("orders", t.key)} style={{ opacity: editing ? 0.5 : 1 }}>
+              <span className="pp-si">{t.icon}</span>
+              <span className="pp-sl">{t.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── TABS ── */}
       <div className="pp-tabs">
-        <button
-          className={`pp-tab ${tab === "profile" ? "active" : ""}`}
-          onClick={() => setTab("profile")}
-        >👤 ข้อมูลโปรไฟล์</button>
-        <button
-          className={`pp-tab ${tab === "orders" ? "active" : ""}`}
-          onClick={() => setTab("orders")}
-        >🛍️ ประวัติคำสั่งซื้อ</button>
+        <button className={`pp-tab ${tab === "profile" ? "on" : ""}`} onClick={() => safeTabChange("profile")} style={{ opacity: editing && tab !== "profile" ? 0.5 : 1 }}>👤 โปรไฟล์</button>
+        <button className={`pp-tab ${tab === "orders" ? "on" : ""}`} onClick={() => safeTabChange("orders")} style={{ opacity: editing && tab !== "orders" ? 0.5 : 1 }}>🛍️ คำสั่งซื้อ</button>
       </div>
 
-      {/* ══════════════════════════════════════════
-          TAB: PROFILE
-      ══════════════════════════════════════════ */}
-      {tab === "profile" && (
-        <div className="pp-section">
-          <div className="pp-card">
-            <div className="pp-card-header">
-              <h3>ข้อมูลส่วนตัว</h3>
-              {!editing && (
-                <button className="pp-edit-btn" onClick={() => { setForm({ ...profile }); setEditing(true); }}>
-                  ✏️ แก้ไข
-                </button>
+      <div className="pp-body">
+        {tab === "profile" ? (
+          <div className="pp-fade">
+            <div className="pp-card">
+              <div className="pp-card-top">
+                <h3 className="pp-ct">ข้อมูลส่วนตัว</h3>
+                {editing ? (
+                  <div className="pp-edit-actions">
+                    <button className="pp-btn-save" onClick={handleSaveProfile} disabled={saving}>{saving ? "⌛" : "💾 บันทึก"}</button>
+                    <button className="pp-btn-cancel" onClick={() => { setEditing(false); setPreviewImg(null); }}>ยกเลิก</button>
+                  </div>
+                ) : (
+                  <button className="pp-btn-edit" onClick={() => setEditing(true)}>✏️ แก้ไข</button>
+                )}
+              </div>
+
+              {saveMsg && <div className={`pp-msg ${saveMsg.includes("สำเร็จ") ? "ok" : "err"}`}>{saveMsg}</div>}
+
+              <div className="pp-fields">
+                <div className="pp-field full">
+                  <label>อีเมล (แก้ไขไม่ได้)</label>
+                  <p>{profile.email}</p>
+                </div>
+                <div className="pp-field">
+                  <label>ชื่อผู้ใช้</label>
+                  {editing ? <input className="pp-inp" value={form.username} onChange={e => setForm({...form, username: e.target.value})} /> : <p>{profile.username}</p>}
+                </div>
+                <div className="pp-field">
+                  <label>เบอร์โทรศัพท์</label>
+                  {editing ? <input className="pp-inp" value={form.phonenumber} onChange={e => setForm({...form, phonenumber: e.target.value})} /> : <p>{profile.phonenumber || "-"}</p>}
+                </div>
+                <div className="pp-field">
+                  <label>เพศ</label>
+                  {editing ? (
+                    <select className="pp-inp" value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}>
+                      <option value="">ไม่ระบุ</option>
+                      <option value="ชาย">ชาย</option>
+                      <option value="หญิง">หญิง</option>
+                    </select>
+                  ) : <p>{profile.gender || "ไม่ได้ระบุ"}</p>}
+                </div>
+                <div className="pp-field">
+                  <label>วันเกิด</label>
+                  {editing ? <input className="pp-inp" type="date" value={form.birthday} onChange={e => setForm({...form, birthday: e.target.value})} /> : 
+                  <p>{profile.birthday ? new Date(profile.birthday).toLocaleDateString('th-TH') : "-"}</p>}
+                </div>
+                <div className="pp-field full">
+                  <label>แนะนำตัว</label>
+                  {editing ? <textarea className="pp-inp pp-ta" value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} /> : <p>{profile.bio || "ยังไม่มีข้อมูล..."}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* ══ HISTORY LOGS ══════════════════════════ */}
+            <div className="pp-logs-section">
+              <button className="pp-logs-toggle" onClick={() => setShowLogs(!showLogs)}>
+                {showLogs ? "🔼 ปิดประวัติการแก้ไข" : "📜 ดูประวัติการแก้ไขโปรไฟล์"}
+              </button>
+              
+              {showLogs && (
+                <div className="pp-logs-list">
+                  {logs.length === 0 ? <p className="pp-empty-msg">ยังไม่มีประวัติการบันทึก</p> : 
+                    logs.map(log => (
+                      <div key={log._id} className="pp-log-card">
+                        <div className="pp-log-date">{new Date(log.updatedAt).toLocaleString('th-TH')}</div>
+                        <div className="pp-log-details">
+                          {Object.keys(log.changedFields).map(key => (
+                            <div key={key} className="pp-log-line">
+                              <span className="pp-log-key">• {key}:</span>
+                              <span className="pp-log-old">{log.changedFields[key].from || "ว่าง"}</span>
+                              <span className="pp-log-arrow">→</span>
+                              <span className="pp-log-new">{log.changedFields[key].to || "ว่าง"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  }
+                </div>
               )}
             </div>
-
-            {!editing ? (
-              <div className="pp-info-grid">
-                <div className="pp-info-row">
-                  <span className="pp-info-label">ชื่อผู้ใช้</span>
-                  <span className="pp-info-val">{profile.username || "—"}</span>
-                </div>
-                <div className="pp-info-row">
-                  <span className="pp-info-label">อีเมล</span>
-                  <span className="pp-info-val">{profile.email || "—"}</span>
-                </div>
-                <div className="pp-info-row">
-                  <span className="pp-info-label">เบอร์โทร</span>
-                  <span className="pp-info-val">{profile.phone || "—"}</span>
-                </div>
-                <div className="pp-info-row">
-                  <span className="pp-info-label">คำแนะนำตัว</span>
-                  <span className="pp-info-val">{profile.bio || "—"}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="pp-form">
-                <label className="pp-label">ชื่อผู้ใช้
-                  <input className="pp-input" value={form.username}
-                    onChange={(e) => setForm({ ...form, username: e.target.value })} />
-                </label>
-                <label className="pp-label">อีเมล
-                  <input className="pp-input" value={form.email} disabled style={{ opacity: .5 }} />
-                  <span className="pp-hint">ไม่สามารถเปลี่ยนอีเมลได้</span>
-                </label>
-                <label className="pp-label">เบอร์โทร
-                  <input className="pp-input" value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    placeholder="0812345678" />
-                </label>
-                <label className="pp-label">คำแนะนำตัว
-                  <textarea className="pp-input pp-textarea" value={form.bio}
-                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                    placeholder="แนะนำตัวสั้นๆ..." rows={3} />
-                </label>
-                {saveMsg && <p className={`pp-msg ${saveMsg.includes("สำเร็จ") ? "ok" : "err"}`}>{saveMsg}</p>}
-                <div className="pp-form-btns">
-                  <button className="pp-save-btn" onClick={handleSave} disabled={saving}>
-                    {saving ? "กำลังบันทึก..." : "💾 บันทึก"}
-                  </button>
-                  <button className="pp-cancel-btn" onClick={() => setEditing(false)}>ยกเลิก</button>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════
-          TAB: ORDERS
-      ══════════════════════════════════════════ */}
-      {tab === "orders" && (
-        <div className="pp-section">
-
-          {/* Order sub-tabs */}
-          <div className="pp-order-tabs">
-            {ORDER_TABS.map((t) => (
-              <button
-                key={t.key}
-                className={`pp-order-tab ${orderTab === t.key ? "active" : ""}`}
-                onClick={() => setOrderTab(t.key)}
-              >
-                {t.icon} {t.label}
-                {countByStatus(t.key) > 0 && (
-                  <span className="pp-otab-badge">{countByStatus(t.key)}</span>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {ordersLoading && (
-            <div className="pp-loading"><div className="pp-spin" /><p>กำลังโหลด...</p></div>
-          )}
-
-          {!ordersLoading && filteredOrders.length === 0 && (
-            <div className="pp-empty">
-              <p className="pp-empty-icon">🛒</p>
-              <p>ไม่มีคำสั่งซื้อในหมวดนี้</p>
+        ) : (
+          <div className="pp-fade">
+            <div className="pp-order-tabs">
+              {ORDER_TABS.map(t => (
+                <button key={t.key} className={`pp-otab ${orderTab === t.key ? "on" : ""}`} onClick={() => setOrderTab(t.key)}>{t.icon} {t.label}</button>
+              ))}
             </div>
-          )}
 
-          {!ordersLoading && filteredOrders.map((order) => {
-            const st = STATUS_MAP[order.status] || STATUS_MAP.pending;
-            return (
-              <div key={order._id} className="pp-order-card">
-                <div className="pp-order-header">
-                  <span className="pp-order-id">#{String(order._id).slice(-8).toUpperCase()}</span>
-                  <span className="pp-order-date">{fmt(order.createdAt)}</span>
-                  <span className="pp-order-status" style={{ color: st.color, background: st.bg }}>
-                    {st.label}
-                  </span>
-                </div>
-
-                {/* รายการสินค้า */}
-                <div className="pp-order-items">
-                  {(order.items || order.products || []).map((item, i) => {
-                    const p = item.product || item;
-                    const img = p.images?.[0];
-                    return (
-                      <div key={i} className="pp-order-item">
-                        <img
-                          className="pp-item-img"
-                          src={
-                            img
-                              ? (img.startsWith("http") ? img : `${API_URL}${img}`)
-                              : "https://placehold.co/56x56/f3f4f6/9ca3af?text=N/A"
-                          }
-                          alt=""
-                        />
-                        <div className="pp-item-info">
-                          <p className="pp-item-name">{p.title || p.name || "สินค้า"}</p>
-                          <p className="pp-item-qty">x{item.quantity || 1}</p>
-                        </div>
-                        <p className="pp-item-price">
-                          ฿{((p.price || 0) * (item.quantity || 1)).toLocaleString()}
-                        </p>
+            {ordersLoading ? <div className="pp-loading"><div className="pp-spin" /></div> : 
+             getFilteredOrders().length === 0 ? (
+               <div className="pp-empty">
+                 <span style={{ fontSize: "50px" }}>📦</span>
+                 <p>ยังไม่มีสินค้าในคลัง</p>
+               </div>
+             ) : (
+               getFilteredOrders().map(order => (
+                <div key={order._id} className="pp-ocard">
+                  <div className="pp-ocard-top">
+                    <span className="pp-oid">#{order._id.slice(-8).toUpperCase()}</span>
+                    <span className="pp-ostatus" style={{ background: STATUS_MAP[order.status]?.bg, color: STATUS_MAP[order.status]?.color }}>{STATUS_MAP[order.status]?.label}</span>
+                  </div>
+                  <div className="pp-oitems">
+                    {order.items?.map((item, i) => (
+                      <div key={i} className="pp-oitem">
+                        <img className="pp-oimg" src={`${API_URL}${item.product?.image}`} alt={item.product?.name || "Product"} />
+                        <div className="pp-ometa"><p className="pp-oname">{item.product?.name}</p><span className="pp-oqty">x{item.quantity}</span></div>
+                        <p className="pp-oprice">฿{item.price.toLocaleString()}</p>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+                  <div className="pp-ofoot">
+                    <div className="pp-ototrow"><span>ยอดรวม</span><strong>฿{order.totalPrice?.toLocaleString()}</strong></div>
+                    {order.status === "Shipping" && <button className="pp-obtn confirm" onClick={() => handleConfirmReceipt(order._id)}>✅ ยืนยันการรับสินค้า</button>}
+                  </div>
                 </div>
-
-                <div className="pp-order-footer">
-                  <span className="pp-order-total-label">ยอดรวม</span>
-                  <span className="pp-order-total">
-                    ฿{(order.totalPrice || order.total || 0).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+               ))
+             )}
+          </div>
+        )}
+      </div>
+      <input ref={fileInputRef} type="file" hidden accept="image/*" onChange={(e) => {
+        const f = e.target.files[0];
+        if (f) { setForm({...form, imageFile: f}); setPreviewImg(URL.createObjectURL(f)); }
+      }} />
     </div>
   );
 }
