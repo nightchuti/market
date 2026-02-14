@@ -120,7 +120,7 @@ function AllProducts() {
 
       {/* ===== PAGINATION ===== */}
       {pagination && (
-        <div className="pagination">
+        <div className="pagination-container">
           <button
             className="page-btn"
             disabled={pagination.page === 1}
