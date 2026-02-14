@@ -44,7 +44,7 @@ function Home() {
                 <li>🟢 เพิ่มโอกาสขายได้เร็วขึ้น 3 เท่า</li>
                 <li>🟢 ป้ายกำกับ "Verified Seller"</li>
               </ul>
-              <button className="btn-white-action" onClick={() => navigate("/register")}>
+              <button className="btn-white-action" onClick={() => navigate("/premium")}>
                 สมัครสมาชิกรับโปรโมชัน
               </button>
             </div>

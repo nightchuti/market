@@ -1,0 +1,122 @@
+.premium-page {
+  padding: 80px 20px;
+  background: radial-gradient(circle at top, #f0f4f0 0%, #ffffff 100%);
+  min-height: 100vh;
+  text-align: center;
+  font-family: 'Prompt', sans-serif;
+}
+
+.premium-header h1 {
+  font-size: 40px;
+  margin: 20px 0;
+  color: #1a1a1a;
+}
+
+.premium-header h1 span {
+  color: #2e7d32;
+}
+
+.badge-exclusive {
+  background: #2e7d32;
+  color: white;
+  display: inline-block;
+  padding: 5px 15px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* ===== PRICING CARDS ===== */
+.pricing-container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 50px;
+  flex-wrap: wrap;
+}
+
+.price-card {
+  background: white;
+  padding: 40px;
+  border-radius: 30px;
+  width: 100%;
+  max-width: 350px;
+  border: 1px solid #eee;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+  transition: 0.3s;
+}
+
+/* การ์ดตัวเด่น (Featured) */
+.price-card.featured {
+  border: 2px solid #2e7d32;
+  transform: scale(1.05);
+  position: relative;
+  box-shadow: 0 20px 40px rgba(46, 125, 50, 0.1);
+}
+
+.hot-tag {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f7b733;
+  color: black;
+  padding: 5px 20px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.price {
+  font-size: 36px;
+  font-weight: 700;
+  margin: 20px 0;
+}
+
+.price span {
+  font-size: 14px;
+  color: #888;
+}
+
+.price-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 30px 0;
+  text-align: left;
+}
+
+.price-card ul li {
+  margin-bottom: 12px;
+  color: #555;
+  font-size: 15px;
+}
+
+/* BUTTONS */
+.btn-premium-gold {
+  width: 100%;
+  padding: 15px;
+  background: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-premium-gold:hover {
+  background: #1b5e20;
+  box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+}
+
+.btn-secondary {
+  width: 100%;
+  padding: 15px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 15px;
+  color: #666;
+  font-weight: 600;
+  cursor: pointer;
+}
