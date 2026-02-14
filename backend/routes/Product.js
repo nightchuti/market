@@ -233,4 +233,14 @@ router.post("/:id/boost", protect, async (req, res) => {
   }
 });
 
+router.post("/bulk", async (req, res) => {
+  const products = await Product.find({
+    _id: { $in: req.body.ids },
+    status: "available"
+  });
+
+  res.json(products);
+});
+
+
 module.exports = router;

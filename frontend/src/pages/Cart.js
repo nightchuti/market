@@ -302,10 +302,24 @@ function Cart() {
             <button
               className="checkout-btn"
               disabled={selectedItems.length === 0}
-              onClick={checkout}
+              onClick={() =>
+                navigate("/checkout", {
+                  state: {
+                    items: selectedItems.map(item => ({
+                      _id: item.product._id,
+                      title: item.product.title,
+                      price: item.product.price,
+                      quantity: item.product.quantity,
+                      images: item.product.images,
+                      qty: item.quantity
+                    }))
+                  }
+                })
+              }
             >
               ดำเนินการสั่งซื้อ
             </button>
+
           </div>
         </>
       )}
