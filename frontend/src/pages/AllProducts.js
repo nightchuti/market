@@ -12,10 +12,8 @@ function AllProducts() {
   const [tradeOption, setTradeOption] = useState("");
   const [deliveryType, setDeliveryType] = useState("");
 
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ✅ โหลดข้อมูลทุกครั้งที่ URL เปลี่ยน
   useEffect(() => {
     const page = parseInt(searchParams.get("page")) || 1;
     const searchQuery = searchParams.get("search") || "";
@@ -23,7 +21,6 @@ function AllProducts() {
     const tradeQuery = searchParams.get("tradeOption") || "";
     const deliveryQuery = searchParams.get("deliveryType") || "";
 
-    // sync state กับ URL
     setSearch(searchQuery);
     setCategory(categoryQuery);
     setTradeOption(tradeQuery);
@@ -40,11 +37,7 @@ function AllProducts() {
 
   const fetchProducts = async (params = {}) => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/products",
-        { params }
-      );
-
+      const res = await axios.get("http://localhost:5000/api/products", { params });
       setProducts(res.data.products);
       setPagination(res.data.pagination);
     } catch (err) {
@@ -53,7 +46,6 @@ function AllProducts() {
     }
   };
 
-  // ✅ กดค้นหา = เปลี่ยน URL
   const handleSearch = () => {
     setSearchParams({
       page: 1,
@@ -84,8 +76,6 @@ function AllProducts() {
           <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
           <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
           <option value="อาหาร">อาหาร</option>
-          <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
-          <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
           <option value="อื่นๆ">อื่นๆ</option>
         </select>
 
@@ -93,7 +83,6 @@ function AllProducts() {
           <option value="">ทุกประเภทการขาย</option>
           <option value="sell_only">ขายเท่านั้น</option>
           <option value="trade_allowed">แลกเปลี่ยนเท่านั้น</option>
-          <option value="negotiable">ต่อรองได้</option>
         </select>
 
         <select value={deliveryType} onChange={(e) => setDeliveryType(e.target.value)}>
@@ -109,50 +98,39 @@ function AllProducts() {
 
       {/* ===== PRODUCT GRID ===== */}
       <div className="product-grid">
-        {products.map((p) => (
-          <ProductCard key={p._id} product={p} />
-        ))}
+        {products.map((p) => {
+          const isBoosted = p.isBoosted && new Date(p.boostExpireAt) > new Date();
+          return (
+            <div 
+              key={p._id} 
+              className={`product-wrapper-scoped ${isBoosted ? "boosted-active" : ""}`}
+            >
+              {isBoosted && <div className="boost-badge-scoped">✨ แนะนำ</div>}
+              <ProductCard product={p} />
+            </div>
+          );
+        })}
       </div>
 
-      {products.length === 0 && (
-        <p className="empty">ไม่พบสินค้า</p>
-      )}
+      {products.length === 0 && <p className="empty">ไม่พบสินค้า</p>}
 
-      {/* ===== PAGINATION ===== */}
+      {/* ===== PAGINATION (ย้ายมาไว้ข้างล่างสุดแบบ Static ไม่ลอยทับ) ===== */}
       {pagination && (
-        <div className="pagination">
+        <div className="pagination-container">
           <button
             className="page-btn"
             disabled={pagination.page === 1}
-            onClick={() =>
-              setSearchParams({
-                page: pagination.page - 1,
-                search,
-                category,
-                tradeOption,
-                deliveryType
-              })
-            }
+            onClick={() => setSearchParams({ ...Object.fromEntries(searchParams), page: pagination.page - 1 })}
           >
             ← ก่อนหน้า
           </button>
-
           <div className="page-info">
             หน้า <span>{pagination.page}</span> จาก {pagination.pages}
           </div>
-
           <button
             className="page-btn"
             disabled={pagination.page === pagination.pages}
-            onClick={() =>
-              setSearchParams({
-                page: pagination.page + 1,
-                search,
-                category,
-                tradeOption,
-                deliveryType
-              })
-            }
+            onClick={() => setSearchParams({ ...Object.fromEntries(searchParams), page: pagination.page + 1 })}
           >
             ถัดไป →
           </button>

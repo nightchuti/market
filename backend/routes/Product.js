@@ -237,18 +237,12 @@ router.delete("/:id", protect, async (req, res) => {
   }
 });
 
-// ================= GET ALL PRODUCTS =================
+/// ================= GET ALL PRODUCTS =================
 router.get("/", async (req, res) => {
   try {
     const {
-      search,
-      category,
-      minPrice,
-      maxPrice,
-      deliveryType,
-      tradeOption,
-      page = 1,
-      limit = 18
+      search, category, minPrice, maxPrice,
+      deliveryType, tradeOption, page = 1, limit = 18
     } = req.query;
 
     let filter = {
@@ -256,54 +250,38 @@ router.get("/", async (req, res) => {
       status: "available"
     };
 
-    // 🔥 ค้นหาแบบใกล้เคียงมากขึ้น
+    // --- Search Logic (คงเดิม) ---
     if (search && search.trim() !== "") {
-
       const keyword = search.trim();
-
-      // สร้าง regex แบบยืดหยุ่น
       const regex = new RegExp(keyword.split("").join(".*"), "i");
-
       filter.$or = [
         { title: { $regex: regex } },
         { description: { $regex: regex } }
       ];
     }
 
-
-    // 📂 หมวดหมู่
-    if (category) {
-      filter.category = category.trim();
-    }
-
-    // 🔄 ประเภทการแลกเปลี่ยน
-    if (tradeOption) {
-      filter.tradeOption = tradeOption;
-    }
-
-    // 🚚 ประเภทการส่ง
+    // --- Filters (คงเดิม) ---
+    if (category) filter.category = category.trim();
+    if (tradeOption) filter.tradeOption = tradeOption;
     if (deliveryType) {
-      if (deliveryType === "delivery") {
-        filter.deliveryType = { $in: ["delivery", "both"] };
-      } else if (deliveryType === "meetup") {
-        filter.deliveryType = { $in: ["meetup", "both"] };
-      } else {
-        filter.deliveryType = deliveryType;
-      }
+      if (deliveryType === "delivery") filter.deliveryType = { $in: ["delivery", "both"] };
+      else if (deliveryType === "meetup") filter.deliveryType = { $in: ["meetup", "both"] };
+      else filter.deliveryType = deliveryType;
     }
-
-    // 💰 ราคา
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
+    // ✅ ส่วนที่แก้ไข: เพิ่มการเรียงลำดับ (Sorting)
+    // 1. isBoosted: -1 (true มาก่อน false)
+    // 2. createdAt: -1 (ของใหม่มาทีหลัง)
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const products = await Product.find(filter)
-      .populate("user", "username email")
-      .sort({ createdAt: -1 })
+      .populate("user", "username email membershipTier") // ดึง Tier ของ User มาด้วยก็ได้
+      .sort({ isBoosted: -1, createdAt: -1 }) // <--- แก้ตรงนี้ครับ!
       .skip(skip)
       .limit(parseInt(limit));
 
@@ -319,10 +297,7 @@ router.get("/", async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({
-      message: "เกิดข้อผิดพลาดในการดึงข้อมูล",
-      error: err.message
-    });
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงข้อมูล", error: err.message });
   }
 });
 
@@ -430,5 +405,70 @@ router.get("/config/categories", async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+// ================= BOOST PRODUCT (ดันโพสต์) =================
+// API นี้ไว้เรียกเมื่อ User จ่ายเงินสำเร็จเพื่อดันโพสต์สินค้าชิ้นนี้
+router.post("/:id/boost", protect, async (req, res) => {
+  try {
+    const { days } = req.body; // รับค่าจำนวนวัน เช่น 3, 7, 30
+    const product = await Product.findById(req.params.id);
 
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    
+    // เช็คว่าเป็นเจ้าของสินค้าไหม
+    if (product.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "คุณไม่ใช่เจ้าของสินค้านี้" });
+    }
+
+    // คำนวณวันหมดอายุ
+    const expireDate = new Date();
+    
+    // ถ้าของเดิมยัง Boost อยู่ ให้บวกเพิ่มจากวันเดิม
+    if (product.isBoosted && product.boostExpireAt > new Date()) {
+       expireDate.setTime(product.boostExpireAt.getTime());
+    }
+    
+    // บวกจำนวนวันที่ซื้อเพิ่ม
+    expireDate.setDate(expireDate.getDate() + parseInt(days || 1));
+
+    // อัปเดตข้อมูล
+    product.isBoosted = true;
+    product.boostExpireAt = expireDate;
+    
+    await product.save();
+
+    res.json({ 
+      message: `ดันโพสต์สำเร็จ! สินค้าจะอยู่บนหน้าแรกถึง ${expireDate.toLocaleDateString()}`,
+      boostExpireAt: expireDate
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+=======
+router.put("/products/:id/publish", authMiddleware, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: "ไม่พบสินค้า" });
+    }
+
+    product.status = "available";
+    await product.save();
+
+    res.json({ message: "ลงขายสำเร็จ" });
+
+  } catch (err) {
+    res.status(500).json({ message: "error" });
+  }
+});
+
+=======
+>>>>>>> 0f619b37ec6af11a4b2531abbe97d489b70b385a
+
+>>>>>>> f393d54f494f52e6d1c6ac372b4f44c1cff0b5d6
 module.exports = router;

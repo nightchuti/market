@@ -1,103 +1,121 @@
 .all-products {
-  min-height: 100vh;        /* สูงเต็มหน้าจอ */
-  display: flex;
-  flex-direction: column;
-  padding: 40px;
+  min-height: 100vh;
+  padding: 40px 20px;
+  background-color: #fafafa;
 }
 
 .all-products h1 {
-  margin-bottom: 20px;
   text-align: center;
+  margin-bottom: 30px;
+  color: #333;
 }
 
-/* ===== FILTER ===== */
+/* ===== FILTER BAR ===== */
 .filter-bar {
   display: flex;
-  gap: 12px;
-  margin-bottom: 30px;
+  gap: 10px;
+  margin-bottom: 40px;
   flex-wrap: wrap;
   justify-content: center;
 }
 
 .filter-bar input,
-.filter-bar select,
-.filter-bar button {
-  padding: 10px 14px;
-  border-radius: 10px;
+.filter-bar select {
+  padding: 10px 15px;
+  border-radius: 8px;
   border: 1px solid #ddd;
-  min-width: 220px;
-  height: 44px;
-  box-sizing: border-box;
-  font-size: 14px;
+  min-width: 180px;
+  height: 45px;
 }
 
-.filter-bar button {
+/* ✅ แก้ปุ่มค้นหาให้ไม่ใหญ่ไป */
+.filter-bar .btn-main {
+  padding: 0 25px;
   background: #f7b733;
+  color: #000;
   border: none;
+  border-radius: 8px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 500;
+  height: 45px;
+  min-width: 100px; /* ลดจาก 200px ลงมา */
+  width: auto;      /* ให้กว้างตามตัวอักษร */
+  transition: 0.2s;
 }
 
-.filter-bar button:hover {
-  opacity: 0.9;
+.filter-bar .btn-main:hover {
+  background: #e5a520;
 }
 
-/* ===== EMPTY ===== */
-.empty {
-  margin-top: 40px;
-  text-align: center;
-  color: #777;
+/* ===== PRODUCT GRID ===== */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 25px;
+  margin-bottom: 50px;
 }
 
-/* ===== PAGINATION ===== */
-.pagination {
-  margin-top: 40px;
+/* ✅ SCOPED BOOST (เนียนแต่เด่นพอประมาณ) */
+.product-wrapper-scoped {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.product-wrapper-scoped.boosted-active {
+  transform: translateY(-4px);
+}
+
+.product-wrapper-scoped.boosted-active::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 2px solid #f7b733;
+  border-radius: 12px;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.boost-badge-scoped {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #f7b733;
+  color: #000;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  z-index: 10;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* ===== PAGINATION (แก้ปัญหาทับช่องแชท) ===== */
+.pagination-container {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 20px;
+  margin-top: 20px;
+  padding: 30px 0;
+  border-top: 1px solid #eee;
 }
 
 .page-btn {
-  padding: 10px 18px;
+  padding: 10px 20px;
+  background: #2e7d32;
+  color: white;
   border: none;
   border-radius: 8px;
-  background-color: #2e7d32;
-  color: white;
-  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.page-btn:hover:not(:disabled) {
-  background-color: #1b5e20;
-  transform: translateY(-2px);
+  font-weight: 500;
 }
 
 .page-btn:disabled {
-  background-color: #ccc;
+  background: #ccc;
   cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.page-info {
-  font-size: 16px;
-  font-weight: 500;
 }
 
 .page-info span {
-  color: #2e7d32;
   font-weight: bold;
-}
-
-.pagination {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 12px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
+  color: #2e7d32;
 }

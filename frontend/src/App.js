@@ -10,6 +10,7 @@ import ChatFloating from "./pages/ChatFloating";
 import Cart from "./pages/Cart";
 import ProfilePage from "./pages/ProfilePage/ProfilePage";
 import EditProduct from "./pages/MyShop/EditProduct";
+import PremiumMember from "./pages/PreMember/PremiumMember";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/edit-product/:id" element={<EditProduct />} />
+          <Route path="/premium" element={<PremiumMember />} />
         </Route>
       </Routes>
     </BrowserRouter>
