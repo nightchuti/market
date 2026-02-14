@@ -1,0 +1,90 @@
+body {
+  background: #f5f6f8;
+  font-family: "Prompt", sans-serif;
+}
+
+.address-container {
+  max-width: 820px;
+  margin: 40px auto;
+  padding: 0 20px 100px;
+}
+
+.address-container h2 {
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ===== Card ===== */
+.address-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.address-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.address-card:hover {
+  border-color: #999;
+}
+
+.address-card.active {
+  border: 2px solid #333;
+  background: #f9f9f9;
+}
+
+.addr-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.addr-dorm {
+  font-weight: 600;
+}
+
+.default-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eee;
+}
+
+.addr-room {
+  font-size: 14px;
+}
+
+.addr-note {
+  font-size: 13px;
+  color: #777;
+  margin-top: 4px;
+}
+
+/* ===== Buttons ===== */
+.add-address-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px dashed #999;
+  background: transparent;
+  cursor: pointer;
+}
+
+.confirm-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #333;
+  color: white;
+  cursor: pointer;
+}
