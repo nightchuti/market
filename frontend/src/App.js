@@ -14,7 +14,7 @@ import PremiumMember from "./pages/PreMember/PremiumMember";
 import AdminDashboard from "./pages/AdminDashboard";
 import CheckoutPage from "./pages/Checkout/CheckoutPage";
 import CouponCenter from "./pages/coupon/CouponCenter";
-import AdminCoupon from "./pages/AdminCoupon";
+import AdminCoupon from "./pages/coupon/AdminCoupon";
 
 function App() {
   return (
@@ -37,6 +37,7 @@ function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/coupons" element={<CouponCenter />} />
           <Route path="/admin/coupons" element={<AdminCoupon />} />
+
         </Route>
       </Routes>
     </BrowserRouter>

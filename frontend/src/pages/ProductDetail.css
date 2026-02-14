@@ -150,9 +150,9 @@
 /* Button Group */
 .button-group {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
-  margin-top: auto; /* ดันปุ่มลงข้างล่าง */
+  margin-top: auto;
 }
 
 .btn-cart, .btn-chat {
@@ -219,4 +219,33 @@
   .button-group {
     grid-template-columns: 1fr;
   }
+}
+/* ปุ่มขอเทรด */
+.btn-trade {
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  background: linear-gradient(135deg, #34d399, #22c55e);
+  color: #ffffff;
+}
+
+.btn-trade:hover {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  transform: translateY(-2px);
+}
+
+.btn-trade:active {
+  transform: scale(0.97);
+}
+ .btn-trade {
+  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.35);
 }
