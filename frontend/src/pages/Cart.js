@@ -9,14 +9,22 @@ function Cart() {
   const [cart, setCart] = useState({ items: [] });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
     fetchCart();
   }, []);
 
   const fetchCart = async () => {
     try {
+      const token = localStorage.getItem("token");
+
       const res = await axios.get(`${API_URL}/api/cart`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -38,6 +46,8 @@ function Cart() {
       return;
     }
 
+    const token = localStorage.getItem("token");
+
     await axios.put(
       `${API_URL}/api/cart/update/${itemId}`,
       { quantity: newQty },
@@ -47,8 +57,34 @@ function Cart() {
     fetchCart();
   };
 
+  // ================= REMOVE ONE ITEM =================
+  const removeItem = async (itemId) => {
+    const confirmDelete = window.confirm("คุณต้องการลบสินค้านี้หรือไม่?");
+
+    if (!confirmDelete) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.delete(
+        `${API_URL}/api/cart/remove/${itemId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      fetchCart();
+
+    } catch (err) {
+      alert("ลบสินค้าไม่สำเร็จ");
+    }
+  };
+
+
   // ================= SELECT ITEM =================
   const toggleSelect = async (itemId) => {
+    const token = localStorage.getItem("token");
+
     await axios.put(
       `${API_URL}/api/cart/select/${itemId}`,
       {},
@@ -60,6 +96,8 @@ function Cart() {
 
   // ================= SELECT ALL =================
   const selectAll = async (value) => {
+    const token = localStorage.getItem("token");
+
     await axios.put(
       `${API_URL}/api/cart/select-all`,
       { selected: value },
@@ -69,13 +107,56 @@ function Cart() {
     fetchCart();
   };
 
+
   // ================= REMOVE SELECTED =================
   const removeSelected = async () => {
-    await axios.delete(`${API_URL}/api/cart/remove-selected`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const token = localStorage.getItem("token");
 
-    fetchCart();
+    const selectedItems = cart.items.filter(i => i.selected === true);
+
+    // ❌ ถ้าไม่เลือกอะไร
+    if (selectedItems.length === 0) {
+      alert("กรุณาเลือกสินค้าที่ต้องการลบ");
+      return;
+    }
+
+    // ✅ ยืนยันก่อนลบ
+    const confirmDelete = window.confirm(
+      `คุณต้องการลบสินค้า ${selectedItems.length} รายการหรือไม่?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_URL}/api/cart/remove-selected`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      fetchCart();
+
+    } catch (err) {
+      alert("ลบไม่สำเร็จ");
+    }
+  };
+
+
+  // ================= CHECKOUT =================
+  const checkout = async () => {
+    const token = localStorage.getItem("token");
+
+    try {
+      await axios.post(
+        `${API_URL}/api/cart/checkout`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("สั่งซื้อสำเร็จ 🎉");
+      fetchCart();
+
+    } catch (err) {
+      alert(err.response?.data?.message || "Checkout ไม่สำเร็จ");
+    }
   };
 
   const selectedItems = cart.items.filter(i => i.selected);
@@ -86,22 +167,6 @@ function Cart() {
     0
   );
 
-  // ================= REMOVE ONE ITEM =================
-const removeItem = async (itemId) => {
-  try {
-    await axios.delete(
-      `${API_URL}/api/cart/remove/${itemId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
-    );
-
-    fetchCart();
-  } catch (err) {
-    console.log(err);
-  }
-};
-
   if (loading) return <p className="loading">กำลังโหลดตะกร้า...</p>;
 
   return (
@@ -111,7 +176,7 @@ const removeItem = async (itemId) => {
       {cart.items.length === 0 ? (
         <div className="empty-cart">
           <p>ยังไม่มีสินค้าในตะกร้า</p>
-          <button onClick={() => navigate("/all-products")}>
+          <button onClick={() => navigate("/products")}>
             ไปเลือกสินค้า
           </button>
         </div>
@@ -130,11 +195,13 @@ const removeItem = async (itemId) => {
               เลือกทั้งหมด
             </label>
 
-            <button className="remove-btn" onClick={removeSelected}>
+            <button
+              className="remove-btn"
+              onClick={removeSelected}
+            >
               ลบที่เลือก
             </button>
           </div>
-
           <div className="cart-list">
             {cart.items.map(item => {
               const img =
@@ -142,12 +209,14 @@ const removeItem = async (itemId) => {
                   ? `${API_URL}${item.product.images[0]}`
                   : "https://via.placeholder.com/80";
 
+              const isOutOfStock = item.product.quantity === 0;
+
               return (
                 <div key={item._id} className="cart-item">
 
                   <input
                     type="checkbox"
-                    checked={item.selected}
+                    checked={!!item.selected}
                     onChange={() => toggleSelect(item._id)}
                   />
 
@@ -159,37 +228,46 @@ const removeItem = async (itemId) => {
                       ฿{item.product?.price?.toLocaleString()}
                     </p>
 
-                    <div className="qty-control">
-                      <button
-                        onClick={() =>
-                          updateQuantity(
-                            item._id,
-                            item.quantity - 1,
-                            item.product.quantity
-                          )
-                        }
-                      >
-                        −
-                      </button>
+                    {isOutOfStock ? (
+                      <p className="out-stock">สินค้าหมด</p>
+                    ) : (
+                      <>
+                        <div className="qty-control">
+                          <button
+                            onClick={() =>
+                              updateQuantity(
+                                item._id,
+                                item.quantity - 1,
+                                item.product.quantity
+                              )
+                            }
+                          >
+                            −
+                          </button>
 
-                      <span>{item.quantity}</span>
+                          <span>{item.quantity}</span>
 
-                      <button
-                        onClick={() =>
-                          updateQuantity(
-                            item._id,
-                            item.quantity + 1,
-                            item.product.quantity
-                          )
-                        }
-                      >
-                        +
-                      </button>
-                    </div>
+                          <button
+                            disabled={
+                              item.quantity >= item.product.quantity
+                            }
+                            onClick={() =>
+                              updateQuantity(
+                                item._id,
+                                item.quantity + 1,
+                                item.product.quantity
+                              )
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
 
-                    <p className="stock">
-                      เหลือ {item.product.quantity} ชิ้น
-                    </p>
+                        <p className="stock">
+                          เหลือ {item.product.quantity} ชิ้น
+                        </p>
+                      </>
+                    )}
                   </div>
 
                   <div className="item-total">
@@ -197,6 +275,13 @@ const removeItem = async (itemId) => {
                       item.product?.price * item.quantity
                     ).toLocaleString()}
                   </div>
+
+                  <button
+                    className="delete-one"
+                    onClick={() => removeItem(item._id)}
+                  >
+                    ลบ
+                  </button>
 
                 </div>
               );
@@ -214,7 +299,11 @@ const removeItem = async (itemId) => {
               <span>฿{total.toLocaleString()}</span>
             </div>
 
-            <button className="checkout-btn">
+            <button
+              className="checkout-btn"
+              disabled={selectedItems.length === 0}
+              onClick={checkout}
+            >
               ดำเนินการสั่งซื้อ
             </button>
           </div>

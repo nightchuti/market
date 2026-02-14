@@ -22,7 +22,7 @@ const cartSchema = new mongoose.Schema({
 
       selected: {
         type: Boolean,
-        default: true   // ⭐ สำคัญมาก
+        default: true
       }
     }
   ]
