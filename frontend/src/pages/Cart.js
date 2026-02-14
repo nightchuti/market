@@ -141,23 +141,29 @@ function Cart() {
 
 
   // ================= CHECKOUT =================
-  const checkout = async () => {
-    const token = localStorage.getItem("token");
+  const goToCheckout = () => {
+    const selectedItems = cart.items.filter(item => item.selected);
 
-    try {
-      await axios.post(
-        `${API_URL}/api/cart/checkout`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      alert("สั่งซื้อสำเร็จ 🎉");
-      fetchCart();
-
-    } catch (err) {
-      alert(err.response?.data?.message || "Checkout ไม่สำเร็จ");
+    if (selectedItems.length === 0) {
+      alert("กรุณาเลือกสินค้าก่อนสั่งซื้อ");
+      return;
     }
+
+    navigate("/checkout", {
+      state: {
+        items: selectedItems.map(item => ({
+          _id: item.product._id,
+          title: item.product.title,
+          price: item.product.price,
+          images: item.product.images,
+          qty: item.quantity,
+          deliveryType: item.product.deliveryType // ⭐ เพิ่มบรรทัดนี้
+        }))
+      }
+    });
   };
+
+
 
   const selectedItems = cart.items.filter(i => i.selected);
 
@@ -207,7 +213,8 @@ function Cart() {
               const img =
                 item.product?.images?.[0]
                   ? `${API_URL}${item.product.images[0]}`
-                  : "https://via.placeholder.com/80";
+                  : "/images/default-avatar.png";
+
 
               const isOutOfStock = item.product.quantity === 0;
 
@@ -302,23 +309,11 @@ function Cart() {
             <button
               className="checkout-btn"
               disabled={selectedItems.length === 0}
-              onClick={() =>
-                navigate("/checkout", {
-                  state: {
-                    items: selectedItems.map(item => ({
-                      _id: item.product._id,
-                      title: item.product.title,
-                      price: item.product.price,
-                      quantity: item.product.quantity,
-                      images: item.product.images,
-                      qty: item.quantity
-                    }))
-                  }
-                })
-              }
+              onClick={goToCheckout}
             >
               ดำเนินการสั่งซื้อ
             </button>
+
 
           </div>
         </>
