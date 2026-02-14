@@ -221,7 +221,7 @@
   }
 }
 /* ปุ่มขอเทรด */
-.btn-trade {
+.btn-trade, btn-buy {
   padding: 16px;
   border-radius: 10px;
   font-size: 16px;

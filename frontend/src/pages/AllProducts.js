@@ -3,7 +3,6 @@ import axios from "axios";
 import "./AllProducts.css";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
-import AdCard from "../components/AdCard"; // ✅ 1. Import AdCard ที่เราสร้างไว้
 
 function AllProducts() {
   const [products, setProducts] = useState([]);
@@ -13,8 +12,10 @@ function AllProducts() {
   const [tradeOption, setTradeOption] = useState("");
   const [deliveryType, setDeliveryType] = useState("");
 
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // ✅ โหลดข้อมูลทุกครั้งที่ URL เปลี่ยน
   useEffect(() => {
     const page = parseInt(searchParams.get("page")) || 1;
     const searchQuery = searchParams.get("search") || "";
@@ -22,6 +23,7 @@ function AllProducts() {
     const tradeQuery = searchParams.get("tradeOption") || "";
     const deliveryQuery = searchParams.get("deliveryType") || "";
 
+    // sync state กับ URL
     setSearch(searchQuery);
     setCategory(categoryQuery);
     setTradeOption(tradeQuery);
@@ -38,8 +40,11 @@ function AllProducts() {
 
   const fetchProducts = async (params = {}) => {
     try {
-      // Backend จะส่งข้อมูลที่มีทั้ง Product และ Ads ผสมมาแล้ว (ตาม Logic Interleave)
-      const res = await axios.get("http://localhost:5000/api/products", { params });
+      const res = await axios.get(
+        "http://localhost:5000/api/products",
+        { params }
+      );
+
       setProducts(res.data.products);
       setPagination(res.data.pagination);
     } catch (err) {
@@ -48,6 +53,7 @@ function AllProducts() {
     }
   };
 
+  // ✅ กดค้นหา = เปลี่ยน URL
   const handleSearch = () => {
     setSearchParams({
       page: 1,
@@ -62,13 +68,14 @@ function AllProducts() {
     <div className="all-products">
       <h1>สินค้าทั้งหมด</h1>
 
-      {/* ===== FILTER BAR (โค้ดเดิม) ===== */}
+      {/* ===== FILTER BAR ===== */}
       <div className="filter-bar">
         <input
           placeholder="ค้นหาสินค้า..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+
         <select value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="">ทุกหมวดหมู่</option>
           <option value="เสื้อผ้า">เสื้อผ้า</option>
@@ -77,6 +84,8 @@ function AllProducts() {
           <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
           <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
           <option value="อาหาร">อาหาร</option>
+          <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
+          <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
           <option value="อื่นๆ">อื่นๆ</option>
         </select>
 
@@ -84,6 +93,7 @@ function AllProducts() {
           <option value="">ทุกประเภทการขาย</option>
           <option value="sell_only">ขายเท่านั้น</option>
           <option value="trade_allowed">แลกเปลี่ยนเท่านั้น</option>
+          <option value="negotiable">ต่อรองได้</option>
         </select>
 
         <select value={deliveryType} onChange={(e) => setDeliveryType(e.target.value)}>
@@ -97,48 +107,52 @@ function AllProducts() {
         </button>
       </div>
 
-      {/* ===== PRODUCT GRID (ปรับปรุงใหม่) ===== */}
+      {/* ===== PRODUCT GRID ===== */}
       <div className="product-grid">
-        {products.map((p) => {
-          // ✅ 2. เช็คว่าเป็นโฆษณา (Native Ads) หรือไม่
-          if (p.isAds) {
-            return <AdCard key={p._id} ad={p} />;
-          }
-
-          // ✅ 3. ถ้าเป็นสินค้าปกติ ให้เช็คสถานะ Boost เหมือนเดิม
-          const isBoosted = p.isBoosted && p.boostExpireAt && new Date(p.boostExpireAt) > new Date();
-          
-          return (
-            <div 
-              key={p._id} 
-              className={`product-wrapper-scoped ${isBoosted ? "boosted-active" : ""}`}
-            >
-              {isBoosted && <div className="boost-badge-scoped">✨ แนะนำ</div>}
-              <ProductCard product={p} />
-            </div>
-          );
-        })}
+        {products.map((p) => (
+          <ProductCard key={p._id} product={p} />
+        ))}
       </div>
 
-      {products.length === 0 && <p className="empty">ไม่พบสินค้า</p>}
+      {products.length === 0 && (
+        <p className="empty">ไม่พบสินค้า</p>
+      )}
 
-      {/* ===== PAGINATION (โค้ดเดิม) ===== */}
+      {/* ===== PAGINATION ===== */}
       {pagination && (
-        <div className="pagination-container">
+        <div className="pagination">
           <button
             className="page-btn"
             disabled={pagination.page === 1}
-            onClick={() => setSearchParams({ ...Object.fromEntries(searchParams), page: pagination.page - 1 })}
+            onClick={() =>
+              setSearchParams({
+                page: pagination.page - 1,
+                search,
+                category,
+                tradeOption,
+                deliveryType
+              })
+            }
           >
             ← ก่อนหน้า
           </button>
+
           <div className="page-info">
             หน้า <span>{pagination.page}</span> จาก {pagination.pages}
           </div>
+
           <button
             className="page-btn"
             disabled={pagination.page === pagination.pages}
-            onClick={() => setSearchParams({ ...Object.fromEntries(searchParams), page: pagination.page + 1 })}
+            onClick={() =>
+              setSearchParams({
+                page: pagination.page + 1,
+                search,
+                category,
+                tradeOption,
+                deliveryType
+              })
+            }
           >
             ถัดไป →
           </button>
