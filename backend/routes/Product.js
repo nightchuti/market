@@ -405,8 +405,7 @@ router.get("/config/categories", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-<<<<<<< HEAD
+
 // ================= BOOST PRODUCT (ดันโพสต์) =================
 // API นี้ไว้เรียกเมื่อ User จ่ายเงินสำเร็จเพื่อดันโพสต์สินค้าชิ้นนี้
 router.post("/:id/boost", protect, async (req, res) => {
@@ -448,7 +447,7 @@ router.post("/:id/boost", protect, async (req, res) => {
   }
 });
 
-=======
+
 router.put("/products/:id/publish", authMiddleware, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -467,8 +466,5 @@ router.put("/products/:id/publish", authMiddleware, async (req, res) => {
   }
 });
 
-=======
->>>>>>> 0f619b37ec6af11a4b2531abbe97d489b70b385a
 
->>>>>>> f393d54f494f52e6d1c6ac372b4f44c1cff0b5d6
 module.exports = router;

@@ -1,0 +1,43 @@
+.ad-card-native {
+  border: 1px solid rgba(46, 125, 50, 0.2);
+  border-radius: 20px;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  transition: 0.3s;
+}
+
+.ad-badge-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  z-index: 2;
+}
+
+.ad-img { width: 100%; height: 160px; object-fit: cover; }
+
+.ad-body { padding: 15px; }
+
+.ad-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.ad-price { color: #2e7d32; font-weight: 700; }
+
+.btn-visit {
+  background: #f1f8e9;
+  color: #2e7d32;
+  border: 1px solid #2e7d32;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
