@@ -16,6 +16,13 @@ router.post("/add", protect, async (req, res) => {
       return res.status(404).json({ message: "ไม่พบสินค้า" });
     }
 
+    // ✅ กันซื้อสินค้าของตัวเอง (สำคัญมาก)
+    if (String(product.user) === String(req.user.id)) {
+      return res.status(400).json({
+        message: "ไม่สามารถเพิ่มสินค้าของตัวเองลงตะกร้าได้"
+      });
+    }
+
     let cart = await Cart.findOne({ user: req.user.id });
 
     if (!cart) {
@@ -30,7 +37,6 @@ router.post("/add", protect, async (req, res) => {
     );
 
     if (itemIndex > -1) {
-      // ✅ มีของใน cart แล้ว
       const currentQty = cart.items[itemIndex].quantity;
       const newQty = currentQty + quantity;
 
@@ -43,7 +49,7 @@ router.post("/add", protect, async (req, res) => {
       cart.items[itemIndex].quantity = newQty;
 
     } else {
-      // ✅ ยังไม่มีใน cart
+
       if (quantity > product.quantity) {
         return res.status(400).json({
           message: `สินค้าเหลือเพียง ${product.quantity} ชิ้น`
