@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./AddressPage.css";
+import { useLocation } from "react-router-dom";
+
 
 const API_URL = "http://127.0.0.1:5000";
 
 const AddressPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [addresses, setAddresses] = useState([]);
     const [selectedId, setSelectedId] = useState(null);
 
@@ -42,9 +45,17 @@ const AddressPage = () => {
             return;
         }
 
-        navigate(-1, {
-            state: { selectedAddressId: selectedId }
+        const selectedAddress = addresses.find(a => a._id === selectedId);
+
+        navigate("/checkout", {
+            state: {
+                items: location.state?.items,
+                selectedAddressId: selectedId,
+                deliveryMode: location.state?.deliveryMode  // ⭐ ส่งกลับด้วย
+            },
+            replace: true
         });
+
     };
 
 

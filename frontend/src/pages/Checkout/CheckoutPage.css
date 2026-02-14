@@ -265,22 +265,3 @@ body {
   opacity: 0.9;
 }
 
-.addr-actions {
-  margin-top: 8px;
-  display: flex;
-  gap: 8px;
-}
-
-.addr-actions button {
-  padding: 4px 10px;
-  font-size: 12px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  background: #f0f0f0;
-}
-
-.delete-btn {
-  background: #fdecea;
-  color: #c62828;
-}

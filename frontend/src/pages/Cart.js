@@ -156,11 +156,13 @@ function Cart() {
           title: item.product.title,
           price: item.product.price,
           images: item.product.images,
-          qty: item.quantity
+          qty: item.quantity,
+          deliveryType: item.product.deliveryType // ⭐ เพิ่มบรรทัดนี้
         }))
       }
     });
   };
+
 
 
   const selectedItems = cart.items.filter(i => i.selected);
@@ -211,7 +213,8 @@ function Cart() {
               const img =
                 item.product?.images?.[0]
                   ? `${API_URL}${item.product.images[0]}`
-                  : "https://via.placeholder.com/80";
+                  : "/images/default-avatar.png";
+
 
               const isOutOfStock = item.product.quantity === 0;
 
