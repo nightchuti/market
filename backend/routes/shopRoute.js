@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Shop = require("../models/shop"); // ตรวจสอบตัวพิมพ์เล็ก/ใหญ่ให้ตรงกับไฟล์จริง
-const protect = require("../middleware/authMiddleware"); // *ต้องมี
+const { protect } = require("../middleware/authMiddleware");// *ต้องมี
 
 // ================= 1. CREATE SHOP (สร้างร้านค้า) =================
 // ต้อง Login ก่อนถึงจะสร้างได้

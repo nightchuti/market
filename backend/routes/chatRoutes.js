@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const auth = require("../middleware/authMiddleware");
+//const auth = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");;
 const {
   initiateNormalChat,
   initiateTradeChat,
@@ -14,7 +15,8 @@ const {
 } = require("../controllers/chatController");
 
 // ===== ทุก route ต้อง login ก่อน =====
-router.use(auth);
+//router.use(auth);
+router.use(protect);
 
 // 1. จัดการรายการห้องแชท
 router.get("/", getMyChats); // รายการห้องแชททั้งหมดของเรา

@@ -1,122 +1,126 @@
-.premium-page {
+.premium-container {
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 80px 20px;
-  background: radial-gradient(circle at top, #f0f4f0 0%, #ffffff 100%);
-  min-height: 100vh;
-  text-align: center;
   font-family: 'Prompt', sans-serif;
+  color: #333;
 }
 
-.premium-header h1 {
-  font-size: 40px;
-  margin: 20px 0;
-  color: #1a1a1a;
+.premium-hero {
+  text-align: center;
+  margin-bottom: 60px;
 }
 
-.premium-header h1 span {
+.hero-badge {
+  background: #e8f5e9;
   color: #2e7d32;
-}
-
-.badge-exclusive {
-  background: #2e7d32;
-  color: white;
-  display: inline-block;
-  padding: 5px 15px;
+  padding: 6px 16px;
   border-radius: 50px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-/* ===== PRICING CARDS ===== */
-.pricing-container {
-  display: flex;
-  justify-content: center;
+.premium-hero h1 { font-size: 42px; margin: 20px 0; }
+.premium-hero h1 span { color: #2e7d32; }
+
+/* Pricing Grid */
+.pricing-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 30px;
-  margin-top: 50px;
-  flex-wrap: wrap;
+  margin-bottom: 80px;
 }
 
-.price-card {
-  background: white;
-  padding: 40px;
-  border-radius: 30px;
-  width: 100%;
-  max-width: 350px;
+.plan-card {
+  background: #fff;
   border: 1px solid #eee;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-  transition: 0.3s;
-}
-
-/* การ์ดตัวเด่น (Featured) */
-.price-card.featured {
-  border: 2px solid #2e7d32;
-  transform: scale(1.05);
+  border-radius: 24px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
   position: relative;
-  box-shadow: 0 20px 40px rgba(46, 125, 50, 0.1);
+  transition: 0.3s ease;
 }
 
-.hot-tag {
+.plan-card:hover { transform: translateY(-10px); }
+
+.featured-pro {
+  border: 2px solid #2e7d32;
+  box-shadow: 0 20px 40px rgba(46, 125, 50, 0.1);
+  background: linear-gradient(180deg, #fff 0%, #f9fff9 100%);
+}
+
+.popular-tag {
   position: absolute;
   top: -15px;
   left: 50%;
   transform: translateX(-50%);
-  background: #f7b733;
-  color: black;
+  background: #2e7d32;
+  color: #fff;
   padding: 5px 20px;
   border-radius: 20px;
-  font-weight: 700;
-  font-size: 12px;
+  font-size: 13px;
 }
 
-.price {
-  font-size: 36px;
-  font-weight: 700;
-  margin: 20px 0;
-}
+.plan-header { text-align: center; }
+.plan-icon { font-size: 40px; margin-bottom: 10px; }
+.plan-price { font-size: 36px; font-weight: 800; margin: 15px 0; }
+.plan-price span { font-size: 16px; color: #999; font-weight: 400; }
 
-.price span {
-  font-size: 14px;
-  color: #888;
-}
-
-.price-card ul {
+.plan-body ul {
   list-style: none;
   padding: 0;
   margin: 30px 0;
-  text-align: left;
+  flex-grow: 1;
 }
 
-.price-card ul li {
-  margin-bottom: 12px;
-  color: #555;
+.plan-body li {
+  margin-bottom: 15px;
   font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* BUTTONS */
-.btn-premium-gold {
+.check-icon { color: #2e7d32; font-style: normal; font-weight: bold; }
+.disabled { color: #ccc; }
+
+.plan-btn {
   width: 100%;
   padding: 15px;
-  background: #2e7d32;
-  color: white;
-  border: none;
-  border-radius: 15px;
-  font-weight: 700;
+  border-radius: 12px;
+  border: 1px solid #2e7d32;
+  background: transparent;
+  color: #2e7d32;
+  font-weight: 600;
   cursor: pointer;
   transition: 0.3s;
 }
 
-.btn-premium-gold:hover {
-  background: #1b5e20;
-  box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+.btn-dark { background: #333; color: #fff; border: none; }
+.btn-gold { background: #2e7d32; color: #fff; border: none; }
+.plan-btn:hover { opacity: 0.9; }
+
+/* Ads Explanation Section */
+.ads-explanation {
+  background: #f7f7f8;
+  border-radius: 30px;
+  padding: 50px;
+  display: flex;
+  justify-content: center;
 }
 
-.btn-secondary {
-  width: 100%;
-  padding: 15px;
-  background: #f5f5f5;
-  border: none;
-  border-radius: 15px;
-  color: #666;
-  font-weight: 600;
-  cursor: pointer;
+.ads-info-content { max-width: 800px; text-align: center; }
+.ad-preview-box {
+  margin-top: 30px;
+  background: #fff;
+  border: 2px dashed #ccc;
+  padding: 40px;
+  border-radius: 20px;
+  color: #888;
+}
+
+@media (max-width: 768px) {
+  .premium-hero h1 { font-size: 32px; }
+  .pricing-layout { grid-template-columns: 1fr; }
 }

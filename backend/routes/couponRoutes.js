@@ -3,7 +3,7 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const Coupon = require("../models/Coupon");
 const CouponUsage = require("../models/CouponUsage");
-const protect = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
 // ================= 1. CREATE (Admin) =================
 router.post("/", protect, async (req, res) => {
