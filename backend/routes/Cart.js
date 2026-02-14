@@ -16,12 +16,6 @@ router.post("/add", protect, async (req, res) => {
       return res.status(404).json({ message: "ไม่พบสินค้า" });
     }
 
-    if (String(product.user) === String(req.user.id)) {
-      return res.status(400).json({
-        message: "ไม่สามารถเพิ่มสินค้าของตัวเองลงตะกร้าได้"
-      });
-    }
-
     let cart = await Cart.findOne({ user: req.user.id });
 
     if (!cart) {
@@ -36,8 +30,26 @@ router.post("/add", protect, async (req, res) => {
     );
 
     if (itemIndex > -1) {
-      cart.items[itemIndex].quantity += quantity;
+      // ✅ มีของใน cart แล้ว
+      const currentQty = cart.items[itemIndex].quantity;
+      const newQty = currentQty + quantity;
+
+      if (newQty > product.quantity) {
+        return res.status(400).json({
+          message: `สินค้านี้มีอยู่ในตะกร้าแล้ว (เหลือ ${product.quantity} ชิ้น)`
+        });
+      }
+
+      cart.items[itemIndex].quantity = newQty;
+
     } else {
+      // ✅ ยังไม่มีใน cart
+      if (quantity > product.quantity) {
+        return res.status(400).json({
+          message: `สินค้าเหลือเพียง ${product.quantity} ชิ้น`
+        });
+      }
+
       cart.items.push({
         product: productId,
         quantity,
@@ -49,9 +61,11 @@ router.post("/add", protect, async (req, res) => {
     res.json(cart);
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: error.message });
   }
 });
+
 
 // ================= GET CART =================
 router.get("/", protect, async (req, res) => {
