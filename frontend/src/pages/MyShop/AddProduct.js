@@ -7,6 +7,7 @@ export default function AddProduct() {
   const navigate = useNavigate();
 
   const [images, setImages] = useState([]);
+  const [tradeImages, setTradeImages] = useState([]);
 
   const [form, setForm] = useState({
     title: "",
@@ -18,23 +19,39 @@ export default function AddProduct() {
     tradeOption: "sell_only",
     lat: "",
     lng: "",
-    locationName: ""
+    address: "",
+    wantedCategory: "",
+    wantedKeywords: ""
   });
 
+  // ---------------- IMAGE ----------------
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-
     setImages((prev) => [...prev, ...files]);
   };
 
-  const removeImage = (index) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+  const handleTradeImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setTradeImages((prev) => [...prev, ...files]);
   };
 
+  const removeImage = (i) => {
+    setImages((prev) => prev.filter((_, index) => index !== i));
+  };
+
+  const removeTradeImage = (i) => {
+    setTradeImages((prev) => prev.filter((_, index) => index !== i));
+  };
+
+  // ---------------- CHANGE ----------------
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
+  // ---------------- SUBMIT ----------------
   const submit = async () => {
     const mustHavePrice =
       form.tradeOption === "sell_only" ||
@@ -45,16 +62,13 @@ export default function AddProduct() {
       !form.category ||
       !form.deliveryType ||
       !form.tradeOption ||
-      !form.locationName ||
+      !form.address ||
       form.quantity === "" ||
-      (mustHavePrice && !form.price)
+      (mustHavePrice && !form.price) ||
+      (form.tradeOption === "trade_allowed" &&
+        (!form.wantedCategory || !form.wantedKeywords))
     ) {
-      alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");
-      return;
-    }
-
-    if (mustHavePrice && Number(form.price) <= 0) {
-      alert("ราคาต้องมากกว่า 0");
+      alert("กรุณากรอกข้อมูลให้ครบ");
       return;
     }
 
@@ -66,21 +80,26 @@ export default function AddProduct() {
       formData.append("category", form.category);
       formData.append("deliveryType", form.deliveryType);
       formData.append("tradeOption", form.tradeOption);
-      formData.append("locationName", form.locationName);
+      formData.append("address", form.address);
       formData.append("quantity", Number(form.quantity));
 
-      // 🔥 เงื่อนไขราคาใหม่
       formData.append(
         "price",
-        form.tradeOption === "trade_allowed"
-          ? 0
-          : Number(form.price)
+        form.tradeOption === "trade_allowed" ? 0 : Number(form.price)
       );
 
-      formData.append("lat", form.lat ? Number(form.lat) : null);
-      formData.append("lng", form.lng ? Number(form.lng) : null);
+      formData.append("lat", form.lat);
+      formData.append("lng", form.lng);
 
-      // เพิ่มรูปหลายรูป
+      if (form.tradeOption === "trade_allowed") {
+        formData.append("wantedCategory", form.wantedCategory);
+        formData.append("wantedKeywords", form.wantedKeywords);
+
+        tradeImages.forEach((img) => {
+          formData.append("wantedImages", img);
+        });
+      }
+
       images.forEach((img) => {
         formData.append("images", img);
       });
@@ -100,12 +119,12 @@ export default function AddProduct() {
       navigate("/products");
 
     } catch (err) {
-      console.error(err.response?.data || err);
+      console.error(err);
       alert("เกิดข้อผิดพลาด");
     }
   };
 
-
+  // ---------------- LOCATION ----------------
   const getMyLocation = () => {
     if (!navigator.geolocation) {
       alert("เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง");
@@ -113,199 +132,201 @@ export default function AddProduct() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
 
-        setForm((prev) => ({
-          ...prev,
-          lat: latitude,
-          lng: longitude
-        }));
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await res.json();
 
-        alert("ดึงตำแหน่งปัจจุบันเรียบร้อยแล้ว");
+          setForm((prev) => ({
+            ...prev,
+            lat: String(latitude),
+            lng: String(longitude),
+            address: data.display_name || ""
+          }));
+
+          alert("ดึงตำแหน่งพร้อมที่อยู่เรียบร้อยแล้ว");
+
+        } catch (err) {
+          console.error(err);
+          alert("ไม่สามารถแปลงพิกัดเป็นชื่อพื้นที่ได้");
+        }
       },
-      (error) => {
-        alert("ไม่สามารถเข้าถึงตำแหน่งของคุณได้ กรุณาอนุญาตการเข้าถึง");
-        console.error(error);
-      }
+      () => alert("ไม่สามารถเข้าถึงตำแหน่งได้")
     );
   };
 
-
+  // ================= UI =================
   return (
     <div className="add-product-container">
       <h1>ลงขายสินค้า</h1>
 
       <div className="form-group">
-        <label>ชื่อสินค้า <span>*</span></label>
-        <input
-          name="title"
-          value={form.title}
-          onChange={handleChange}
-          required
-        />
+        <label>ชื่อสินค้า *</label>
+        <input name="title" value={form.title} onChange={handleChange} />
       </div>
 
       <div className="form-group">
         <label>รายละเอียดสินค้า</label>
-        <textarea
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-        />
+        <textarea name="description" value={form.description} onChange={handleChange} />
       </div>
 
+      {/* รูปสินค้า */}
       <div className="form-group">
         <label>รูปสินค้า</label>
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleImageChange}
-        />
+        <input type="file" multiple accept="image/*" onChange={handleImageChange} />
 
-        {/* preview รูป */}
         <div className="image-preview">
-          {images.map((img, index) => (
-            <div key={index} className="preview-item">
-              <img
-                src={URL.createObjectURL(img)}
-                alt="preview"
-              />
-              <button
-                type="button"
-                className="remove-btn"
-                onClick={() => removeImage(index)}
-              >
-                ✕
-              </button>
+          {images.map((img, i) => (
+            <div key={i} className="preview-item">
+              <img src={URL.createObjectURL(img)} alt="" />
+              <button onClick={() => removeImage(i)}>✕</button>
             </div>
           ))}
         </div>
-
       </div>
 
+      {/* ราคา + จำนวน */}
       {(form.tradeOption === "sell_only" ||
         form.tradeOption === "negotiable") && (
-          <div className="form-group">
-            <label>ราคา (บาท) <span>*</span></label>
+          <div className="inline-row">
+            <div className="form-group">
+              <label>ราคา (บาท)</label>
+              <input name="price" type="number" value={form.price} onChange={handleChange} />
+            </div>
 
-            <input
-              name="price"
-              type="number"
-              min="0"
-              value={form.price}
-              onChange={handleChange}
-              required
-            />
+            <div className="form-group">
+              <label>จำนวนสินค้า</label>
+              <input name="quantity" type="number" value={form.quantity} onChange={handleChange} />
+            </div>
           </div>
         )}
 
-      <div className="form-group">
-        <label>จำนวนสินค้า <span>*</span></label>
-        <input
-          name="quantity"
-          type="number"
-          min="0"
-          value={form.quantity}
-          onChange={handleChange}
-        />
+      {/* หมวด + ส่งสินค้า */}
+      <div className="inline-row">
+        <div className="form-group">
+          <label>หมวดหมู่</label>
+          <select name="category" value={form.category} onChange={handleChange}>
+            <option value="">-- เลือกหมวด --</option>
+            <option value="เสื้อผ้า">เสื้อผ้า</option>
+            <option value="เครื่องใช้ไฟฟ้า">เครื่องใช้ไฟฟ้า</option>
+            <option value="หนังสือ">หนังสือ</option>
+            <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
+            <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
+            <option value="อาหาร">อาหาร</option>
+            <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
+            <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
+            <option value="อื่นๆ">อื่นๆ</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>รูปแบบการส่ง</label>
+          <select name="deliveryType" value={form.deliveryType} onChange={handleChange}>
+            <option value="delivery">จัดส่ง</option>
+            <option value="meetup">นัดรับ</option>
+            <option value="both">ได้ทั้งคู่</option>
+          </select>
+        </div>
       </div>
 
+      {/* ตัวเลือกขาย */}
       <div className="form-group">
-        <label>หมวดหมู่ <span>*</span></label>
-
-        <select
-          name="category"
-          value={form.category}
-          onChange={handleChange}
-          required
-        >
-          <option value="">-- เลือกหมวดหมู่ --</option>
-          <option value="เสื้อผ้า">เสื้อผ้า</option>
-          <option value="เครื่องใช้ไฟฟ้า">เครื่องใช้ไฟฟ้า</option>
-          <option value="หนังสือ">หนังสือ</option>
-          <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
-          <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
-          <option value="อาหาร">อาหาร</option>
-          <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
-          <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
-          <option value="อื่นๆ">อื่นๆ</option>
-        </select>
-      </div>
-
-      <div className="form-group">
-        <label>รูปแบบการส่งสินค้า <span>*</span></label>
-        <select
-          name="deliveryType"
-          value={form.deliveryType}
-          onChange={handleChange}
-        >
-          <option value="delivery">จัดส่งเท่านั้น</option>
-          <option value="meetup">นัดรับเท่านั้น</option>
-          <option value="both">จัดส่งหรือนัดรับ</option>
-        </select>
-      </div>
-
-      <div className="form-group">
-        <label>ตัวเลือกการขาย <span>*</span></label>
-        <select
-          name="tradeOption"
-          value={form.tradeOption}
-          onChange={handleChange}
-        >
+        <label>ตัวเลือกการขาย</label>
+        <select name="tradeOption" value={form.tradeOption} onChange={handleChange}>
           <option value="sell_only">ขายเท่านั้น</option>
-          <option value="trade_allowed">รับแลกเท่านั้น</option>
-          <option value="negotiable">รับแลก / ต่อรองได้</option>
+          <option value="trade_allowed">รับแลก</option>
+          <option value="negotiable">ขาย/แลก</option>
         </select>
       </div>
 
+      {/* ⭐ เฉพาะเทรด */}
+      {form.tradeOption === "trade_allowed" && (
+        <>
+          <hr />
+          <h3>ข้อมูลสินค้าที่ต้องการแลก</h3>
+
+          {/* ✅ หมวด + คำค้นหา แถวเดียวกัน */}
+          <div className="inline-row">
+            <div className="form-group">
+              <label>หมวดหมู่ที่อยากได้</label>
+              <select
+                name="wantedCategory"
+                value={form.wantedCategory}
+                onChange={handleChange}
+              >
+                <option value="">-- เลือกหมวด --</option>
+                <option value="เสื้อผ้า">เสื้อผ้า</option>
+                <option value="เครื่องใช้ไฟฟ้า">เครื่องใช้ไฟฟ้า</option>
+                <option value="หนังสือ">หนังสือ</option>
+                <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
+                <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
+                <option value="อาหาร">อาหาร</option>
+                <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
+                <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
+                <option value="อื่นๆ">อื่นๆ</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>คำค้นหา</label>
+              <input
+                name="wantedKeywords"
+                value={form.wantedKeywords}
+                onChange={handleChange}
+                placeholder="เช่น หูฟัง, powerbank"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>รูปสินค้าที่อยากได้</label>
+            <input type="file" multiple accept="image/*" onChange={handleTradeImageChange} />
+
+            <div className="image-preview">
+              {tradeImages.map((img, i) => (
+                <div key={i} className="preview-item">
+                  <img src={URL.createObjectURL(img)} alt="" />
+                  <button onClick={() => removeTradeImage(i)}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ที่อยู่ */}
       <div className="form-group">
-        <label>ชื่อสถานที่อยู่ <span>*</span></label>
+        <label>ที่อยู่โดยประมาณ *</label>
         <input
-          name="locationName"
-          value={form.locationName}
+          name="address"
+          value={form.address}
           onChange={handleChange}
+          placeholder="กดใช้ตำแหน่งปัจจุบัน หรือพิมพ์เอง"
         />
       </div>
 
+      {/* พิกัด */}
       <div className="form-group">
-        <div className="label-inline">
-          <label>พิกัด (Latitude / Longitude)</label>
-          <button
-            type="button"
-            className="location-btn"
-            onClick={getMyLocation}
-          >
+        <div className="location-header">
+          <label>พิกัด</label>
+          <button type="button" className="location-btn" onClick={getMyLocation}>
             ใช้ตำแหน่งปัจจุบัน
           </button>
         </div>
 
         <div className="form-row">
-          <input
-            name="lat"
-            type="number"
-            step="any"
-            placeholder="Latitude"
-            value={form.lat}
-            onChange={handleChange}
-          />
-          <input
-            name="lng"
-            type="number"
-            step="any"
-            placeholder="Longitude"
-            value={form.lng}
-            onChange={handleChange}
-          />
+          <input name="lat" value={form.lat} onChange={handleChange} placeholder="Latitude" />
+          <input name="lng" value={form.lng} onChange={handleChange} placeholder="Longitude" />
         </div>
       </div>
-
 
       <button onClick={submit} className="submit-btn">
         บันทึกสินค้า
       </button>
     </div>
-
   );
 }
