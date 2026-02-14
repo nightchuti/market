@@ -3,6 +3,7 @@ import axios from "axios";
 import "./AllProducts.css";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
+import AdCard from "../components/AdCard"; // ✅ 1. Import AdCard ที่เราสร้างไว้
 
 function AllProducts() {
   const [products, setProducts] = useState([]);
@@ -37,6 +38,7 @@ function AllProducts() {
 
   const fetchProducts = async (params = {}) => {
     try {
+      // Backend จะส่งข้อมูลที่มีทั้ง Product และ Ads ผสมมาแล้ว (ตาม Logic Interleave)
       const res = await axios.get("http://localhost:5000/api/products", { params });
       setProducts(res.data.products);
       setPagination(res.data.pagination);
@@ -60,14 +62,13 @@ function AllProducts() {
     <div className="all-products">
       <h1>สินค้าทั้งหมด</h1>
 
-      {/* ===== FILTER BAR ===== */}
+      {/* ===== FILTER BAR (โค้ดเดิม) ===== */}
       <div className="filter-bar">
         <input
           placeholder="ค้นหาสินค้า..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-
         <select value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="">ทุกหมวดหมู่</option>
           <option value="เสื้อผ้า">เสื้อผ้า</option>
@@ -96,10 +97,17 @@ function AllProducts() {
         </button>
       </div>
 
-      {/* ===== PRODUCT GRID ===== */}
+      {/* ===== PRODUCT GRID (ปรับปรุงใหม่) ===== */}
       <div className="product-grid">
         {products.map((p) => {
-          const isBoosted = p.isBoosted && new Date(p.boostExpireAt) > new Date();
+          // ✅ 2. เช็คว่าเป็นโฆษณา (Native Ads) หรือไม่
+          if (p.isAds) {
+            return <AdCard key={p._id} ad={p} />;
+          }
+
+          // ✅ 3. ถ้าเป็นสินค้าปกติ ให้เช็คสถานะ Boost เหมือนเดิม
+          const isBoosted = p.isBoosted && p.boostExpireAt && new Date(p.boostExpireAt) > new Date();
+          
           return (
             <div 
               key={p._id} 
@@ -114,7 +122,7 @@ function AllProducts() {
 
       {products.length === 0 && <p className="empty">ไม่พบสินค้า</p>}
 
-      {/* ===== PAGINATION (ย้ายมาไว้ข้างล่างสุดแบบ Static ไม่ลอยทับ) ===== */}
+      {/* ===== PAGINATION (โค้ดเดิม) ===== */}
       {pagination && (
         <div className="pagination-container">
           <button

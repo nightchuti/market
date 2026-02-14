@@ -235,4 +235,68 @@
   background: #eeeeee;
   color: #616161;
 }
+.pro-badge {
+  background: #ffd700;
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-left: 10px;
+  vertical-align: middle;
+}
 
+.ad-request-card {
+  background: #fff;
+  border: 1px solid rgba(46, 125, 50, 0.2);
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.05);
+}
+
+.ad-card-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.ad-icon {
+  font-size: 30px;
+  background: #f1f8e9;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.ad-card-content h4 { margin: 0; color: #2e7d32; }
+.ad-card-content p { margin: 4px 0 0 0; font-size: 13px; color: #666; }
+
+.btn-request {
+  background: #2e7d32;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-request:hover { background: #1b5e20; }
+/* รองรับมือถือ */
+@media (max-width: 600px) {
+  .ad-request-card {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  .ad-card-content {
+    flex-direction: column;
+  }
+}

@@ -119,3 +119,21 @@
   font-weight: bold;
   color: #2e7d32;
 }
+.boosted-active {
+  border: 1.5px solid #2e7d32; /* เขียว มก. */
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(46, 125, 50, 0.15);
+  transform: scale(1.02); /* ขยายขนาดขึ้นนิดเดียว */
+  transition: all 0.3s ease;
+}
+
+.boost-badge-scoped {
+  background: linear-gradient(90deg, #2e7d32, #66bb6a);
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}

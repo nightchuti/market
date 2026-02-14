@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const Cart = require("../models/Cart");
-const protect = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
 // ================= ADD TO CART =================
 router.post("/add", protect, async (req, res) => {

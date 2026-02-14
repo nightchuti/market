@@ -4,25 +4,23 @@ const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 const connectDB = require("./config/db");
-
-// ✅ 1. Import Socket Logic
 const socketManager = require("./socket/socketManager"); 
 
 // ===== 2. ROUTES IMPORT =====
 const authRoutes = require("./routes/auth");
-const productRoutes = require("./routes/Product"); // เช็คชื่อไฟล์ดีๆ ว่า Product.js หรือ products.js
+const productRoutes = require("./routes/Product");
 const cartRoutes = require("./routes/Cart");
 const orderRoutes = require("./routes/orderRoutes");
 const addressRoutes = require("./routes/addressRoutes");
+const adRoutes = require("./routes/adRoutes"); // ✅ เพิ่มบรรทัดนี้เพื่อแก้ไข ReferenceError
 
 // Shop & Promotion System
-const shopRoutes = require("./routes/shopRoute"); // *แก้ชื่อไฟล์ให้ตรงกับที่สร้าง (shops.js)
-const subscriptionRoutes = require("./routes/subscription"); // *เพิ่มอันนี้เข้ามาครับ!
+const shopRoutes = require("./routes/shopRoute"); 
+const subscriptionRoutes = require("./routes/subscription"); // คงไว้สำหรับระบบ 20.- และ 99.-
 
 const couponRoutes = require("./routes/couponRoutes"); 
 const tradeRoutes = require("./routes/tradeRoutes");
 const chatRoutes = require("./routes/chatRoutes");
-
 
 const app = express();
 const server = http.createServer(app);
@@ -33,11 +31,8 @@ const io = new Server(server, {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"],
     credentials: true
-  },
-  allowEIO3: true
+  }
 });
-
-// ✅ 4. INITIALIZE SOCKET LOGIC
 socketManager(io);
 
 // ===== 5. MIDDLEWARE =====
@@ -54,23 +49,14 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/address", addressRoutes);
+app.use("/api/ads", adRoutes); // ✅ ใช้งานได้แล้วหลังจาก Import ด้านบน
 
-// Shop & Subscription API
-app.use("/api/shops", shopRoutes); // ใช้ /api/shops จะสื่อความหมายกว่า /api/shop (พหูพจน์)
-app.use("/api/subscription", subscriptionRoutes); // *ต้องมีบรรทัดนี้ ไม่งั้นจ่ายเงินอัปเกรดไม่ได้
+app.use("/api/shops", shopRoutes); 
+app.use("/api/subscription", subscriptionRoutes); // ระบบสมัครสมาชิก/บูสสินค้าแบบอัตโนมัติ
 
 app.use("/api/coupons", couponRoutes);
 app.use("/api/trades", tradeRoutes);
 app.use("/api/chat", chatRoutes);
 
-
-app.get("/", (req, res) => {
-  res.send("API Running");
-});
-
-// ===== 8. START SERVER =====
 const PORT = process.env.PORT || 5000;
-
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

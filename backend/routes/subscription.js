@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Shop = require("../models/shop");
 const User = require("../models/User");
-const protect = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
 // POST /api/subscription/upgrade
 router.post("/upgrade", protect, async (req, res) => {

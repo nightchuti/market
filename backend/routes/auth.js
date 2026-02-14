@@ -3,13 +3,14 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const User = require("../models/User");
-const protect = require("../middleware/authMiddleware");
+// ✅ ดึงแบบ Destructuring ให้ตรงกับ middleware/authMiddleware.js
+const { protect } = require("../middleware/authMiddleware"); 
 const ProfileLog = require("../models/ProfileLog");
 
 const router = express.Router();
 
 /* =====================================================
-   1. Config การบันทึกรูปภาพ
+    1. Config การบันทึกรูปภาพ
 ===================================================== */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -28,7 +29,7 @@ const upload = multer({
 });
 
 /* =====================================================
-   2. ✅ GET /profile (ดึงข้อมูลไปแสดงที่หน้า Profile)
+    2. ✅ GET /profile (ดึงข้อมูลทั้งหมด)
 ===================================================== */
 router.get("/profile", protect, async (req, res) => {
   try {
@@ -42,14 +43,13 @@ router.get("/profile", protect, async (req, res) => {
 });
 
 /* =====================================================
-   3. ✅ PUT /profile (บันทึกข้อมูลเมื่อกด Save)
+    3. ✅ PUT /profile (อัปเดตข้อมูล)
 ===================================================== */
 router.put("/profile", protect, upload.single("profileImage"), async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
 
-    const now = Date.now();
     const { username, phone, gender, bio, birthday } = req.body;
     const changedFields = {};
 
@@ -57,7 +57,10 @@ router.put("/profile", protect, upload.single("profileImage"), async (req, res) 
     if (username || phone) {
       const duplicate = await User.findOne({
         _id: { $ne: user._id },
-        $or: [{ username }, { phonenumber: phone }],
+        $or: [
+          ...(username ? [{ username }] : []),
+          ...(phone ? [{ phonenumber: phone }] : [])
+        ],
       });
       if (duplicate) return res.status(400).json({ message: "ชื่อผู้ใช้หรือเบอร์โทรนี้ถูกใช้งานแล้ว" });
     }
@@ -71,6 +74,7 @@ router.put("/profile", protect, upload.single("profileImage"), async (req, res) 
       changedFields.phonenumber = { from: user.phonenumber, to: phone };
       user.phonenumber = phone;
     }
+    
     if (gender !== undefined) user.gender = gender;
     if (bio !== undefined) user.bio = bio;
     if (birthday !== undefined) user.birthday = birthday;
@@ -92,16 +96,6 @@ router.put("/profile", protect, upload.single("profileImage"), async (req, res) 
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
-  }
-});
-
-// ต้องแยกกันแบบนี้ ห้ามซ้อนใน router.put
-router.get("/profile", protect, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select("username profileImage"); // ดึงแค่ชื่อและรูป
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ message: "Error" });
   }
 });
 

@@ -11,6 +11,8 @@ import Cart from "./pages/Cart";
 import ProfilePage from "./pages/ProfilePage/ProfilePage";
 import EditProduct from "./pages/MyShop/EditProduct";
 import PremiumMember from "./pages/PreMember/PremiumMember";
+import AdminDashboard from "./pages/AdminDashboard";
+
 
 function App() {
   return (
@@ -29,6 +31,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/edit-product/:id" element={<EditProduct />} />
           <Route path="/premium" element={<PremiumMember />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const tradeController = require("../controllers/tradeController");
-const protect = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 const multer = require("multer");
 
 const upload = multer({

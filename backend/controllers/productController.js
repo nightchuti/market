@@ -1,7 +1,8 @@
 const Product = require("../models/Product");
 const User = require("../models/User");
+const Ad = require("../models/Ad");
 
-// 1. ดึงสินค้าทั้งหมดพร้อมแทรกโฆษณาเนียนๆ
+// 1. ดึงสินค้าทั้งหมดพร้อมแทรกโฆษณา
 exports.getAllProducts = async (req, res) => {
   try {
     const { search, category, tradeOption, page = 1, limit = 8 } = req.query;
@@ -15,25 +16,25 @@ exports.getAllProducts = async (req, res) => {
     const allItems = await Product.find(query).populate("user", "username").sort({ createdAt: -1 });
 
     const now = new Date();
-    // แยกสินค้า Boost (ที่ยังไม่หมดอายุ) และสินค้าปกติ
+    // แยกสินค้า Boost และสินค้าปกติ
     const boosted = allItems.filter(p => p.isBoosted && p.boostExpireAt && new Date(p.boostExpireAt) > now)
-                            .sort(() => 0.5 - Math.random()); 
+                           .sort(() => 0.5 - Math.random()); 
     const regular = allItems.filter(p => !p.isBoosted || !p.boostExpireAt || new Date(p.boostExpireAt) <= now);
 
-    // จำลองข้อมูลโฆษณาร้านอาหาร (Native Ads)
-    const nativeAds = [
-      { _id: "ad_1", isAds: true, name: "กะเพราป้าใจ ประตู 3", imageUrl: "https://via.placeholder.com/300x200", price: "เริ่มต้น 40.-", location: "หลัง มก." }
-    ];
+    // ✅ ดึงโฆษณาจริงจากหน้า Admin
+    const realAds = await Ad.find().limit(5).lean();
+    const formattedAds = realAds.map(ad => ({ ...ad, isAds: true }));
 
     let mixed = [];
-    let bIdx = 0, rIdx = 0;
+    let bIdx = 0, rIdx = 0, adIdx = 0;
     while (bIdx < boosted.length || rIdx < regular.length) {
       if (bIdx < boosted.length) mixed.push(boosted[bIdx++]);
       for (let i = 0; i < 3 && rIdx < regular.length; i++) {
         mixed.push(regular[rIdx++]);
-        // แทรก Ads ทุกครั้งที่สินค้าปกติครบ 6 ชิ้น
-        if (mixed.length % 6 === 0 && nativeAds.length > 0) {
-          mixed.push({...nativeAds[0], _id: `ad_index_${mixed.length}`});
+        if (mixed.length % 6 === 0 && formattedAds.length > 0) {
+          const currentAd = formattedAds[adIdx % formattedAds.length];
+          mixed.push({...currentAd, _id: `ad_pos_${mixed.length}_${currentAd._id}`});
+          adIdx++;
         }
       }
     }
@@ -58,14 +59,12 @@ exports.activateBoost = async (req, res) => {
     if (user.boostQuota > 0) {
       user.boostQuota -= 1;
       product.isBoosted = true;
-      product.boostExpireAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // บูส 3 วัน
+      product.boostExpireAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); 
       
       await user.save();
       await product.save();
       return res.json({ success: true, quotaLeft: user.boostQuota });
     }
-
-    // ถ้าโควตาหมด ส่ง 402 เพื่อให้หน้าบ้านพาไปหน้าชำระเงิน 20 บาท
     res.status(402).json({ message: "Quota empty" });
   } catch (err) {
     res.status(500).json({ message: "Error" });
