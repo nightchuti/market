@@ -8,6 +8,7 @@ import ChatPage from "./pages/ChatPage";
 import MyShop from "./pages/MyShop/MyShop";
 import ChatFloating from "./pages/ChatFloating";
 import Cart from "./pages/Cart";
+import ProfilePage from "./pages/ProfilePage/ProfilePage";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/my-shop" element={<MyShop />} />
           <Route path="/chat-floating" element={<ChatFloating />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/profile"     element={<ProfilePage />} />
         </Route>
       </Routes>
     </BrowserRouter>
