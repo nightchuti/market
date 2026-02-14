@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import Inventory from "./Inventory";
 import SalesHistory from "./SalesHistory";
 
-
 const API_URL = "http://localhost:5000";
 
 function MyShop() {
@@ -19,7 +18,6 @@ function MyShop() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       setIsLoggedIn(false);
       setLoading(false);
@@ -29,7 +27,6 @@ function MyShop() {
     }
   }, []);
 
-
   const fetchMyProducts = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/products/my`, {
@@ -37,10 +34,8 @@ function MyShop() {
           Authorization: `Bearer ${localStorage.getItem("token")}`
         }
       });
-
       setProducts(res.data);
     } catch (err) {
-      // ถ้า token หมดอายุ
       if (err.response?.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -56,14 +51,12 @@ function MyShop() {
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm("ต้องการลบสินค้านี้หรือไม่?");
     if (!confirmDelete) return;
-
     try {
       await axios.delete(`${API_URL}/api/products/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`
         }
       });
-
       setProducts(prev => prev.filter(p => p._id !== id));
     } catch (err) {
       alert("ลบสินค้าไม่สำเร็จ");
@@ -81,78 +74,73 @@ function MyShop() {
           }
         }
       );
-
-      // อัปเดต state ทันที (ไม่ต้อง reload ใหม่)
       setProducts(prev =>
-        prev.map(p =>
-          p._id === id ? { ...p, status: "available" } : p
-        )
+        prev.map(p => (p._id === id ? { ...p, status: "available" } : p))
       );
-
     } catch (err) {
-      alert("เกิดข้อผิดพลาด");
+      alert("เกิดข้อผิดพลาดในการลงขาย");
     }
   };
 
-
   if (loading) {
-    return (
-      <div style={{ padding: "100px 20px", textAlign: "center" }}>
-        กำลังโหลดข้อมูล...
-      </div>
-    );
+    return <div style={{ padding: "100px 20px", textAlign: "center" }}>กำลังโหลดข้อมูล...</div>;
   }
 
   if (!isLoggedIn) {
     return (
       <div style={{ padding: "100px 20px", textAlign: "center" }}>
         <h2>กรุณาเข้าสู่ระบบก่อนใช้งาน</h2>
-        <button
-          style={{ marginTop: "20px" }}
-          onClick={() => navigate("/login")}
-        >
-          ไปหน้าเข้าสู่ระบบ
-        </button>
+        <button style={{ marginTop: "20px" }} onClick={() => navigate("/login")}>ไปหน้าเข้าสู่ระบบ</button>
       </div>
     );
   }
 
-  // ปรับการกรองข้อมูล: คลังสินค้าต้องมีทั้ง 'พร้อมขาย' และ 'รอลงขาย'
-  const inventoryProducts = products.filter(p => p.status === "available" || p.status === "pending");
-  const sold = products.filter(p => p.status === "sold");
-  const totalIncome = sold.reduce((sum, p) => sum + (p.price || 0), 0);
+  // =========================================================
+  // ✅ ส่วนการคำนวณ (ต้องอยู่ก่อน return และหลัง check loading/login)
+  // =========================================================
+  
+  // 1. แยกกลุ่มสินค้าตามสถานะ
+  const pendingProducts = products.filter(p => p.status === "pending");
+  const availableProducts = products.filter(p => p.status === "available");
+  const soldProducts = products.filter(p => p.status === "sold");
+
+  // 2. สินค้าที่แสดงในคลัง (รวมตัวที่พร้อมขาย และ ตัวที่รอเรากดยืนยันลงขาย)
+  const inventoryProducts = [...availableProducts, ...pendingProducts];
+
+  // 3. คำนวณรายได้ (เฉพาะตัวที่ขายแล้ว)
+  const totalIncome = soldProducts.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
+
+  // =========================================================
 
   return (
     <div className="shop-wrapper">
-
       <div className="shop-header">
         <div>
           <h2>ร้านค้าของฉัน</h2>
           <p className="sub-text">จัดการสินค้าและติดตามยอดขายของคุณ</p>
         </div>
-
-        <button
-          className="btn-main"
-          onClick={() => navigate("/add-product")}
-        >
+        <button className="btn-main" onClick={() => navigate("/add-product")}>
           + เพิ่มสินค้า
         </button>
       </div>
 
       <div className="summary-cards">
         <div className="summary-card">
-          <h3>{products.length}</h3>
-          <span>สินค้าทั้งหมด</span>
-        </div>
-
-        <div className="summary-card">
-          {/* แสดงจำนวนสินค้าที่รวมทั้งพร้อมขายและรอลงขาย */}
+          {/* แสดงจำนวนสินค้าที่มีอยู่จริงในคลัง ไม่นับของที่ขายไปแล้ว */}
           <h3>{inventoryProducts.length}</h3>
-          <span>ในคลังสินค้า</span>
+          <span>สินค้าในคลัง</span>
         </div>
 
         <div className="summary-card">
-          <h3>{sold.length}</h3>
+          {/* แจ้งเตือนจำนวนสินค้าที่ต้องกด 'ลงขาย' */}
+          <h3 style={{ color: pendingProducts.length > 0 ? "#ef6c00" : "inherit" }}>
+            {pendingProducts.length}
+          </h3>
+          <span>รอลงขาย</span>
+        </div>
+
+        <div className="summary-card">
+          <h3>{soldProducts.length}</h3>
           <span>ขายแล้ว</span>
         </div>
 
@@ -167,21 +155,20 @@ function MyShop() {
           className={activeTab === "inventory" ? "active" : ""}
           onClick={() => setActiveTab("inventory")}
         >
-          คลังสินค้า
+          คลังสินค้า ({inventoryProducts.length})
         </button>
-
         <button
           className={activeTab === "sales" ? "active" : ""}
           onClick={() => setActiveTab("sales")}
         >
-          ประวัติการขาย
+          ประวัติการขาย ({soldProducts.length})
         </button>
       </div>
 
       <div className="shop-list">
         {activeTab === "inventory" && (
           <Inventory
-            products={inventoryProducts} // ใช้ตัวแปรที่กรองใหม่
+            products={inventoryProducts}
             openId={openId}
             setOpenId={setOpenId}
             handleDelete={handleDelete}
@@ -191,11 +178,9 @@ function MyShop() {
         )}
 
         {activeTab === "sales" && (
-          <SalesHistory products={sold} />
+          <SalesHistory products={soldProducts} />
         )}
       </div>
-
-
     </div>
   );
 }
