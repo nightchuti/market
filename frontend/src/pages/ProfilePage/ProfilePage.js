@@ -162,6 +162,7 @@ export default function ProfilePage() {
       }
 
       setProfile(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
       setForm(prev => ({
         ...prev,
