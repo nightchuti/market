@@ -12,7 +12,7 @@ import ProfilePage from "./pages/ProfilePage/ProfilePage";
 import EditProduct from "./pages/MyShop/EditProduct";
 import PremiumMember from "./pages/PreMember/PremiumMember";
 import AdminDashboard from "./pages/AdminDashboard";
-
+import CheckoutPage from "./pages/Checkout/CheckoutPage";
 
 function App() {
   return (
@@ -32,6 +32,7 @@ function App() {
           <Route path="/edit-product/:id" element={<EditProduct />} />
           <Route path="/premium" element={<PremiumMember />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

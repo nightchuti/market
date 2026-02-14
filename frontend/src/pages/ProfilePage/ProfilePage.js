@@ -31,7 +31,6 @@ export default function ProfilePage() {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [removeImage, setRemoveImage] = useState(false);
 
-
   // --- States ---
   const [tab, setTab] = useState("profile");
   const [orderTab, setOrderTab] = useState("all");
@@ -55,6 +54,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [ordersLoading, setOrdersLoading] = useState(false);
+
+  const isEditingAvatar = previewImg || removeImage;
 
   // --- Fetch Functions ---
   const fetchProfile = useCallback(async () => {
@@ -122,70 +123,70 @@ export default function ProfilePage() {
   };
 
   const handleSaveProfile = async () => {
-  setSaving(true);
-  setSaveMsg("");
+    setSaving(true);
+    setSaveMsg("");
 
-  const formData = new FormData();
+    const formData = new FormData();
 
-  formData.append("username", form.username);
-  formData.append("phone", form.phonenumber);
-  formData.append("gender", form.gender);
-  formData.append("bio", form.bio);
-  formData.append("birthday", form.birthday);
+    formData.append("username", form.username);
+    formData.append("phone", form.phonenumber);
+    formData.append("gender", form.gender);
+    formData.append("bio", form.bio);
+    formData.append("birthday", form.birthday);
 
-  if (form.imageFile instanceof File) {
-    formData.append("profileImage", form.imageFile);
-  }
-
-  if (removeImage) {
-    formData.append("removeProfileImage", "true");
-  }
-
-  try {
-    const res = await axios.put(
-      `${API_URL}/api/auth/profile`,
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data"
-        },
-      }
-    );
-
-    const updatedUser = res.data.user || res.data;
-
-    // ✅ ถ้าลบรูป ให้บังคับ null
-    if (removeImage) {
-      updatedUser.profileImage = null;
+    if (form.imageFile instanceof File) {
+      formData.append("profileImage", form.imageFile);
     }
 
-    setProfile(updatedUser);
+    if (removeImage) {
+      formData.append("removeProfileImage", "true");
+    }
 
-    setForm(prev => ({
-      ...prev,
-      username: updatedUser.username,
-      phonenumber: updatedUser.phonenumber,
-      gender: updatedUser.gender,
-      bio: updatedUser.bio,
-      birthday: updatedUser.birthday
-        ? new Date(updatedUser.birthday).toISOString().split('T')[0]
-        : ""
-    }));
+    try {
+      const res = await axios.put(
+        `${API_URL}/api/auth/profile`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+          },
+        }
+      );
 
-    setEditing(false);
-    setPreviewImg(null);
-    setRemoveImage(false);
-    setSaveMsg("บันทึกข้อมูลสำเร็จ ✓");
+      const updatedUser = res.data.user || res.data;
 
-    setTimeout(() => setSaveMsg(""), 3000);
+      // ✅ ถ้าลบรูป ให้บังคับ null
+      if (removeImage) {
+        updatedUser.profileImage = null;
+      }
 
-  } catch (err) {
-    setSaveMsg(err.response?.data?.message || "เกิดข้อผิดพลาดในการบันทึก");
-  } finally {
-    setSaving(false);
-  }
-};
+      setProfile(updatedUser);
+
+      setForm(prev => ({
+        ...prev,
+        username: updatedUser.username,
+        phonenumber: updatedUser.phonenumber,
+        gender: updatedUser.gender,
+        bio: updatedUser.bio,
+        birthday: updatedUser.birthday
+          ? new Date(updatedUser.birthday).toISOString().split('T')[0]
+          : ""
+      }));
+
+      setEditing(false);
+      setPreviewImg(null);
+      setRemoveImage(false);
+      setSaveMsg("บันทึกข้อมูลสำเร็จ ✓");
+
+      setTimeout(() => setSaveMsg(""), 3000);
+
+    } catch (err) {
+      setSaveMsg(err.response?.data?.message || "เกิดข้อผิดพลาดในการบันทึก");
+    } finally {
+      setSaving(false);
+    }
+  };
 
 
   const handleConfirmReceipt = async (orderId) => {
@@ -237,30 +238,30 @@ export default function ProfilePage() {
               alt="Large Avatar"
             />
 
-
             <div className="pp-avatar-actions">
 
-              <button
-                className="pp-btn-edit"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                📷 เปลี่ยนรูป
-              </button>
+              {!isEditingAvatar ? (
+                <>
+                  <button
+                    className="pp-btn-edit"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    📷 เปลี่ยนรูป
+                  </button>
 
-              {profile.profileImage && !removeImage && (
-                <button
-                  className="pp-btn-delete"
-                  onClick={() => {
-                    setPreviewImg(null);
-                    setRemoveImage(true);
-                  }}
-                >
-                  🗑 ลบรูป
-                </button>
-              )}
-
-
-              {(previewImg || removeImage) && (
+                  {profile.profileImage && (
+                    <button
+                      className="pp-btn-delete"
+                      onClick={() => {
+                        setPreviewImg(null);
+                        setRemoveImage(true);
+                      }}
+                    >
+                      🗑 ลบรูป
+                    </button>
+                  )}
+                </>
+              ) : (
                 <>
                   <button
                     className="pp-btn-save"
@@ -286,6 +287,7 @@ export default function ProfilePage() {
               )}
 
             </div>
+
           </div>
         </div>
       )}
@@ -311,7 +313,7 @@ export default function ProfilePage() {
             <p className="pp-hemail">{profile.email}</p>
           </div>
         </div>
-        
+
       </div>
 
       <div className="pp-tabs">
