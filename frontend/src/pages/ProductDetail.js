@@ -30,7 +30,6 @@ function ProductDetail() {
   const handleChat = async () => {
     if (!token) {
       alert("กรุณาเข้าสู่ระบบก่อนแชท");
-      navigate("/login");
       return;
     }
 
@@ -64,11 +63,10 @@ function ProductDetail() {
   };
 
   const handleAddToCart = async () => {
-
+    
     // ✅ ต้อง login ก่อน
     if (!token) {
-      alert("กรุณาเข้าสู่ระบบก่อน");
-      navigate("/login");
+      alert("กรุณาเข้าสู่ระบบก่อนใช้งาน");
       return;
     }
 

@@ -176,7 +176,7 @@ function Cart() {
       {cart.items.length === 0 ? (
         <div className="empty-cart">
           <p>ยังไม่มีสินค้าในตะกร้า</p>
-          <button onClick={() => navigate("/all-products")}>
+          <button onClick={() => navigate("/products")}>
             ไปเลือกสินค้า
           </button>
         </div>

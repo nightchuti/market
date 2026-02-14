@@ -7,12 +7,21 @@ function MyShop() {
   const [products, setProducts] = useState([]);
   const [activeTab, setActiveTab] = useState("inventory");
   const [openId, setOpenId] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchMyProducts();
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setIsLoggedIn(false);
+    } else {
+      setIsLoggedIn(true);
+      fetchMyProducts();
+    }
   }, []);
+
 
   const fetchMyProducts = async () => {
     const res = await axios.get(
@@ -35,6 +44,14 @@ function MyShop() {
   const toggleDropdown = (id) => {
     setOpenId(openId === id ? null : id);
   };
+
+  if (!isLoggedIn) {
+    return (
+      <div style={{ padding: "100px 20px", textAlign: "center"}}>
+        <h2>กรุณาเข้าสู่ระบบก่อนใช้งาน</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="shop-wrapper">
