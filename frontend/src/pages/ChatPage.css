@@ -228,3 +228,91 @@
   border-top: 1px solid #fde68a;
   font-weight: 500;
 }
+/* --- Trade Panel Styling --- */
+.cp-trade {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 15px;
+}
+
+.cp-trade-title {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.cp-trade-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cp-tcard {
+  flex: 1;
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  position: relative;
+}
+
+.cp-tchip {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  background: #4f46e5;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.cp-tchip.alt { background: #10b981; }
+
+.cp-tcard img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+
+.cp-tswap {
+  font-size: 20px;
+  color: #94a3b8;
+}
+
+.cp-tbtns {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.cp-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.cp-btn.accept { background: #10b981; color: white; }
+.cp-btn.reject { background: #fee2e2; color: #ef4444; }
+.cp-btn.cancel { background: #f1f5f9; color: #64748b; }
+
+.cp-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* Status Styles */
+.cp-tstatus {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
+  font-size: 14px;
+}

@@ -7,40 +7,42 @@ import "./ChatPage.css";
 const API_URL = "http://127.0.0.1:5000";
 
 // ✅ helper: avatar ไม่มี null เด็ดขาด — sync กับ ProfilePage
+const DEFAULT_AVATAR = "/images/default-avatar.png";
+
 const getAvatar = (user) => {
-  if (!user) return genAvatar("U");
+  if (!user) return DEFAULT_AVATAR;
   if (user.avatarUrl) return user.avatarUrl;
   if (user.profileImage) {
-    return user.profileImage.startsWith("http")
-      ? user.profileImage
-      : `${API_URL}${user.profileImage}`;
+    if (user.profileImage.startsWith("http")) return user.profileImage;
+    const path = user.profileImage.startsWith("/") ? user.profileImage : `/${user.profileImage}`;
+    return `${API_URL}${path}`;
   }
-  return genAvatar(user.username);
+  return DEFAULT_AVATAR;
 };
 
-const genAvatar = (name) =>
-  `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "U")}&background=475569&color=fff&size=80`;
-
+// ✅ เพิ่มฟังก์ชันนี้เข้าไปเพื่อแก้ Error 'getImgUrl' is not defined
 const getImgUrl = (path) => {
-  if (!path) return "https://placehold.co/80x80/f3f4f6/9ca3af?text=N/A";
-  return path.startsWith("http") ? path : `${API_URL}${path}`;
+  if (!path) return "/images/default-product.png"; // รูปพื้นหลังกรณีไม่มีรูปสินค้า
+  if (path.startsWith("http")) return path;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `${API_URL}${cleanPath}`;
 };
 
 export default function ChatPage() {
-  const params  = useParams();
-  const roomId  = params.roomId || params.sellerId;
+  const params = useParams();
+  const roomId = params.roomId || params.sellerId;
   const navigate = useNavigate();
 
-  const socketRef   = useRef(null);
-  const bottomRef   = useRef(null);
+  const socketRef = useRef(null);
+  const bottomRef = useRef(null);
   const typingTimer = useRef(null);
 
   const [messages, setMessages] = useState([]);
-  const [text, setText]         = useState("");
-  const [room, setRoom]         = useState(null);
-  const [typing, setTyping]     = useState("");
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState("");
+  const [text, setText] = useState("");
+  const [room, setRoom] = useState(null);
+  const [typing, setTyping] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -48,7 +50,7 @@ export default function ChatPage() {
   const [currentUser, setCurrentUser] = useState(
     () => JSON.parse(localStorage.getItem("user") || "{}")
   );
-  const myId = String(currentUser._id || currentUser.id || "");
+  const myId = String(currentUser?._id || currentUser?.id || "");
 
   // ── โหลดห้อง + sync localStorage → ชื่อ/รูปอัปเดตทันที ──
   const fetchRoom = useCallback(async () => {
@@ -56,12 +58,12 @@ export default function ChatPage() {
     const headers = { Authorization: `Bearer ${token}` };
     setLoading(true);
     try {
-      // ✅ sync ข้อมูล user จาก localStorage ทุกครั้งที่ fetch
-      const fresh = JSON.parse(localStorage.getItem("user") || "{}");
-      setCurrentUser(fresh);
+      // ✅ 1. ดึงข้อมูลล่าสุดจาก localStorage มาอัปเดต State ตัวเรา
+      const freshUser = JSON.parse(localStorage.getItem("user") || "{}");
+      setCurrentUser(freshUser); // สมมติว่าคุณเปลี่ยนชื่อ state เป็น setCurrentUser
 
       const [roomRes, msgRes] = await Promise.all([
-        axios.get(`${API_URL}/api/chat/${roomId}`,          { headers }),
+        axios.get(`${API_URL}/api/chat/${roomId}`, { headers }),
         axios.get(`${API_URL}/api/chat/${roomId}/messages`, { headers }),
       ]);
       setRoom(roomRes.data);
@@ -87,10 +89,9 @@ export default function ChatPage() {
 
     const socket = io(API_URL, {
       auth: { token },
-      transports: ["polling", "websocket"],
+      transports: ["websocket"], // ✅ เปลี่ยนให้เหลือแค่ websocket เพื่อความเสถียร
       reconnection: true,
       reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
     });
     socketRef.current = socket;
 
@@ -110,10 +111,10 @@ export default function ChatPage() {
       socket.emit("mark_read", { roomId, userId: myId });
     });
 
-    socket.on("user_typing",      ({ username }) => setTyping(username));
-    socket.on("user_stop_typing", ()             => setTyping(""));
-    socket.on("chat_error",       ({ message })  => alert(message));
-    socket.on("trade_updated",    ({ status })   =>
+    socket.on("user_typing", ({ username }) => setTyping(username));
+    socket.on("user_stop_typing", () => setTyping(""));
+    socket.on("chat_error", ({ message }) => alert(message));
+    socket.on("trade_updated", ({ status }) =>
       setRoom(prev => prev ? { ...prev, tradeStatus: status } : prev));
 
     return () => {
@@ -144,7 +145,7 @@ export default function ChatPage() {
 
   const isClosed = () => {
     if (!room) return false;
-    if (room.type === "trade"  && ["rejected","cancelled","completed"].includes(room.tradeStatus)) return true;
+    if (room.type === "trade" && ["rejected", "cancelled", "completed"].includes(room.tradeStatus)) return true;
     if (room.type === "normal" && room.inquiryStatus === "closed") return true;
     return false;
   };
@@ -159,7 +160,7 @@ export default function ChatPage() {
       await axios.put(`${API_URL}/api/chat/${roomId}/${action}`, {}, { headers });
       socketRef.current?.emit("trade_status_update", {
         roomId,
-        status:    action==="accept" ? "accepted" : action==="reject" ? "rejected" : "cancelled",
+        status: action === "accept" ? "accepted" : action === "reject" ? "rejected" : "cancelled",
         updatedBy: myId,
       });
       fetchRoom();
@@ -169,21 +170,21 @@ export default function ChatPage() {
   // ✅ ใช้ getAvatar แทน .profileImage ตรงๆ
   const otherUser = room?.participants?.find(p => String(p._id || p) !== myId);
 
-  const fmt     = d => d ? new Date(d).toLocaleTimeString("th-TH", { hour:"2-digit", minute:"2-digit" }) : "";
-  const fmtDate = d => d ? new Date(d).toLocaleDateString("th-TH",  { day:"numeric", month:"short" })    : "";
+  const fmt = d => d ? new Date(d).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "";
+  const fmtDate = d => d ? new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short" }) : "";
 
   const STATUS = {
-    pending:     { t: "⏳ รอตอบรับ",    c: "#f59e0b" },
-    negotiating: { t: "💬 กำลังเจรจา",  c: "#3b82f6" },
-    accepted:    { t: "✅ ตกลงแล้ว",    c: "#10b981" },
-    rejected:    { t: "❌ ปฏิเสธแล้ว",  c: "#ef4444" },
-    cancelled:   { t: "🚫 ยกเลิกแล้ว",  c: "#6b7280" },
-    completed:   { t: "🎉 เสร็จสิ้น",   c: "#8b5cf6" },
+    pending: { t: "⏳ รอตอบรับ", c: "#f59e0b" },
+    negotiating: { t: "💬 กำลังเจรจา", c: "#3b82f6" },
+    accepted: { t: "✅ ตกลงแล้ว", c: "#10b981" },
+    rejected: { t: "❌ ปฏิเสธแล้ว", c: "#ef4444" },
+    cancelled: { t: "🚫 ยกเลิกแล้ว", c: "#6b7280" },
+    completed: { t: "🎉 เสร็จสิ้น", c: "#8b5cf6" },
   };
 
   if (!token) return <div className="cp-notice">กรุณาเข้าสู่ระบบก่อน</div>;
-  if (loading) return <div className="cp-loading"><div className="cp-spin"/><p>กำลังโหลด...</p></div>;
-  if (error)   return (
+  if (loading) return <div className="cp-loading"><div className="cp-spin" /><p>กำลังโหลด...</p></div>;
+  if (error) return (
     <div className="cp-error-page">
       <p>⚠️ {error}</p>
       <button className="cp-retry-btn" onClick={fetchRoom}>ลองใหม่</button>
@@ -233,7 +234,7 @@ export default function ChatPage() {
               {STATUS[room.tradeStatus]?.t}
             </p>
           )}
-          {["pending","negotiating"].includes(room?.tradeStatus) && (
+          {["pending", "negotiating"].includes(room?.tradeStatus) && (
             <div className="cp-tbtns">
               {isOwner() && (
                 <>
@@ -254,13 +255,13 @@ export default function ChatPage() {
       {room?.type === "normal" && room?.productId && (
         <div className="cp-pbar"
           onClick={() => navigate(`/products/${room.productId._id || room.productId}`)}
-          style={{ cursor:"pointer" }}>
+          style={{ cursor: "pointer" }}>
           <img src={getImgUrl(room.productId.images?.[0])} alt="" />
           <div>
             <p>{room.productId.title}</p>
             <span>฿{room.productId.price?.toLocaleString()}</span>
           </div>
-          <div style={{ marginLeft:"auto", color:"#9ca3af" }}>›</div>
+          <div style={{ marginLeft: "auto", color: "#9ca3af" }}>›</div>
         </div>
       )}
 
@@ -270,9 +271,9 @@ export default function ChatPage() {
           <p className="cp-empty">ยังไม่มีข้อความ — เริ่มสนทนาได้เลย 👋</p>
         )}
         {messages.map((msg, i) => {
-          const me    = String(msg.sender?._id || msg.sender) === myId;
+          const me = String(msg.sender?._id || msg.sender) === myId;
           const isSys = msg.messageType && msg.messageType !== "text";
-          const showDate = i === 0 || fmtDate(msg.createdAt) !== fmtDate(messages[i-1].createdAt);
+          const showDate = i === 0 || fmtDate(msg.createdAt) !== fmtDate(messages[i - 1].createdAt);
 
           return (
             <React.Fragment key={msg._id || i}>
@@ -298,7 +299,7 @@ export default function ChatPage() {
         {typing && (
           <div className="cp-typing">
             <span>{typing} กำลังพิมพ์...</span>
-            <div className="cp-dots"><i/><i/><i/></div>
+            <div className="cp-dots"><i /><i /><i /></div>
           </div>
         )}
         <div ref={bottomRef} />
@@ -311,7 +312,7 @@ export default function ChatPage() {
         ) : (
           <>
             <input className="cp-input" value={text} onChange={handleInput}
-              onKeyDown={e => e.key==="Enter" && !e.shiftKey && sendMessage()}
+              onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
               placeholder="พิมพ์ข้อความ..." />
             <button className="cp-send" onClick={sendMessage} disabled={!text.trim()}>➤</button>
           </>
