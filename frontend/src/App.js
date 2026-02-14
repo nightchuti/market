@@ -3,7 +3,7 @@ import Layout from "./layouts/Layout";
 import Home from "./pages/Home";
 import AllProducts from "./pages/AllProducts";
 import ProductDetail from "./pages/ProductDetail";
-import AddProduct from "./pages/AddProduct";
+import AddProduct from "./pages/MyShop/AddProduct";
 import ChatPage from "./pages/ChatPage";
 import MyShop from "./pages/MyShop/MyShop";
 import ChatFloating from "./pages/ChatFloating";
