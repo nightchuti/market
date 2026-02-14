@@ -7,27 +7,32 @@ import "./ChatPage.css";
 const API_URL = "http://127.0.0.1:5000";
 
 export default function ChatPage() {
-  const params  = useParams();
-  const roomId  = params.roomId || params.sellerId;
+  const params = useParams();
+  const roomId = params.roomId || params.sellerId;
   const navigate = useNavigate();
 
-  const socketRef   = useRef(null);
-  const bottomRef   = useRef(null);
+  const socketRef = useRef(null);
+  const bottomRef = useRef(null);
   const typingTimer = useRef(null);
 
   const [messages, setMessages] = useState([]);
-  const [text, setText]         = useState("");
-  const [room, setRoom]         = useState(null);
-  const [typing, setTyping]     = useState("");
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState("");
+  const [text, setText] = useState("");
+  const [room, setRoom] = useState(null);
+  const [typing, setTyping] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const token       = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  // ✅ รองรับทั้ง _id และ id จาก localStorage
   const myId = String(currentUser._id || currentUser.id || "");
 
-  // ── โหลดห้อง + ประวัติข้อความ ──────────────────────────
+  // ✅ ฟังก์ชันจัดการ URL รูปภาพ (เพิ่มเข้ามาใหม่)
+  const getImgUrl = (path) => {
+    if (!path) return "https://placehold.co/80x80/f3f4f6/9ca3af?text=N/A";
+    if (path.startsWith("http")) return path;
+    return `${API_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+  };
+
   const fetchRoom = useCallback(async () => {
     if (!token || !roomId) return;
     const headers = { Authorization: `Bearer ${token}` };
@@ -50,12 +55,10 @@ export default function ChatPage() {
 
   useEffect(() => { fetchRoom(); }, [fetchRoom]);
 
-  // ── Auto Scroll ─────────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── Socket.io ────────────────────────────────────────────
   useEffect(() => {
     if (!token || !roomId || !myId) return;
 
@@ -78,7 +81,6 @@ export default function ChatPage() {
       socket.emit("join_room", roomId);
     });
 
-    // ✅ รับข้อความจาก socket เท่านั้น — ไม่ setMessages ฝั่งส่งเอง
     socket.on("receive_message", (msg) => {
       setMessages((prev) => {
         if (prev.find((m) => String(m._id) === String(msg._id))) return prev;
@@ -86,10 +88,10 @@ export default function ChatPage() {
       });
     });
 
-    socket.on("user_typing",      ({ username }) => setTyping(username));
-    socket.on("user_stop_typing", ()             => setTyping(""));
-    socket.on("chat_error",       ({ message })  => alert(message));
-    socket.on("trade_updated",    ({ status })   =>
+    socket.on("user_typing", ({ username }) => setTyping(username));
+    socket.on("user_stop_typing", () => setTyping(""));
+    socket.on("chat_error", ({ message }) => alert(message));
+    socket.on("trade_updated", ({ status }) =>
       setRoom((prev) => prev ? { ...prev, tradeStatus: status } : prev)
     );
 
@@ -97,10 +99,8 @@ export default function ChatPage() {
       socket.emit("leave_room", roomId);
       socket.disconnect();
     };
-  }, [roomId, token, myId]); // eslint-disable-line
+  }, [roomId, token, myId]);
 
-  // ── ส่งข้อความ ───────────────────────────────────────────
-  // ✅ emit socket อย่างเดียว — socketManager บันทึก DB + broadcast กลับ
   const sendMessage = () => {
     const trimmed = text.trim();
     if (!trimmed || isClosed()) return;
@@ -111,7 +111,7 @@ export default function ChatPage() {
     socketRef.current.emit("send_message", {
       roomId,
       sender: myId,
-      text:   trimmed,
+      text: trimmed,
     });
     socketRef.current.emit("stop_typing", { roomId, userId: myId });
     setText("");
@@ -122,7 +122,7 @@ export default function ChatPage() {
     if (socketRef.current?.connected) {
       socketRef.current.emit("typing", {
         roomId,
-        userId:   myId,
+        userId: myId,
         username: currentUser.username,
       });
       clearTimeout(typingTimer.current);
@@ -132,19 +132,15 @@ export default function ChatPage() {
     }
   };
 
-  // ── Helpers ──────────────────────────────────────────────
   const isClosed = () => {
     if (!room) return false;
-    if (room.type === "trade" && ["rejected","cancelled","completed"].includes(room.tradeStatus)) return true;
+    if (room.type === "trade" && ["rejected", "cancelled", "completed"].includes(room.tradeStatus)) return true;
     if (room.type === "normal" && room.inquiryStatus === "closed") return true;
     return false;
   };
 
-  // ✅ ใช้ myId เช็ค — รองรับทั้ง _id และ id
-  const isMe = (msg) =>
-    String(msg.sender?._id || msg.sender) === myId;
+  const isMe = (msg) => String(msg.sender?._id || msg.sender) === myId;
 
-  // ✅ otherUser = คนที่ไม่ใช่เรา (เจ้าของสินค้า)
   const otherUser = room?.participants?.find(
     (p) => String(p._id || p) !== myId
   );
@@ -156,12 +152,12 @@ export default function ChatPage() {
     d ? new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short" }) : "";
 
   const STATUS = {
-    pending:     { t: "⏳ รอตอบรับ",    c: "#f59e0b" },
+    pending: { t: "⏳ รอตอบรับ", c: "#f59e0b" },
     negotiating: { t: "💬 กำลังเจรจา", c: "#3b82f6" },
-    accepted:    { t: "✅ ตกลงแล้ว",    c: "#10b981" },
-    rejected:    { t: "❌ ปฏิเสธแล้ว",  c: "#ef4444" },
-    cancelled:   { t: "🚫 ยกเลิกแล้ว", c: "#6b7280" },
-    completed:   { t: "🎉 เสร็จสิ้น",   c: "#8b5cf6" },
+    accepted: { t: "✅ ตกลงแล้ว", c: "#10b981" },
+    rejected: { t: "❌ ปฏิเสธแล้ว", c: "#ef4444" },
+    cancelled: { t: "🚫 ยกเลิกแล้ว", c: "#6b7280" },
+    completed: { t: "🎉 เสร็จสิ้น", c: "#8b5cf6" },
   };
 
   const tradeAction = async (action) => {
@@ -183,10 +179,9 @@ export default function ChatPage() {
     room?.participants?.length > 1 &&
     String(room.participants[1]?._id || room.participants[1]) === myId;
 
-  // ── Render ───────────────────────────────────────────────
-  if (!token)  return <div className="cp-notice">กรุณาเข้าสู่ระบบก่อน</div>;
+  if (!token) return <div className="cp-notice">กรุณาเข้าสู่ระบบก่อน</div>;
   if (loading) return <div className="cp-loading"><div className="cp-spin" /><p>กำลังโหลด...</p></div>;
-  if (error)   return (
+  if (error) return (
     <div className="cp-error-page">
       <p>⚠️ {error}</p>
       <button className="cp-retry-btn" onClick={fetchRoom}>ลองใหม่</button>
@@ -196,8 +191,6 @@ export default function ChatPage() {
 
   return (
     <div className="cp-wrap">
-
-      {/* ── HEADER ── */}
       <header className="cp-header">
         <button className="cp-back" onClick={() => navigate(-1)}>←</button>
         <img
@@ -209,7 +202,6 @@ export default function ChatPage() {
           alt=""
         />
         <div className="cp-htxt">
-          {/* ✅ แสดงชื่อเจ้าของสินค้า (คนอื่น) ไม่ใช่ชื่อเรา */}
           <p className="cp-hname">{otherUser?.username || "..."}</p>
           <p className="cp-htype">
             {room?.type === "trade" ? "🔄 เทรดสินค้า" : "💬 สอบถามสินค้า"}
@@ -219,7 +211,7 @@ export default function ChatPage() {
         {isClosed() && <span className="cp-closed-chip">ปิดแล้ว</span>}
       </header>
 
-      {/* ── TRADE PANEL ── */}
+      {/* ── TRADE PANEL (แก้ไขรูปภาพ) ── */}
       {room?.type === "trade" && (
         <div className="cp-trade">
           <p className="cp-trade-title">🔒 สินค้าที่ล็อกในการเทรด</p>
@@ -227,11 +219,7 @@ export default function ChatPage() {
             <div className="cp-tcard">
               <span className="cp-tchip">ต้องการ</span>
               <img
-                src={
-                  room.lockedProductSnapshot?.images?.[0] ||
-                  room.productId?.images?.[0] ||
-                  "https://placehold.co/80x80/f3f4f6/9ca3af?text=N/A"
-                }
+                src={getImgUrl(room.lockedProductSnapshot?.images?.[0] || room.productId?.images?.[0])}
                 alt=""
               />
               <p>{room.lockedProductSnapshot?.title || room.productId?.title}</p>
@@ -241,11 +229,7 @@ export default function ChatPage() {
             <div className="cp-tcard">
               <span className="cp-tchip alt">เสนอ</span>
               <img
-                src={
-                  room.lockedOfferedProductSnapshot?.images?.[0] ||
-                  room.offeredProductId?.images?.[0] ||
-                  "https://placehold.co/80x80/f3f4f6/9ca3af?text=N/A"
-                }
+                src={getImgUrl(room.lockedOfferedProductSnapshot?.images?.[0] || room.offeredProductId?.images?.[0])}
                 alt=""
               />
               <p>{room.lockedOfferedProductSnapshot?.title || room.offeredProductId?.title}</p>
@@ -257,7 +241,7 @@ export default function ChatPage() {
               {STATUS[room.tradeStatus]?.t}
             </p>
           )}
-          {["pending","negotiating"].includes(room?.tradeStatus) && (
+          {["pending", "negotiating"].includes(room?.tradeStatus) && (
             <div className="cp-tbtns">
               {isOwner() && (
                 <>
@@ -274,29 +258,33 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* ── PRODUCT BAR (normal) ── */}
+      {/* ── PRODUCT BAR (แก้ไขรูปภาพ + เพิ่มการคลิก) ── */}
       {room?.type === "normal" && room?.productId && (
-        <div className="cp-pbar">
+        <div
+          className="cp-pbar"
+          onClick={() => navigate(`/products/${room.productId._id || room.productId}`)} // เติม s ตรง /products/
+          style={{ cursor: 'pointer' }}
+        >
           <img
-            src={room.productId.images?.[0] || "https://placehold.co/44x44/f3f4f6/9ca3af?text=N/A"}
+            src={getImgUrl(room.productId.images?.[0])}
             alt=""
           />
           <div>
             <p>{room.productId.title}</p>
             <span>฿{room.productId.price?.toLocaleString()}</span>
           </div>
+          <div style={{ marginLeft: 'auto', color: '#9ca3af' }}>›</div>
         </div>
       )}
 
-      {/* ── MESSAGES ── */}
       <main className="cp-msgs">
         {messages.length === 0 && (
           <p className="cp-empty">ยังไม่มีข้อความ — เริ่มสนทนาได้เลย 👋</p>
         )}
 
         {messages.map((msg, i) => {
-          const me     = isMe(msg);
-          const isSys  = msg.messageType && msg.messageType !== "text";
+          const me = isMe(msg);
+          const isSys = msg.messageType && msg.messageType !== "text";
           const showDate =
             i === 0 ||
             fmtDate(msg.createdAt) !== fmtDate(messages[i - 1].createdAt);
@@ -311,7 +299,6 @@ export default function ChatPage() {
               {isSys ? (
                 <div className="cp-sysmsg"><span>{msg.text}</span></div>
               ) : (
-                // ✅ me = ขวา (เรา), other = ซ้าย (คนอื่น)
                 <div className={`cp-row ${me ? "me" : "other"}`}>
                   {!me && (
                     <img
@@ -345,7 +332,6 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </main>
 
-      {/* ── INPUT / CLOSED ── */}
       <footer className="cp-footer">
         {isClosed() ? (
           <div className="cp-closed-bar">🔒 ห้องแชทนี้ปิดแล้ว</div>
