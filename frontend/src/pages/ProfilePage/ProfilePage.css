@@ -6,7 +6,7 @@
   --ink:    #0f1923;
   --muted:  #64748b;
   --line:   #e2e8f0;
-  --bg:     #f8fafc;
+  --bg:     rgb(255, 255, 255);
   --white:  #ffffff;
   --amber:  #d97706;
   --amberBg:#fef3c7;
@@ -18,11 +18,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 .pp-root {
-  min-height: 100vh;
+  min-height: ห0vh;
   background: var(--bg);
   font-family: 'Noto Sans Thai', 'DM Sans', sans-serif;
   padding-bottom: 48px;
-  max-width: 720px;
+  max-width: 850px;
   margin: 0 auto;
 }
 
