@@ -25,6 +25,29 @@ const userSchema = new mongoose.Schema({
     enum: ["nisit", "staff", "shop"],
     default: "nisit"
   },
+  gender: { 
+    type: String, 
+    default: "" 
+  },
+  bio: { 
+    type: String, 
+    default: "" 
+  },
+  profileImage: { 
+    type: String, 
+    default: "" 
+  },
+  birthday: { 
+    type: String, 
+    default: "" 
+  },
+  lastProfileUpdate: { 
+    type: Date, 
+    default: null 
+  },
+  lastImageUpdate: { 
+    type: Date, 
+    default: null },
   dormAddress: {
     type: String
   },
