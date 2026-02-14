@@ -154,9 +154,40 @@ const CheckoutPage = () => {
         0
     );
 
-    const total = subTotal + deliveryFee - discount;
+    const total = Math.max(0, subTotal + deliveryFee - discount);
+
+    useEffect(() => {
+        setDiscount(0);
+    }, [subTotal]);
 
     if (loading) return <div className="loading">กำลังเตรียมคำสั่งซื้อ...</div>;
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode) return alert("กรุณากรอกโค้ดคูปอง");
+
+        try {
+            const token = localStorage.getItem("token");
+
+            const res = await axios.post(
+                `${API_URL}/api/coupons/check`,
+                {
+                    code: couponCode,
+                    subTotal
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            setDiscount(res.data.discount);
+
+            alert("ใช้คูปองสำเร็จ!");
+
+        } catch (err) {
+            setDiscount(0);
+            alert(err.response?.data?.message || "คูปองใช้ไม่ได้");
+        }
+    };
 
     // ================= PLACE ORDER =================
     const handlePlaceOrder = async () => {
@@ -210,9 +241,25 @@ const CheckoutPage = () => {
                 status: initialStatus
             };
 
-            await axios.post(`${API_URL}/api/orders`, orderData, {
+            const orderRes = await axios.post(`${API_URL}/api/orders`, orderData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+
+            // ✅ ถ้ามีคูปอง -> Redeem
+            if (couponCode && discount > 0) {
+                await axios.post(
+                    `${API_URL}/api/coupons/redeem`,
+                    {
+                        code: couponCode,
+                        subTotal,
+                        orderId: orderRes.data._id
+                    },
+                    {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }
+                );
+            }
+
 
             alert("สั่งซื้อสำเร็จ!");
             navigate("/profile");
@@ -336,6 +383,39 @@ const CheckoutPage = () => {
                     </div>
                 </div>
             )}
+
+            <div className="sh-card coupon-section">
+                <div className="section-title">คูปองส่วนลด</div>
+
+                <div style={{ display: "flex", gap: "8px" }}>
+                    <input
+                        type="text"
+                        placeholder="กรอกโค้ดคูปอง"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        style={{ flex: 1, padding: "8px" }}
+                    />
+
+                    <button
+                        onClick={handleApplyCoupon}
+                        style={{
+                            background: "#ee4d2d",
+                            color: "#fff",
+                            border: "none",
+                            padding: "8px 14px",
+                            cursor: "pointer"
+                        }}
+                    >
+                        ใช้คูปอง
+                    </button>
+                </div>
+
+                {discount > 0 && (
+                    <p style={{ color: "green", marginTop: "8px" }}>
+                        ใช้คูปองสำเร็จ ลดไป ฿{discount.toLocaleString()}
+                    </p>
+                )}
+            </div>
 
             {/* BILLING */}
             <div className="sh-card billing-section">
