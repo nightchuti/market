@@ -122,7 +122,7 @@ export default function ProfilePage() {
     
     // Mapping ให้ตรงกับ Backend
     formData.append("username", form.username);
-    formData.append("phonenumber", form.phonenumber); // Backend รอรับ field ชื่อ 'phone'
+    formData.append("phone", form.phonenumber); // Backend รอรับ field ชื่อ 'phone'
     formData.append("gender", form.gender);
     formData.append("bio", form.bio);
     formData.append("birthday", form.birthday);

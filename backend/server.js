@@ -19,6 +19,7 @@ const couponRoutes = require("./routes/couponRoutes");
 const tradeRoutes = require("./routes/tradeRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 
+
 const app = express();
 const server = http.createServer(app);
 
@@ -53,6 +54,7 @@ app.use("/api/shop", shopRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/trades", tradeRoutes);
 app.use("/api/chat", chatRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("API Running");

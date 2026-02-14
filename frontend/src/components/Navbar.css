@@ -105,3 +105,60 @@
 .btn-add:hover {
   background-color: #1b5e20;
 }
+/* ===== USER MINI PROFILE ===== */
+
+.user-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.user-mini:hover {
+  background: #f1f5f9;
+}
+
+/* รูปโปรไฟล์ */
+.mini-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #22c55e;
+}
+
+/* กล่องข้อความ */
+.user-mini-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.user-mini-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.user-mini-sub {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  .menu {
+    display: none;
+  }
+
+  .user-mini-info {
+    display: none;
+  }
+
+  .navbar {
+    padding: 12px 18px;
+  }
+}
