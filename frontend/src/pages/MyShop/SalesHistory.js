@@ -1,38 +1,22 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+function SalesHistory({ products }) {
+  if (products.length === 0) {
+    return <div style={{ padding: "40px", textAlign: "center" }}>ยังไม่มีประวัติการขาย</div>;
+  }
 
-function SalesHistory() {
-  const [soldProducts, setSoldProducts] = useState([]);
-
-  useEffect(() => {
-    fetchSold();
-  }, []);
-
-  const fetchSold = async () => {
-    const res = await axios.get(
-      "http://localhost:5000/api/products/my",
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        }
-      }
-    );
-
-    const sold = res.data.filter(p => p.status === "sold");
-    setSoldProducts(sold);
-  };
-
-  return (
-    <div>
-      {soldProducts.length === 0 && <p>ยังไม่มีสินค้าที่ขายแล้ว</p>}
-
-      {soldProducts.map((p) => (
-        <div key={p._id} className="inventory-item">
-          {p.title} — ขายแล้ว
+  return products.map(p => (
+    <div key={p._id} className="shop-card">
+      <div className="card-top">
+        <div>
+          <h4>{p.title}</h4>
+          <span className="price">฿{p.price?.toLocaleString()}</span>
         </div>
-      ))}
+
+        <div className="card-actions">
+          <span className="status sold">ขายแล้ว</span>
+        </div>
+      </div>
     </div>
-  );
+  ));
 }
 
 export default SalesHistory;
