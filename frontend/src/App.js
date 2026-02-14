@@ -13,7 +13,12 @@ import EditProduct from "./pages/MyShop/EditProduct";
 import PremiumMember from "./pages/PreMember/PremiumMember";
 import AdminDashboard from "./pages/AdminDashboard";
 import CheckoutPage from "./pages/Checkout/CheckoutPage";
+<<<<<<< HEAD
+import CouponCenter from "./pages/coupon/CouponCenter";
+import AdminCoupon from "./pages/coupon/AdminCoupon";
+=======
 import AddressPage from "./pages/Checkout/AddressPage";
+>>>>>>> d491795ae05795d787721eec0f9cdeb357ccce46
 
 function App() {
   return (
@@ -34,7 +39,13 @@ function App() {
           <Route path="/premium" element={<PremiumMember />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+<<<<<<< HEAD
+          <Route path="/coupons" element={<CouponCenter />} />
+          <Route path="/admin/coupons" element={<AdminCoupon />} />
+
+=======
           <Route path="/address" element={<AddressPage />} />
+>>>>>>> d491795ae05795d787721eec0f9cdeb357ccce46
         </Route>
       </Routes>
     </BrowserRouter>

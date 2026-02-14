@@ -87,7 +87,17 @@ const productSchema = new mongoose.Schema({
   boostExpireAt: { 
     type: Date,
     default: null
-  }
+  },
+  isLocked: {
+  type: Boolean,
+  default: false
+},
+
+lockedByRoom: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "ChatRoom",
+  default: null
+}
 
 }, { timestamps: true });
 

@@ -20,8 +20,7 @@ function Home() {
     <div className="home-clean-tech">
       {/* ===== LIGHT FUTURISTIC HERO ===== */}
       <section className="hero-clean">
-        <div className="abstract-bg"></div> {/* วงกลมแสงสีเขียวจางๆ */}
-        
+        <div className="abstract-bg"></div>
         <div className="hero-inner">
           <div className="hero-text">
             <div className="status-pill">● KU Community Marketplace</div>
@@ -34,7 +33,6 @@ function Home() {
             </div>
           </div>
 
-          {/* ✅ ส่วนสมัครสมาชิกโปรโมชัน: ดีไซน์แบบ Soft-Glass สีขาวสะอาดตา */}
           <div className="promo-white-glass">
             <div className="promo-content">
               <div className="promo-label">SPECIAL OFFER</div>
@@ -55,6 +53,23 @@ function Home() {
       {/* ===== MINIMAL PRODUCT GRID ===== */}
       <section className="featured-home-clean">
         <div className="container">
+          
+          {/* ✅ ส่วนที่เพิ่ม: ปุ่ม Coupon Center เหนือสินค้าแนะนำ */}
+          <div className="coupon-entry-wrapper" onClick={() => navigate("/coupons")}>
+             <div className="coupon-entry-content">
+                <div className="coupon-icon-box">
+                   <span className="coupon-emoji">🎟️</span>
+                </div>
+                <div className="coupon-entry-text">
+                   <span className="entry-title">ศูนย์รวมคูปองส่วนลด</span>
+                   <span className="entry-subtitle">เก็บโค้ดลดเพิ่มสำหรับสมาชิก KU เท่านั้น</span>
+                </div>
+                <div className="coupon-go-btn">
+                   เก็บโค้ดเลย
+                </div>
+             </div>
+          </div>
+
           <div className="header-flex">
             <h2>สินค้าแนะนำพิเศษ</h2>
             <div className="view-all" onClick={() => navigate("/products")}>ดูทั้งหมด →</div>
