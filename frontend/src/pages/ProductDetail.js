@@ -62,48 +62,6 @@ function ProductDetail() {
     }
   };
 
-  // ================================
-  // 🔄 ขอเทรดสินค้า
-  // ================================
-  const handleTrade = async () => {
-    if (!token) {
-      alert("กรุณาเข้าสู่ระบบก่อนทำการเทรด");
-      return;
-    }
-
-    if (!product) return;
-
-    const sellerId = product.user?._id || product.user;
-
-    if (String(sellerId) === String(currentUser._id)) {
-      alert("ไม่สามารถเทรดสินค้าของตัวเองได้");
-      return;
-    }
-
-    const offeredProductId = prompt("กรอก ID สินค้าที่คุณต้องการใช้แลก");
-
-    if (!offeredProductId) return;
-
-    try {
-      const res = await axios.post(
-        `${API_URL}/api/chat/trade`,
-        {
-          receiverId: sellerId,
-          productId: product._id,
-          offeredProductId
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      navigate(`/chat/${res.data._id}`);
-    } catch (err) {
-      alert(err.response?.data?.error || "เริ่มการเทรดไม่สำเร็จ");
-    }
-  };
-
-
   const handleAddToCart = async () => {
 
     if (!token) {
@@ -216,14 +174,6 @@ function ProductDetail() {
                 {chatLoading ? "⏳ กำลังเปิด..." : "💬 แชทผู้ขาย"}
               </button>
             )}
-            {!isOwnProduct &&
-              (product.tradeOption === "trade_allowed" ||
-                product.tradeOption === "negotiable") &&
-              !product.isLocked && (
-                <button className="btn-trade" onClick={handleTrade}>
-                  🔄 ขอเทรด
-                </button>
-              )}
           </div>
         </div>
       </div>
