@@ -19,7 +19,7 @@ function Cart() {
     }
 
     fetchCart();
-  }, []);
+  }, [navigate]);
 
   const fetchCart = async () => {
     try {
@@ -210,13 +210,11 @@ function Cart() {
           </div>
           <div className="cart-list">
             {cart.items.map(item => {
-              const img =
-                item.product?.images?.[0]
-                  ? `${API_URL}${item.product.images[0]}`
-                  : "/images/default-avatar.png";
+              // ตรวจสอบว่า item.product มีค่าหรือไม่ก่อนที่จะเข้าถึง properties ต่าง ๆ
+              const product = item.product || {}; // หาก product เป็น null/undefined ให้ fallback เป็น empty object
+              const img = product.images?.[0] ? `${API_URL}${product.images[0]}` : "/images/default-avatar.png";
 
-
-              const isOutOfStock = item.product.quantity === 0;
+              const isOutOfStock = product.quantity === 0;
 
               return (
                 <div key={item._id} className="cart-item">
@@ -230,9 +228,9 @@ function Cart() {
                   <img src={img} alt="" />
 
                   <div className="item-info">
-                    <h4>{item.product?.title}</h4>
+                    <h4>{product?.title || "สินค้าหายไป"}</h4> {/* แสดงข้อความ fallback ถ้าไม่มี title */}
                     <p className="price">
-                      ฿{item.product?.price?.toLocaleString()}
+                      ฿{product?.price?.toLocaleString() || "0.00"}
                     </p>
 
                     {isOutOfStock ? (
@@ -245,7 +243,7 @@ function Cart() {
                               updateQuantity(
                                 item._id,
                                 item.quantity - 1,
-                                item.product.quantity
+                                product.quantity
                               )
                             }
                           >
@@ -255,14 +253,12 @@ function Cart() {
                           <span>{item.quantity}</span>
 
                           <button
-                            disabled={
-                              item.quantity >= item.product.quantity
-                            }
+                            disabled={item.quantity >= product.quantity}
                             onClick={() =>
                               updateQuantity(
                                 item._id,
                                 item.quantity + 1,
-                                item.product.quantity
+                                product.quantity
                               )
                             }
                           >
@@ -271,16 +267,14 @@ function Cart() {
                         </div>
 
                         <p className="stock">
-                          เหลือ {item.product.quantity} ชิ้น
+                          เหลือ {product.quantity} ชิ้น
                         </p>
                       </>
                     )}
                   </div>
 
                   <div className="item-total">
-                    ฿{(
-                      item.product?.price * item.quantity
-                    ).toLocaleString()}
+                    ฿{(product?.price * item.quantity).toLocaleString() || "0.00"}
                   </div>
 
                   <button
@@ -293,6 +287,7 @@ function Cart() {
                 </div>
               );
             })}
+
           </div>
 
           <div className="cart-summary">
