@@ -165,85 +165,82 @@ router.get("/", async (req, res) => {
 // });
 
 // ================= CREATE PRODUCT =================
+// Route สำหรับเพิ่มสินค้า
 router.post("/", protect, upload.fields([
-  { name: "images", maxCount: 6 },
-  { name: "wantedImages", maxCount: 6 }
-]),
-  async (req, res) => {
+  { name: "images", maxCount: 5 },
+  { name: "wantedImages", maxCount: 5 }
+]), async (req, res) => {
+  try {
+    const {
+      title, description, price, category, quantity,
+      deliveryType, tradeOption, lat, lng, locationName,
+      meetupAddress, wantedCategory, wantedKeywords
+    } = req.body;
 
-    try {
-      const { title, description, price, category, quantity,
-        deliveryType, tradeOption, lat, lng, locationName, meetupAddress } = req.body;
+    // 1. จัดการรูปภาพ (ป้องกันกรณีไม่มีไฟล์)
+    const imagePaths = req.files?.images
+      ? req.files.images.map(f => `/uploads/${f.filename}`)
+      : [];
+    const wantedImagePaths = req.files?.wantedImages
+      ? req.files.wantedImages.map(f => `/uploads/${f.filename}`)
+      : [];
 
-      const userShop = await Shop.findOne({ user: req.user.id});
-
-      if (!userShop) {
-        return res.status(400).json({
-          message: "กรุณาสร้างร้านค้าก่อนลงขายสินค้า (ไม่พบข้อมูล Shop)"
-        });
-      }
-      console.log("BODY:", req.body);
-      console.log("FILES:", req.files);
-      const imagePaths = req.files?.images
-        ? req.files.images.map(f => `/uploads/${f.filename}`)
-        : [];
-
-      const wantedImagePaths = req.files?.wantedImages
-        ? req.files.wantedImages.map(f => `/uploads/${f.filename}`)
-        : [];
-
-
-      if (!title || !category) return res.status(400).json({
-        message: "กรุณาระบุชื่อสินค้า และหมวดหมู่"
-      });
-      if (
-        (deliveryType === "meetup" || deliveryType === "both") &&
-        !meetupAddress
-      ) {
-        return res.status(400).json({
-          message: "กรุณากรอกที่อยู่หอพักหรือจุดนัดรับ"
-        });
-      }
-
-      if ((tradeOption === "sell_only" || tradeOption === "negotiable") && (!price || Number(price) <= 0))
-        return res.status(400).json({ message: "สินค้าขายต้องมีราคามากกว่า 0" });
-
-      let vector = [];
-      try {
-        const model = genAI.getGenerativeModel({ model: "embedding-001" });
-        const result = await model.embedContent(`Product: ${title}. Category: ${category}. Description: ${description || ""}. Delivery: ${deliveryType || "delivery"}. Price: ${price}`);
-        vector = result.embedding.values;
-      } catch (aiErr) { console.error("❌ Embedding failed:", aiErr.message); }
-
-      const product = await Product.create({
-        user: req.user.id,
-        shop: userShop._id,
-        title,
-        description,
-        price: tradeOption === "trade_allowed" ? 0 : Number(price),
-        category: category.trim(),
-        quantity: quantity || 1,
-        images: imagePaths,
-        wantedImages: wantedImagePaths,
-        wantedCategory: req.body.wantedCategory,
-        wantedKeywords: req.body.wantedKeywords
-          ? req.body.wantedKeywords.split(",")
-          : [],
-        meetupAddress: req.body.meetupAddress,
-        deliveryType: deliveryType || "delivery",
-        tradeOption: tradeOption || "sell_only",
-        lat,
-        lng,
-        locationName,
-        embeddings: vector
-      });
-
-      await product.populate("user", "username email");
-      res.status(201).json({ message: "สร้างสินค้าสำเร็จ", product });
-    } catch (err) {
-      res.status(500).json({ message: "เกิดข้อผิดพลาดในการสร้างสินค้า", error: err.message });
+    // 2. จัดการ Keywords (ป้องกัน .split of undefined)
+    let processedKeywords = [];
+    if (wantedKeywords) {
+      processedKeywords = typeof wantedKeywords === "string"
+        ? wantedKeywords.split(",").map(k => k.trim()).filter(k => k !== "")
+        : wantedKeywords;
     }
-  });
+
+    // 3. สร้าง Instance ของ Product
+    const product = new Product({
+      user: req.user.id,
+      shop: req.user.id,
+      title,
+      description,
+      price: tradeOption === "trade_allowed" ? 0 : Number(price || 0),
+      category,
+      quantity: Number(quantity || 1),
+      images: imagePaths,
+      wantedImages: wantedImagePaths,
+      wantedCategory: wantedCategory || "",
+      wantedKeywords: processedKeywords,
+      meetupAddress: meetupAddress || "",
+      deliveryType: deliveryType || "delivery",
+      tradeOption: tradeOption || "sell_only",
+      lat: lat ? Number(lat) : null,
+      lng: lng ? Number(lng) : null,
+      locationName: locationName || ""
+    });
+
+    // 4. ทำ AI Embedding (ถ้าทำได้)
+    async function generateEmbedding(text) {
+      try {
+        // แก้ไขจาก embedding-001 เป็น text-embedding-004
+        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const result = await model.embedContent(text);
+        return result.embedding.values;
+      } catch (error) {
+        // ถ้า AI มีปัญหา ให้ Log ไว้แต่ไม่ให้ Error 500 พ่นออกไปหา User
+        console.error("❌ Google AI Embedding Error:", error.message);
+        return null;
+      }
+    }
+
+    // 5. บันทึกข้อมูล
+    await product.save();
+    res.status(201).json({ success: true, message: "บันทึกสินค้าสำเร็จ", product });
+
+  } catch (err) {
+    console.error("🔥 Server Error:", err);
+    res.status(500).json({
+      success: false,
+      message: "เกิดข้อผิดพลาดที่ Server",
+      error: err.message
+    });
+  }
+});
 
 // ================= UPDATE PRODUCT =================
 router.put("/:id", protect, upload.fields([

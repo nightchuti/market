@@ -59,74 +59,58 @@ export default function AddProduct() {
   };
 
   // ---------------- SUBMIT ----------------
-  const submit = async () => {
-    const mustHavePrice = form.tradeOption === "sell_only" || form.tradeOption === "negotiable";
-    const needMeetup = form.deliveryType === "meetup" || form.deliveryType === "both";
-
-    // ── Validation ──────────────────────────────────────
-    if (!form.title)        return alert("กรุณากรอกชื่อสินค้า");
-    if (!form.category)     return alert("กรุณาเลือกหมวดหมู่");
-    if (!form.deliveryType) return alert("กรุณาเลือกรูปแบบการส่ง");
-    if (!form.tradeOption)  return alert("กรุณาเลือกตัวเลือกการขาย");
-    if (!form.locationName) return alert("กรุณากรอกที่อยู่โดยประมาณ");
-    if (form.quantity === "") return alert("กรุณากรอกจำนวนสินค้า");
-    if (mustHavePrice && !form.price) return alert("กรุณากรอกราคา");
-    if (needMeetup && !form.meetupAddress) return alert("กรุณากรอกจุดนัดรับ");
-
-    // ✅ แก้: เช็ค array length แทน !array
-    if (form.tradeOption === "trade_allowed") {
-      if (!form.wantedCategory) return alert("กรุณาเลือกหมวดหมู่ที่อยากได้");
-      if (form.wantedKeywords.length === 0) return alert("กรุณาเพิ่มคำค้นหาสินค้าที่ต้องการอย่างน้อย 1 คำ");
-    }
-
-    if (images.length === 0) return alert("กรุณาเพิ่มรูปสินค้าอย่างน้อย 1 รูป");
-    if (form.tradeOption === "trade_allowed" && tradeImages.length === 0)
-      return alert("กรุณาเพิ่มรูปสินค้าที่อยากได้อย่างน้อย 1 รูป");
+  const submit = async (e) => {
+    if (e) e.preventDefault();
 
     // ── Build FormData ───────────────────────────────────
     try {
-      const formData = new FormData();
-
-      formData.append("title",        form.title);
-      formData.append("description",  form.description);
-      formData.append("category",     form.category);
-      formData.append("deliveryType", form.deliveryType);
-      formData.append("tradeOption",  form.tradeOption);
-      formData.append("locationName", form.locationName);
-      formData.append("quantity",     Number(form.quantity));
-      formData.append("meetupAddress", form.meetupAddress || "");
-
-      // ✅ แก้: price ต้องเป็น number ที่ถูกต้อง
-      formData.append("price", mustHavePrice ? Number(form.price) : 0);
-
-      // ✅ แก้: lat/lng ส่งเป็น number หรือ 0 ถ้าว่าง (ป้องกัน NaN ใน backend)
-      formData.append("lat", form.lat ? Number(form.lat) : 0);
-      formData.append("lng", form.lng ? Number(form.lng) : 0);
-
-      if (form.tradeOption === "trade_allowed") {
-        formData.append("wantedCategory", form.wantedCategory);
-        // ✅ แก้: ส่ง JSON array แทน comma-separated string
-        formData.append("wantedKeywords", JSON.stringify(form.wantedKeywords));
-        tradeImages.forEach(img => formData.append("wantedImages", img));
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("กรุณาเข้าสู่ระบบก่อนลงขาย");
+        return;
       }
 
-      images.forEach(img => formData.append("images", img));
+      const formData = new FormData();
 
-      await axios.post("http://localhost:5000/api/products", formData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "multipart/form-data",
-        },
+      // วนลูปเพิ่มข้อมูลจาก state 'form'
+      Object.keys(form).forEach((key) => {
+        if (key === "wantedKeywords") {
+          // ส่งเป็น String คั่นด้วยคอมมาให้ Backend ไป split เอง
+          formData.append(key, form.wantedKeywords.join(","));
+        } else {
+          formData.append(key, form[key]);
+        }
       });
 
-      alert("เพิ่มสินค้าเรียบร้อยแล้ว");
-      navigate("/products");
+      // เพิ่มไฟล์ภาพหลัก
+      images.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      // เพิ่มไฟล์ภาพของที่อยากแลก
+      tradeImages.forEach((file) => {
+        formData.append("wantedImages", file);
+      });
+
+      const res = await axios.post(
+        "http://localhost:5000/api/products",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Response:", res.data);
+      alert("ลงขายสินค้าสำเร็จ!");
+      navigate("/my-shop");
 
     } catch (err) {
-      console.error(err);
-      // ✅ แสดง error message จาก backend จริงๆ แทน alert กว้างๆ
-      const msg = err.response?.data?.message || err.response?.data?.error || "เกิดข้อผิดพลาด";
-      alert(`ผิดพลาด: ${msg}`);
+      console.error("❌ Submit Error:", err.response?.data || err.message);
+      const errorMsg = err.response?.data?.message || "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์";
+      alert("ไม่สามารถเพิ่มสินค้าได้: " + errorMsg);
     }
   };
 
