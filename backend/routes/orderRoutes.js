@@ -59,6 +59,35 @@ router.get("/my", protect, async (req, res) => {
 });
 
 // ==========================================
+// 🆕 [SELLER] ดึงคำสั่งซื้อที่ส่งมาถึงร้านค้าของเรา
+// ==========================================
+router.get("/seller/all", protect, async (req, res) => {
+  try {
+    // 1. ค้นหาออเดอร์ทั้งหมดที่มีรายการสินค้า
+    const orders = await Order.find()
+      .populate("user", "username")
+      .populate({
+        path: "items.product",
+        model: "Product",
+        select: "title price seller", // ดึงข้อมูล seller มาด้วยเพื่อกรอง
+      })
+      .sort({ createdAt: -1 });
+
+    // 2. กรองเฉพาะออเดอร์ที่มีสินค้าที่เป็นของเรา (req.user._id)
+    const myOrders = orders.filter(order =>
+      order.items.some(item =>
+        item.product && item.product.seller && item.product.seller.toString() === req.user._id.toString()
+      )
+    );
+
+    res.json(myOrders);
+  } catch (err) {
+    console.error("Seller Order Fetch Error:", err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงข้อมูลออเดอร์ของร้านค้า" });
+  }
+});
+
+// ==========================================
 // 2. [SELLER] ดึงรายการที่มีคนมาสั่งซื้อสินค้าของฉัน
 // ==========================================
 router.get("/seller/orders", protect, async (req, res) => {
@@ -354,29 +383,27 @@ router.patch("/:id/cancel", protect, async (req, res) => {
 //  ตรวจสอบสลืปที่อัปโหลดโดยผู้ใช้ (สำหรับ Admin)
 // ==========================================
 // ดึงออเดอร์ทั้งหมดที่โอนเงินมาแล้วแต่ยังไม่ได้ตรวจ
+// ✅ แก้ไขส่วนดึงรายการชำระเงินสำหรับ Admin (orderRoutes.js)
 router.get("/admin/all-payments", protect, async (req, res) => {
   try {
     const orders = await Order.find({
       status: { $in: ["WaitingConfirm", "Paid"] }
     })
-      .populate("user", "username")
+      .populate("user", "username") 
       .populate({
         path: "items.product",
-        // ย้ายการเลือกฟิลด์มาไว้ที่นี่เพื่อให้ดึง seller ออกมาได้
-        select: "name price seller",
+        select: "title price shop", // ✅ ดึงฟิลด์ shop ออกมาจาก Product
         populate: {
-          path: "seller",
-          select: "shopName"
+          path: "shop",             // ✅ ทำ Populate ต่อเข้าไปที่ Model Shop
+          select: "name"            // ✅ ดึงเฉพาะฟิลด์ name (ชื่อร้าน) มา
         }
       })
-      // เพิ่มบรรทัดนี้เพื่อแก้ปัญหา StrictPopulateError
       .setOptions({ strictPopulate: false })
       .sort({ updatedAt: -1 });
 
     res.json(orders);
   } catch (err) {
-    console.error("Admin Fetch Error:", err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Error", error: err.message });
   }
 });
 

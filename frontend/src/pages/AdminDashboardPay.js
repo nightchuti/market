@@ -83,9 +83,12 @@ const AdminDashboardPay = () => {
                                 <tr key={order._id} style={styles.tr}>
                                     {/* ข้อมูลออเดอร์และร้านค้า */}
                                     <td style={styles.td}>
-                                        <div style={{ fontWeight: 'bold', color: '#333' }}>#{order._id.slice(-6).toUpperCase()}</div>
+                                        <div style={{ fontWeight: 'bold', color: '#333' }}>
+                                            #{order._id.slice(-6).toUpperCase()}
+                                        </div>
                                         <div style={{ fontSize: '12px', color: '#00467f' }}>
-                                            🏪 {order.items[0]?.product?.seller?.shopName || "ไม่ระบุร้าน"}
+                                            {/* 🆕 แก้ไข: ดึงชื่อร้านจาก product.shop.name */}
+                                            {order.items[0]?.product?.shop?.title || "ร้านค้าทั่วไป"}
                                         </div>
                                     </td>
 
@@ -93,7 +96,8 @@ const AdminDashboardPay = () => {
                                     <td style={styles.td}>
                                         {order.items.map((item, index) => (
                                             <div key={index} style={{ fontSize: '13px', color: '#555' }}>
-                                                • {item.product?.name} (x{item.quantity})
+                                                {/* 🆕 แก้ไข: เปลี่ยนจาก .name เป็น .title ตาม Model Product */}
+                                                • {item.product?.title || "ไม่พบชื่อสินค้า"} (x{item.quantity})
                                             </div>
                                         ))}
                                     </td>
