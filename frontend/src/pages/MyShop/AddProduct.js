@@ -80,94 +80,57 @@ export default function AddProduct() {
   };
 
   // ---------------- SUBMIT ----------------
-  const submit = async () => {
-    const mustHavePrice =
-      form.tradeOption === "sell_only" ||
-      form.tradeOption === "negotiable";
-
-    if (
-      !form.title ||
-      !form.category ||
-      !form.deliveryType ||
-      !form.tradeOption ||
-      !form.locationName ||
-      form.quantity === "" ||
-      (mustHavePrice && !form.price) ||
-      ((form.deliveryType === "meetup" || form.deliveryType === "both")
-        && !form.meetupAddress) ||   // ✅ เพิ่ม
-      (form.tradeOption === "trade_allowed" &&
-        (!form.wantedCategory || !form.wantedKeywords))
-    ) {
-      alert("กรุณากรอกข้อมูลให้ครบ");
-      return;
-    }
-
-    // ✅ ต้องมีรูปสินค้าอย่างน้อย 1 รูป
-    if (images.length === 0) {
-      alert("กรุณาเพิ่มรูปสินค้าอย่างน้อย 1 รูป");
-      return;
-    }
-
-    // ✅ ถ้าเป็นโหมดแลก ต้องมีรูปสินค้าที่อยากได้
-    if (form.tradeOption === "trade_allowed" && tradeImages.length === 0) {
-      alert("กรุณาเพิ่มรูปสินค้าที่อยากได้อย่างน้อย 1 รูป");
-      return;
-    }
-
+  const submit = async (e) => {
+    if (e) e.preventDefault();
 
     try {
-      const formData = new FormData();
-
-      formData.append("title", form.title);
-      formData.append("description", form.description);
-      formData.append("category", form.category);
-      formData.append("deliveryType", form.deliveryType);
-      formData.append("tradeOption", form.tradeOption);
-      formData.append("locationName", form.locationName);
-      formData.append("quantity", Number(form.quantity));
-
-      formData.append(
-        "price",
-        form.tradeOption === "trade_allowed" ? 0 : Number(form.price)
-      );
-      formData.append("meetupAddress", form.meetupAddress);
-      formData.append("lat", form.lat);
-      formData.append("lng", form.lng);
-
-      if (form.tradeOption === "trade_allowed") {
-        formData.append("wantedCategory", form.wantedCategory);
-        formData.append(
-          "wantedKeywords",
-          form.wantedKeywords.join(",")
-        );
-
-
-        tradeImages.forEach((img) => {
-          formData.append("wantedImages", img);
-        });
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("กรุณาเข้าสู่ระบบก่อนลงขาย");
+        return;
       }
 
-      images.forEach((img) => {
-        formData.append("images", img);
+      const formData = new FormData();
+
+      // วนลูปเพิ่มข้อมูลจาก state 'form'
+      Object.keys(form).forEach((key) => {
+        if (key === "wantedKeywords") {
+          // ส่งเป็น String คั่นด้วยคอมมาให้ Backend ไป split เอง
+          formData.append(key, form.wantedKeywords.join(","));
+        } else {
+          formData.append(key, form[key]);
+        }
       });
 
-      await axios.post(
+      // เพิ่มไฟล์ภาพหลัก
+      images.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      // เพิ่มไฟล์ภาพของที่อยากแลก
+      tradeImages.forEach((file) => {
+        formData.append("wantedImages", file);
+      });
+
+      const res = await axios.post(
         "http://localhost:5000/api/products",
         formData,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data"
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
 
-      alert("เพิ่มสินค้าเรียบร้อยแล้ว");
-      navigate("/products");
+      console.log("Response:", res.data);
+      alert("ลงขายสินค้าสำเร็จ!");
+      navigate("/my-shop");
 
     } catch (err) {
-      console.error(err);
-      alert("เกิดข้อผิดพลาด");
+      console.error("❌ Submit Error:", err.response?.data || err.message);
+      const errorMsg = err.response?.data?.message || "เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์";
+      alert("ไม่สามารถเพิ่มสินค้าได้: " + errorMsg);
     }
   };
 
