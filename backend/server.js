@@ -14,7 +14,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const adRoutes = require("./routes/adRoutes"); // ✅ เพิ่มบรรทัดนี้เพื่อแก้ไข ReferenceError
 const messageRoutes = require("./routes/messageRoutes");
-
+const locationRoutes = require("./routes/location");
 
 // Shop & Promotion System
 const shopRoutes = require("./routes/shopRoute"); 
@@ -52,7 +52,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/ads", adRoutes); // ✅ ใช้งานได้แล้วหลังจาก Import ด้านบน
-
+app.use("/api/location", locationRoutes);
 app.use("/api/shop", shopRoutes); 
 app.use("/api/subscription", subscriptionRoutes); // ระบบสมัครสมาชิก/บูสสินค้าแบบอัตโนมัติ
 

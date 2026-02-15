@@ -243,7 +243,10 @@ router.post("/", protect, upload.fields([
   });
 
 // ================= UPDATE PRODUCT =================
-router.put("/:id", protect, upload.array("images", 6), async (req, res) => {
+router.put("/:id", protect, upload.fields([
+  { name: "images", maxCount: 6 },
+  { name: "wantedImages", maxCount: 6 }
+]), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
@@ -253,7 +256,9 @@ router.put("/:id", protect, upload.array("images", 6), async (req, res) => {
     if (req.body.existingImages) {
       try { finalImages = JSON.parse(req.body.existingImages); } catch { }
     }
-    if (req.files?.length > 0) finalImages = [...finalImages, ...req.files.map(f => `/uploads/${f.filename}`)];
+    if (req.files?.images?.length > 0)
+  finalImages = [...finalImages, ...req.files.images.map(f => `/uploads/${f.filename}`)];
+
 
     product.title = req.body.title || product.title;
     product.description = req.body.description || product.description;
@@ -310,7 +315,9 @@ router.delete("/:id", protect, async (req, res) => {
   }
 });
 
-router.put("/:id/add-images", protect, upload.array("images", 6), async (req, res) => {
+router.put("/:id/add-images", protect, upload.fields([
+  { name: "images", maxCount: 6 }
+]), async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });

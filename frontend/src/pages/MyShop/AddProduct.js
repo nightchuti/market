@@ -168,7 +168,7 @@ export default function AddProduct() {
 
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            `http://localhost:5000/api/location/reverse?lat=${latitude}&lon=${longitude}`
           );
           const data = await res.json();
 
@@ -176,7 +176,13 @@ export default function AddProduct() {
             ...prev,
             lat: String(latitude),
             lng: String(longitude),
-            address: data.display_name || ""
+            address:
+              data.display_name ||
+              data.address?.road ||
+              data.address?.suburb ||
+              data.address?.city ||
+              data.address?.town ||
+              ""
           }));
 
           alert("ดึงตำแหน่งพร้อมที่อยู่เรียบร้อยแล้ว");
@@ -366,38 +372,38 @@ export default function AddProduct() {
           </div>
         </>
       )}
-      
 
-          {/* ที่อยู่ */}
-          <div className="form-group">
-            <label>ที่อยู่โดยประมาณ *</label>
-            <input
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              placeholder="กดใช้ตำแหน่งปัจจุบัน หรือพิมพ์เอง"
-            />
-          </div>
 
-          {/* พิกัด */}
-          <div className="form-group">
-            <div className="location-header">
-              <label>พิกัด</label>
-              <button type="button" className="location-btn" onClick={getMyLocation}>
-                ใช้ตำแหน่งปัจจุบัน
-              </button>
-            </div>
+      {/* ที่อยู่ */}
+      <div className="form-group">
+        <label>ที่อยู่โดยประมาณ *</label>
+        <input
+          name="address"
+          value={form.address}
+          onChange={handleChange}
+          placeholder="กดใช้ตำแหน่งปัจจุบัน หรือพิมพ์เอง"
+        />
+      </div>
 
-            <div className="form-row">
-              <input name="lat" value={form.lat} onChange={handleChange} placeholder="Latitude" />
-              <input name="lng" value={form.lng} onChange={handleChange} placeholder="Longitude" />
-            </div>
-          </div>
-
-          <button onClick={submit} className="submit-btn">
-            บันทึกสินค้า
+      {/* พิกัด */}
+      <div className="form-group">
+        <div className="location-header">
+          <label>พิกัด</label>
+          <button type="button" className="location-btn" onClick={getMyLocation}>
+            ใช้ตำแหน่งปัจจุบัน
           </button>
         </div>
-      );
+
+        <div className="form-row">
+          <input name="lat" value={form.lat} onChange={handleChange} placeholder="Latitude" />
+          <input name="lng" value={form.lng} onChange={handleChange} placeholder="Longitude" />
+        </div>
+      </div>
+
+      <button onClick={submit} className="submit-btn">
+        บันทึกสินค้า
+      </button>
+    </div>
+  );
 }
 
