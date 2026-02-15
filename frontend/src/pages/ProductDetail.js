@@ -73,29 +73,37 @@ function ProductDetail() {
   };
 
   const handleBuyNow = () => {
-    if (!token) return alert("กรุณาเข้าสู่ระบบก่อนซื้อสินค้า");
-    if (!product) return;
+  if (!token) return alert("กรุณาเข้าสู่ระบบก่อนซื้อสินค้า");
+  if (!product) return;
 
-    const sellerId = product.user?._id || product.user;
-    if (String(sellerId) === String(currentUser._id))
-      return alert("ไม่สามารถซื้อสินค้าของตัวเองได้");
+  const sellerId = product.user?._id || product.user;
+  if (String(sellerId) === String(currentUser._id))
+    return alert("ไม่สามารถซื้อสินค้าของตัวเองได้");
 
-    // สร้างข้อมูล Item ให้ตรงตามโครงสร้างที่ CheckoutPage ต้องการ
-    const itemToBuy = {
-      _id: product._id,
-      product: { _id: product._id }, // ดึง ID ไว้ใช้ใน backend
-      title: product.title,
-      price: product.price,
-      images: product.images,
-      qty: 1, // ซื้อทันทีเริ่มที่ 1 ชิ้น
-      deliveryType: product.deliveryType // สำคัญ: ใช้เช็ค deliveryMode ในหน้า Checkout
-    };
-
-    // navigate ไปหน้า checkout พร้อมส่ง state
-    navigate("/checkout", {
-      state: { items: [itemToBuy] }
-    });
+  const itemToBuy = {
+    _id: product._id,
+    product: { _id: product._id },
+    title: product.title,
+    price: product.price,
+    images: product.images,
+    qty: 1,
+    quantity: 1,                // ✅ เพิ่ม
+    deliveryType: product.deliveryType
   };
+
+  navigate("/checkout", {
+    state: {
+      items: [itemToBuy],
+      deliveryMode:
+        product.deliveryType === "meetup"
+          ? "PICKUP"
+          : product.deliveryType === "delivery"
+            ? "DELIVERY"
+            : ""       // both
+    }
+  });
+};
+
   // ==================
 
   if (!product) return <p>กำลังโหลด...</p>;
