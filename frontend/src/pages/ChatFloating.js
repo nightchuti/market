@@ -112,17 +112,13 @@ export default function ChatFloating() {
                     <img
                       className="cf-avatar"
                       src={
-                        other?.profileImage
-                          ? (other.profileImage.startsWith("http")
-                            ? other.profileImage
-                            : `${API_URL}${other.profileImage.startsWith("/") ? "" : "/"}${other.profileImage}`)
-                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(other?.username || "U")}&background=random`
+                        other?.avatarUrl || // ✅ ใช้ตัวแปรใหม่จาก Backend
+                        (other?.profileImage?.startsWith("http")
+                          ? other.profileImage
+                          : `${API_URL}${other?.profileImage}`) ||
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(other?.username || "U")}`
                       }
-                      alt=""
-                      onError={(e) => {
-                        // ถ้าโหลดรูปจาก Server พัง ให้ใช้ UI-Avatar แทน
-                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(other?.username || "U")}&background=random`;
-                      }}
+                      alt="avatar"
                     />
                     {/* รูปสินค้าเล็กๆ มุมขวาล่างของ avatar */}
                     {productImg && (

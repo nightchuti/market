@@ -1,3 +1,4 @@
+// backend/controllers/chatController.js
 const ChatRoom = require("../models/ChatRoomTalk");
 const Message  = require("../models/Message");
 const Product  = require("../models/Product");
@@ -9,7 +10,6 @@ const createProductSnapshot = (product) => ({
   lockedAt: new Date(),
 });
 
-// ✅ helper: สร้าง avatar URL เสมอ — ไม่มี null
 const toAvatarUrl = (user, apiUrl = "http://127.0.0.1:5000") => {
   if (!user) return `https://ui-avatars.com/api/?name=U&background=475569&color=fff&size=80`;
   if (user.profileImage) {
@@ -48,7 +48,6 @@ exports.initiateNormalChat = async (req, res) => {
       });
     }
 
-    // ✅ mark-read ทันทีที่เปิดห้อง
     await ChatRoom.findByIdAndUpdate(chatRoom._id, { $pull: { unreadBy: userId } });
 
     await chatRoom.populate([
@@ -78,6 +77,12 @@ exports.initiateTradeChat = async (req, res) => {
     if (!product)        return res.status(404).json({ error: "ไม่พบสินค้าที่ต้องการ" });
     if (!offeredProduct) return res.status(404).json({ error: "ไม่พบสินค้าที่เสนอเทรด" });
 
+    // ✅ ตรวจสถานะสินค้าทั้งคู่
+    if (product.status !== "available")
+      return res.status(400).json({ error: "สินค้าที่ต้องการไม่พร้อมสำหรับการเทรด" });
+    if (offeredProduct.status !== "available")
+      return res.status(400).json({ error: "สินค้าที่เสนอเทรดไม่พร้อม" });
+
     const offeredOwner = String(offeredProduct.user || offeredProduct.owner);
     if (offeredOwner !== String(userId))
       return res.status(403).json({ error: "คุณไม่ใช่เจ้าของสินค้าที่เสนอเทรด" });
@@ -86,7 +91,7 @@ exports.initiateTradeChat = async (req, res) => {
       type: "trade",
       participants: { $all: [userId, receiverId] },
       productId, offeredProductId,
-      tradeStatus: { $in: ["pending", "negotiating"] },
+      tradeStatus: { $in: ["pending", "negotiating", "accepted"] },
     });
     if (existingRoom)
       return res.status(400).json({ error: "มีคำขอเทรดอยู่แล้ว", roomId: existingRoom._id });
@@ -125,25 +130,36 @@ exports.initiateTradeChat = async (req, res) => {
   }
 };
 
-// ── 3. Accept trade ────────────────────────────────────────
+// ── 3. Accept Trade ────────────────────────────────────────
 exports.acceptTrade = async (req, res) => {
   const { roomId } = req.params;
   const userId = req.user.id;
   try {
-    const chatRoom = await ChatRoom.findById(roomId);
+    const chatRoom = await ChatRoom.findById(roomId).populate("productId", "user");
     if (!chatRoom) return res.status(404).json({ error: "ไม่พบห้องแชท" });
     if (chatRoom.type !== "trade") return res.status(400).json({ error: "ห้องนี้ไม่ใช่ห้องเทรด" });
 
-    const product = await Product.findById(chatRoom.productId);
-    const ownerId = String(product.user || product.owner);
+    // ✅ ตรวจ owner จาก productId.user ตรงๆ (ไม่ใช่ participants[1])
+    const ownerId = String(chatRoom.productId?.user || "");
     if (ownerId !== String(userId))
       return res.status(403).json({ error: "เฉพาะเจ้าของสินค้าเท่านั้นที่ยืนยันได้" });
-    if (!["pending","negotiating"].includes(chatRoom.tradeStatus))
+
+    if (!["pending", "negotiating"].includes(chatRoom.tradeStatus))
       return res.status(400).json({ error: "ไม่สามารถยืนยันในสถานะนี้" });
 
+    // ✅ ตรวจสินค้าว่ายังว่างอยู่ไหม (ป้องกัน race condition)
+    const [product, offeredProduct] = await Promise.all([
+      Product.findById(chatRoom.productId),
+      Product.findById(chatRoom.offeredProductId),
+    ]);
+    if (product?.status !== "available" && product?.status !== "pending")
+      return res.status(400).json({ error: "สินค้าไม่พร้อมสำหรับการเทรดแล้ว" });
+
     chatRoom.tradeStatus = "accepted";
+    chatRoom.isLocked    = true;
     await chatRoom.save();
 
+    // 🔒 Lock สินค้าทั้งคู่
     await Promise.all([
       Product.findByIdAndUpdate(chatRoom.productId,        { status: "pending" }),
       Product.findByIdAndUpdate(chatRoom.offeredProductId, { status: "pending" }),
@@ -151,29 +167,34 @@ exports.acceptTrade = async (req, res) => {
 
     const systemMsg = await Message.create({
       roomId, sender: userId, messageType: "trade_accept",
-      text: "✅ ยืนยันการเทรดแล้ว! เริ่มคุยรายละเอียดได้เลย",
+      text: "✅ ยืนยันการเทรดแล้ว! ตกลงรายละเอียดการส่งสินค้าได้เลย",
     });
 
     res.json({ chatRoom, systemMsg });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    console.error("acceptTrade:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// ── 4. Reject trade ────────────────────────────────────────
+// ── 4. Reject Trade ────────────────────────────────────────
 exports.rejectTrade = async (req, res) => {
   const { roomId } = req.params;
   const userId = req.user.id;
   try {
-    const chatRoom = await ChatRoom.findById(roomId);
+    const chatRoom = await ChatRoom.findById(roomId).populate("productId", "user");
     if (!chatRoom) return res.status(404).json({ error: "ไม่พบห้องแชท" });
 
-    const product = await Product.findById(chatRoom.productId);
-    if (String(product.user || product.owner) !== String(userId))
+    // ✅ เช็ค owner จาก productId.user
+    const ownerId = String(chatRoom.productId?.user || "");
+    if (ownerId !== String(userId))
       return res.status(403).json({ error: "เฉพาะเจ้าของสินค้าเท่านั้นที่ปฏิเสธได้" });
 
     chatRoom.tradeStatus = "rejected";
     chatRoom.isLocked    = false;
     await chatRoom.save();
 
+    // 🔓 Unlock สินค้าทั้งคู่
     await Promise.all([
       Product.findByIdAndUpdate(chatRoom.productId,        { status: "available" }),
       Product.findByIdAndUpdate(chatRoom.offeredProductId, { status: "available" }),
@@ -181,10 +202,13 @@ exports.rejectTrade = async (req, res) => {
 
     await Message.create({ roomId, sender: userId, messageType: "trade_reject", text: "❌ ปฏิเสธการเทรดแล้ว" });
     res.json({ message: "ปฏิเสธการเทรดสำเร็จ" });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    console.error("rejectTrade:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// ── 5. Cancel trade ────────────────────────────────────────
+// ── 5. Cancel Trade ────────────────────────────────────────
 exports.cancelTrade = async (req, res) => {
   const { roomId } = req.params;
   const userId = req.user.id;
@@ -201,6 +225,7 @@ exports.cancelTrade = async (req, res) => {
     chatRoom.isLocked    = false;
     await chatRoom.save();
 
+    // 🔓 Unlock สินค้า
     await Promise.all([
       Product.findByIdAndUpdate(chatRoom.productId,        { status: "available" }),
       Product.findByIdAndUpdate(chatRoom.offeredProductId, { status: "available" }),
@@ -208,10 +233,50 @@ exports.cancelTrade = async (req, res) => {
 
     await Message.create({ roomId, sender: userId, messageType: "trade_cancel", text: "🚫 ยกเลิกการเทรดแล้ว" });
     res.json({ message: "ยกเลิกการเทรดสำเร็จ" });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    console.error("cancelTrade:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
-// ── 6. ✅ getMessages — mark-read + avatar ─────────────────
+// ── 6. ✅ Confirm Swap (ใหม่) ───────────────────────────────
+// เรียกเมื่อทั้งสองฝ่ายได้รับสินค้าแล้ว
+exports.confirmSwap = async (req, res) => {
+  const { roomId } = req.params;
+  const userId = req.user.id;
+  try {
+    const chatRoom = await ChatRoom.findById(roomId);
+    if (!chatRoom) return res.status(404).json({ error: "ไม่พบห้องแชท" });
+
+    if (!chatRoom.participants.map(String).includes(String(userId)))
+      return res.status(403).json({ error: "คุณไม่มีสิทธิ์ในห้องนี้" });
+    if (chatRoom.tradeStatus !== "accepted")
+      return res.status(400).json({ error: "ยืนยันได้เฉพาะตอน accepted เท่านั้น" });
+
+    chatRoom.tradeStatus = "completed";
+    chatRoom.isLocked    = false;
+    chatRoom.completedAt = new Date();
+    await chatRoom.save();
+
+    // ✅ Mark สินค้าว่า traded/sold
+    await Promise.all([
+      Product.findByIdAndUpdate(chatRoom.productId,        { status: "sold" }),
+      Product.findByIdAndUpdate(chatRoom.offeredProductId, { status: "sold" }),
+    ]);
+
+    await Message.create({
+      roomId, sender: userId, messageType: "trade_confirm",
+      text: "🎉 เทรดสำเร็จ! ขอบคุณที่ใช้บริการ",
+    });
+
+    res.json({ message: "เทรดสำเร็จ" });
+  } catch (err) {
+    console.error("confirmSwap:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── 7. Get Messages ────────────────────────────────────────
 exports.getMessages = async (req, res) => {
   const { roomId } = req.params;
   const userId = req.user.id;
@@ -226,10 +291,8 @@ exports.getMessages = async (req, res) => {
       .populate("sender", "username profileImage")
       .sort({ createdAt: 1 });
 
-    // ✅ mark-read ทุกครั้งที่ดึงข้อความ
     await ChatRoom.findByIdAndUpdate(roomId, { $pull: { unreadBy: userId } });
 
-    // ✅ เติม avatarUrl ให้ทุก sender
     const result = messages.map(m => {
       const obj = m.toObject();
       if (obj.sender) obj.sender.avatarUrl = toAvatarUrl(obj.sender);
@@ -243,7 +306,7 @@ exports.getMessages = async (req, res) => {
   }
 };
 
-// ── 7. sendMessage (REST fallback) ────────────────────────
+// ── 8. Send Message (REST fallback) ───────────────────────
 exports.sendMessage = async (req, res) => {
   const { roomId } = req.params;
   const { text }   = req.body;
@@ -256,11 +319,11 @@ exports.sendMessage = async (req, res) => {
       return res.status(403).json({ error: "คุณไม่มีสิทธิ์ในห้องนี้" });
 
     const saved = await Message.create({
-      roomId, sender: userId, text: String(text || "").trim(), messageType: "text",
+      roomId, sender: userId,
+      text: String(text || "").trim(), messageType: "text",
     });
 
     const others = chatRoom.participants.map(String).filter(p => p !== String(userId));
-
     await ChatRoom.findByIdAndUpdate(roomId, {
       lastMessage:   String(text).trim(),
       lastMessageAt: new Date(),
@@ -270,18 +333,17 @@ exports.sendMessage = async (req, res) => {
     await saved.populate("sender", "username profileImage");
     const obj = saved.toObject();
     if (obj.sender) obj.sender.avatarUrl = toAvatarUrl(obj.sender);
-
     res.status(201).json(obj);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ── 8. ✅ getMyChats — เพิ่ม unreadCount ─────────────────
+// ── 9. Get My Chats ────────────────────────────────────────
 exports.getMyChats = async (req, res) => {
   try {
     const userId = req.user.id;
-    const chats  = await ChatRoom.find({ participants: userId })
+    const chats = await ChatRoom.find({ participants: userId })
       .populate("participants",    "username profileImage")
       .populate("productId",       "title images price")
       .populate("offeredProductId","title images price")
@@ -289,13 +351,10 @@ exports.getMyChats = async (req, res) => {
 
     const result = chats.map(r => {
       const obj = r.toObject();
-      // ✅ unreadCount — นับเฉพาะ userId ของตัวเอง
       obj.unreadCount = (r.unreadBy || [])
         .filter(id => String(id) === String(userId)).length;
-      // ✅ avatar ให้ทุก participant
       obj.participants = obj.participants.map(p => ({
-        ...p,
-        avatarUrl: toAvatarUrl(p),
+        ...p, avatarUrl: toAvatarUrl(p),
       }));
       return obj;
     });
@@ -307,20 +366,17 @@ exports.getMyChats = async (req, res) => {
   }
 };
 
-// ── 9. ✅ getRoomDetail — mark-read + avatar ──────────────
+// ── 10. Get Room Detail ─────────────────────────────────────
 exports.getRoomDetail = async (req, res) => {
   const { roomId } = req.params;
   const userId = req.user.id;
   try {
-    // ✅ mark-read พร้อมกับดึงข้อมูล (findByIdAndUpdate + populate)
     const chatRoom = await ChatRoom.findByIdAndUpdate(
-      roomId,
-      { $pull: { unreadBy: userId } },
-      { new: true }
+      roomId, { $pull: { unreadBy: userId } }, { new: true }
     )
       .populate("participants",    "username profileImage")
-      .populate("productId",       "title images price description status")
-      .populate("offeredProductId","title images price description status");
+      .populate("productId",       "title images price description status user")
+      .populate("offeredProductId","title images price description status user");
 
     if (!chatRoom) return res.status(404).json({ error: "ไม่พบห้องแชท" });
 
@@ -329,8 +385,7 @@ exports.getRoomDetail = async (req, res) => {
 
     const obj = chatRoom.toObject();
     obj.participants = obj.participants.map(p => ({
-      ...p,
-      avatarUrl: toAvatarUrl(p),
+      ...p, avatarUrl: toAvatarUrl(p),
     }));
 
     res.json(obj);
