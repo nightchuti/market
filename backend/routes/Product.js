@@ -170,7 +170,9 @@ router.post("/", protect, upload.fields([
   async (req, res) => {
 
     try {
-      const { title, description, price, category, quantity, deliveryType, tradeOption, lat, lng, locationName } = req.body;
+      const { title, description, price, category, quantity,
+        deliveryType, tradeOption, lat, lng, locationName, meetupAddress } = req.body;
+
       const imagePaths = req.files?.images
         ? req.files.images.map(f => `/uploads/${f.filename}`)
         : [];
@@ -180,7 +182,18 @@ router.post("/", protect, upload.fields([
         : [];
 
 
-      if (!title || !category) return res.status(400).json({ message: "กรุณาระบุชื่อสินค้า และหมวดหมู่" });
+      if (!title || !category) return res.status(400).json({
+        message: "กรุณาระบุชื่อสินค้า และหมวดหมู่"
+      });
+      if (
+        (deliveryType === "meetup" || deliveryType === "both") &&
+        !meetupAddress
+      ) {
+        return res.status(400).json({
+          message: "กรุณากรอกที่อยู่หอพักหรือจุดนัดรับ"
+        });
+      }
+
       if ((tradeOption === "sell_only" || tradeOption === "negotiable") && (!price || Number(price) <= 0))
         return res.status(400).json({ message: "สินค้าขายต้องมีราคามากกว่า 0" });
 
@@ -202,6 +215,7 @@ router.post("/", protect, upload.fields([
         wantedImages: wantedImagePaths,
         wantedCategory: req.body.wantedCategory,
         wantedKeywords: req.body.wantedKeywords,
+        meetupAddress: req.body.meetupAddress,
         deliveryType: deliveryType || "delivery",
         tradeOption: tradeOption || "sell_only",
         lat,
@@ -248,12 +262,16 @@ router.put("/:id", protect, upload.fields([
     product.images = finalImages;
     product.status = "pending";
 
+
     if (req.body.title || req.body.description || req.body.category) {
       try {
         const model = genAI.getGenerativeModel({ model: "embedding-001" });
         const result = await model.embedContent(`Product: ${product.title}. Category: ${product.category}. Description: ${product.description || ""}. Price: ${product.price}`);
         product.embeddings = result.embedding.values;
       } catch (aiErr) { console.error("❌ Embedding update failed:", aiErr.message); }
+    }
+    if (req.body.meetupAddress !== undefined) {
+      product.meetupAddress = req.body.meetupAddress;
     }
 
     await product.save();

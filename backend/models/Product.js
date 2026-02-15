@@ -77,28 +77,34 @@ const productSchema = new mongoose.Schema({
     enum: ["available", "pending", "exchanged", "sold"],
     default: "available"
   },
+  meetupAddress: {
+  type: String,
+  default: ""
+},
+
+
 
   // ============================================
   // ✅ เพิ่ม 2 Fields นี้ เพื่อรองรับระบบ Boost
   // ============================================
-  isBoosted: { 
-    type: Boolean, 
-    default: false 
+  isBoosted: {
+    type: Boolean,
+    default: false
   },
-  boostExpireAt: { 
+  boostExpireAt: {
     type: Date,
     default: null
   },
   isLocked: {
-  type: Boolean,
-  default: false
-},
+    type: Boolean,
+    default: false
+  },
 
-lockedByRoom: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "ChatRoom",
-  default: null
-}
+  lockedByRoom: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "ChatRoom",
+    default: null
+  }
 
 }, { timestamps: true });
 
