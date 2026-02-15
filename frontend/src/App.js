@@ -16,6 +16,7 @@ import CheckoutPage from "./pages/Checkout/CheckoutPage";
 import CouponCenter from "./pages/coupon/CouponCenter";
 import AdminCoupon from "./pages/coupon/AdminCoupon";
 import AddressPage from "./pages/Checkout/AddressPage";
+import PaymentPage from "./pages/Checkout/PaymentPage";
 
 function App() {
   return (
@@ -38,8 +39,8 @@ function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/coupons" element={<CouponCenter />} />
           <Route path="/admin/coupons" element={<AdminCoupon />} />
-
           <Route path="/address" element={<AddressPage />} />
+          <Route path="/payment" element={<PaymentPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

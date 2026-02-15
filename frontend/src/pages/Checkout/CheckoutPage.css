@@ -160,18 +160,18 @@ body {
   text-align: center;
   font-size: 14px;
   transition: all 0.2s ease;
-  background: #fafafa;
+  background: #ffffff;
 }
 
 .ship-box:hover,
 .pay-box:hover {
-  border-color: #999;
+  border-color: #ee4d2d;
 }
 
 .ship-box.active,
 .pay-box.active {
-  border-color: #333;
-  background: #f0f0f0;
+  border-color: #ee4d2d;
+  background: #ffffff;
 }
 
 /* ===== Coupon ===== */
@@ -537,5 +537,88 @@ body {
 .coupon-item button:disabled {
     background: #ccc;
     cursor: not-allowed;
+}
+
+/* ================= PAYMENT METHOD SECTION ================= */
+.payment-method-section {
+    margin-top: 24px;
+}
+
+.payment-method-section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #222;
+}
+
+.payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.payment-card {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.payment-card:hover {
+    border-color: #ee4d2d;
+    background-color: #fffaf9;
+}
+
+.payment-card.active {
+    border-color: #ee4d2d;
+    background-color: #fffaf9;
+}
+
+/* ซ่อน Radio Button ดั้งเดิม */
+.payment-card input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #ee4d2d;
+    margin-right: 15px;
+    cursor: pointer;
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.payment-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+}
+
+.payment-subtext {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+}
+
+/* เพิ่ม Icon (ถ้าต้องการใส่ในภายหลัง) */
+.payment-icon {
+    font-size: 20px;
+    margin-right: 12px;
+    color: #ee4d2d;
+}
+
+/* Animation เมื่อเลือก */
+.payment-card.active::after {
+    content: '✔';
+    position: absolute;
+    right: 20px;
+    color: #ee4d2d;
+    font-size: 14px;
+    font-weight: bold;
 }
 
