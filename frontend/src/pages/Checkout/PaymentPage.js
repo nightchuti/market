@@ -67,6 +67,8 @@ const PaymentPage = () => {
 
     if (loading) return <div style={styles.loader}>กำลังเตรียมข้อมูลชำระเงิน...</div>;
 
+    if (!order) return <div style={{ textAlign: "center", marginTop: "50px" }}>ไม่พบข้อมูลคำสั่งซื้อ</div>;
+
     return (
         <div style={styles.pageBackground}>
             <div style={styles.container}>
@@ -88,7 +90,7 @@ const PaymentPage = () => {
                     </div>
                     <div style={styles.amountContainer}>
                         <span style={styles.currencySymbol}>฿</span>
-                        <span style={styles.amountText}>{order.totalPrice.toLocaleString()}</span>
+                        <span style={styles.amountText}>{order?.totalPrice?.toLocaleString() || "0"}</span>
                     </div>
                     <p style={styles.orderIdText}>ออเดอร์: {orderId.slice(-8).toUpperCase()}</p>
                 </div>
