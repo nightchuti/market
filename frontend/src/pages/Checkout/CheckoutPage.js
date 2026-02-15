@@ -308,7 +308,7 @@ const CheckoutPage = () => {
             };
 
             const orderRes = await axios.post(
-                `${API_URL}/api/orders/checkout`,
+                `${API_URL}/api/order/checkout`,
                 orderData,
                 {
                     headers: { Authorization: `Bearer ${token}` }
