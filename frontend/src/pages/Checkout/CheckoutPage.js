@@ -306,7 +306,7 @@ const CheckoutPage = () => {
                 couponCode: appliedCoupon ? appliedCoupon.code : null
             };
 
-            const res = await axios.post(`${API_URL}/api/order/checkout`, orderData, {
+            const res = await axios.post(`${API_URL}/api/orders/checkout`, orderData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
