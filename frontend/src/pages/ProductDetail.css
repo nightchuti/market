@@ -1,251 +1,207 @@
-/* Container หลัก */
-.product-detail {
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 20px;
-  font-family: 'Inter', -apple-system, sans-serif;
-  color: #333;
+.product-detail{
+  padding:30px;
+  background:#f5f6f8;
 }
 
-/* ปุ่มย้อนกลับ */
-.btn-back {
-  background: none;
-  border: none;
-  color: #666;
-  font-size: 16px;
-  cursor: pointer;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  transition: color 0.2s;
+.detail-container{
+  max-width:1200px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:30px;
 }
 
-.btn-back:hover {
-  color: #000;
+/* LEFT */
+.image-box{
+  background:#fff;
+  padding:20px;
+  border-radius:14px;
 }
 
-/* ส่วน Layout หลัก */
-.detail-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-  background: #fff;
-  padding: 20px;
-  border-radius: 16px;
+.main-image{
+  width:100%;
+  height:420px;
+  object-fit:contain;
 }
 
-/* --- ฝั่งซ้าย: รูปภาพ --- */
-.main-image {
-  width: 100%;
-  height: 450px;
-  object-fit: contain; 
-  border-radius: 12px;
-  background: #f2f2f2;
+.thumbnail-row{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
 }
 
-.placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #888;
-  font-size: 20px;
+.thumbnail-row img{
+  width:70px;
+  height:70px;
+  object-fit:cover;
+  cursor:pointer;
+  opacity:.6;
 }
 
-.thumbnail-row {
-  display: flex;
-  margin-top: 15px;
-  gap: 10px;
+.thumbnail-row img.active{
+  opacity:1;
+  border:2px solid black;
 }
 
-.thumbnail-row img {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-  opacity: 0.6;
-  transition: 0.2s;
+.seller-box{
+  margin-top:14px;
+  background:#fff;
+  padding:12px;
+  border-radius:12px;
+  display:flex;
+  gap:10px;
+  align-items:center;
 }
 
-.thumbnail-row img.active,
-.thumbnail-row img:hover {
-  opacity: 1;
-  border: 2px solid #ff4d4f;
+.seller-box img{
+  width:50px;
+  height:50px;
+  border-radius:50%;
 }
 
-/* --- ฝั่งขวา: ข้อมูล --- */
-.info-section {
-  display: flex;
-  flex-direction: column;
+/* RIGHT */
+.info-section{
+  background:#fff;
+  padding:26px;
+  border-radius:14px;
 }
 
-.title {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  line-height: 1.2;
+.price{
+  font-size:32px;
+  font-weight:bold;
+  margin:10px 0;
 }
 
-.price {
-  font-size: 32px;
-  font-weight: 700;
-  color: #000000;
-  margin-bottom: 5px;
+.badge-row span{
+  background:#e0f2fe;
+  padding:6px 12px;
+  border-radius:20px;
+  margin-right:8px;
+  font-size:13px;
 }
 
-.stock {
-  font-size: 14px;
-  color: #777;
-  margin-bottom: 20px;
+.location-box{
+  background:#f1f5f9;
+  padding:12px;
+  border-radius:10px;
+  margin:14px 0;
 }
 
-/* Badges สไตล์ทันสมัย */
-.badges, .badges-sales {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+.desc-box{
+  margin-bottom:14px;
 }
 
-.badges span, .badges-sales span {
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
+.wanted-card{
+  display:flex;
+  gap:12px;
+  background:#ecfeff;
+  padding:12px;
+  border-radius:12px;
 }
 
-/* นัดรับ/จัดส่ง (สีฟ้า) */
-.badges span {
-  background: #e0f2fe;
-  color: #0369a1;
+.wanted-card img{
+  width:90px;
+  height:90px;
+  object-fit:cover;
+  border-radius:10px;
 }
 
-/* รูปแบบการขาย (สีเขียว/ม่วง) */
-.badges-sales span {
-  background: #f0fdf4;
-  color: #166534;
-  border: 1px solid #dcfce7;
+.wanted-tags span{
+  background:#2563eb;
+  color:#fff;
+  padding:4px 8px;
+  border-radius:12px;
+  font-size:12px;
+  margin-right:6px;
 }
 
-/* Seller Card */
-.seller-card {
-  margin: 25px 0;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 1px solid #eee;
+/* BUTTONS */
+.button-group{
+  margin-top:20px;
+  display:grid;
+  grid-template-columns:1fr 1fr 1.5fr;
+  gap:12px;
 }
 
-.seller-card h4 {
-  margin: 0 0 4px 0;
-  font-size: 16px;
+.btn-cart{
+  background:#f3f4f6;
+  padding:16px;
+  border:none;
+  border-radius:10px;
 }
 
-.seller-card p {
-  margin: 0;
-  color: #666;
-  font-size: 14px;
+.btn-chat{
+  background:black;
+  color:white;
+  padding:16px;
+  border:none;
+  border-radius:10px;
 }
 
-/* Button Group */
-.button-group {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-top: auto;
+.btn-buy{
+  background:#22c55e;
+  color:white;
+  padding:18px;
+  border:none;
+  border-radius:12px;
+  font-size:18px;
+  font-weight:bold;
 }
 
-.btn-cart, .btn-chat {
-  padding: 16px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.btn-cart {
-  background-color: #f3f4f6;
-  color: #374151;
-}
-
-.btn-cart:hover {
-  background-color: #e5e7eb;
-}
-
-.btn-chat {
-  background-color: #000;
-  color: #fff;
-}
-
-.btn-chat:hover {
-  background-color: #333;
-  transform: translateY(-2px);
-}
-
-.btn-chat:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-/* Description Section */
-.description-section {
-  margin-top: 40px;
-  padding-top: 30px;
-  border-top: 1px solid #eee;
-}
-
-.description-section h3 {
-  font-size: 20px;
-  margin-bottom: 15px;
-}
-
-.description-section p {
-  line-height: 1.6;
-  color: #444;
-  white-space: pre-wrap; /* รักษาการเว้นบรรทัด */
-}
-
-/* Responsive สำหรับมือถือ */
-@media (max-width: 768px) {
-  .detail-container {
-    grid-template-columns: 1fr;
+@media(max-width:768px){
+  .detail-container{
+    grid-template-columns:1fr;
   }
-  .button-group {
-    grid-template-columns: 1fr;
+
+  .button-group{
+    grid-template-columns:1fr;
   }
 }
-/* ปุ่มขอเทรด */
-.btn-trade, btn-buy {
-  padding: 16px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  background: linear-gradient(135deg, #34d399, #22c55e);
-  color: #ffffff;
+.btn-back{
+  background:none;
+  border:none;
+  font-size:16px;
+  cursor:pointer;
+  margin-bottom:10px;
 }
 
-.btn-trade:hover {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  transform: translateY(-2px);
+.info-section{
+  display:flex;
+  flex-direction:column;
+  min-height:650px;
 }
 
-.btn-trade:active {
-  transform: scale(0.97);
+.desc-box{
+  flex-grow:1;
 }
- .btn-trade {
-  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.35);
+
+.button-group{
+  margin-top:auto;
+}
+
+/* seller mini */
+.seller-mini{
+  margin-top:10px;
+  background:#fff;
+  padding:10px;
+  border-radius:10px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.seller-mini img{
+  width:45px;
+  height:45px;
+  border-radius:50%;
+}
+
+/* wanted */
+.wanted-card{
+  margin-top:15px;
+  display:flex;
+  gap:12px;
+  background:#ecfeff;
+  padding:12px;
+  border-radius:12px;
 }

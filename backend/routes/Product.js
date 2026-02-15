@@ -151,16 +151,16 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ================= GET SINGLE PRODUCT =================
-router.get("/:id", async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id).populate("user", "username email");
-    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
-    res.json(product);
-  } catch (err) {
-    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
-  }
-});
+// // ================= GET SINGLE PRODUCT =================
+// router.get("/:id", async (req, res) => {
+//   try {
+//     const product = await Product.findById(req.params.id).populate("user", "username email");
+//     if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+//     res.json(product);
+//   } catch (err) {
+//     res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
+//   }
+// });
 
 // ================= CREATE PRODUCT =================
 router.post("/", protect, upload.fields([
@@ -299,7 +299,14 @@ router.put("/:id/publish", protect, async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("user", "username email profileImage role shopId");
+      .populate({
+        path: "user",
+        select: "username email profileImage role shopId",
+        populate: {
+          path: "shopId",
+          select: "shopName shopImage bio"
+        }
+      });
 
     if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
     res.json(product);

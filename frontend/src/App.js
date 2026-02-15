@@ -38,7 +38,7 @@ function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/coupons" element={<CouponCenter />} />
           <Route path="/admin/coupons" element={<AdminCoupon />} />
-
+          <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/address" element={<AddressPage />} />
         </Route>
       </Routes>
