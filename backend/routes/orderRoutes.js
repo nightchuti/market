@@ -39,7 +39,14 @@ router.get("/my", protect, async (req, res) => {
     const skip = (page - 1) * limit;
 
     const orders = await Order.find({ user: req.user.id })
-      .populate({ path: "items.product", select: "name image price seller" })
+      .populate({
+        path: "items.product",
+        select: "title images user",
+        populate: {
+          path: "user",
+          select: "username" // สมมติว่าต้องการแสดงชื่อเจ้าของจากโมเดล User
+        }
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -347,10 +354,30 @@ router.patch("/:id/cancel", protect, async (req, res) => {
 //  ตรวจสอบสลืปที่อัปโหลดโดยผู้ใช้ (สำหรับ Admin)
 // ==========================================
 // ดึงออเดอร์ทั้งหมดที่โอนเงินมาแล้วแต่ยังไม่ได้ตรวจ
-router.get("/admin/waiting-confirm", protect, async (req, res) => {
-  // ใส่ Logic เช็คว่าเป็น Admin หรือไม่ตรงนี้
-  const orders = await Order.find({ status: "WaitingConfirm" }).populate("user");
-  res.json(orders);
+router.get("/admin/all-payments", protect, async (req, res) => {
+  try {
+    const orders = await Order.find({
+      status: { $in: ["WaitingConfirm", "Paid"] }
+    })
+      .populate("user", "username")
+      .populate({
+        path: "items.product",
+        // ย้ายการเลือกฟิลด์มาไว้ที่นี่เพื่อให้ดึง seller ออกมาได้
+        select: "name price seller",
+        populate: {
+          path: "seller",
+          select: "shopName"
+        }
+      })
+      // เพิ่มบรรทัดนี้เพื่อแก้ปัญหา StrictPopulateError
+      .setOptions({ strictPopulate: false })
+      .sort({ updatedAt: -1 });
+
+    res.json(orders);
+  } catch (err) {
+    console.error("Admin Fetch Error:", err);
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // Admin กดยืนยันเงินเข้า

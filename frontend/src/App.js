@@ -18,6 +18,7 @@ import AdminCoupon from "./pages/coupon/AdminCoupon";
 import AddressPage from "./pages/Checkout/AddressPage";
 import PaymentPage from "./pages/Checkout/PaymentPage";
 import ShopProfile from "./pages/ShopProfile/ShopProfile";
+import AdminDashboardPay from "./pages/AdminDashboardPay";
 
 
 function App() {
@@ -37,15 +38,17 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/edit-product/:id" element={<EditProduct />} />
           <Route path="/premium" element={<PremiumMember />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/coupons" element={<CouponCenter />} />
-          <Route path="/admin/coupons" element={<AdminCoupon />} />
           <Route path="/address" element={<AddressPage />} />
           <Route path="/payment/:orderId" element={<PaymentPage />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/address" element={<AddressPage />} />
           <Route path="/profile/:id" element={<ShopProfile />} />
+
+          <Route path="/admin/coupons" element={<AdminCoupon />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/payments" element={<AdminDashboardPay />} />
 
         </Route>
       </Routes>

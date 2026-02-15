@@ -431,3 +431,104 @@
 .pp-btn-delete:hover {
   background: #fecaca;
 }
+
+/* ===== Card ===== */
+.pp-ocard {
+  background: #fff;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* ===== Header ร้าน ===== */
+.pp-shop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f1f1;
+  margin-bottom: 12px;
+}
+
+.pp-shop-left {
+  font-size: 15px;
+}
+
+/* ===== รายการสินค้า ===== */
+.pp-oitem {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.pp-oimg {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.pp-ometa {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-oname {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.pp-odesc {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.pp-oqty {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.pp-oprice {
+  font-weight: 600;
+  color: #111827;
+  align-self: flex-start;
+}
+
+/* ===== Footer ===== */
+.pp-ofooter {
+  border-top: 1px solid #f1f1f1;
+  padding-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pp-total {
+  font-size: 14px;
+}
+
+.pp-total span {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ee4d2d;   /* 🔥 Shopee Orange */
+  margin-left: 6px;
+}
+
+/* ===== ปุ่ม ===== */
+.pp-obtn.confirm {
+  background: #ee4d2d;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pp-obtn.confirm:hover {
+  opacity: 0.9;
+}

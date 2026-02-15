@@ -94,7 +94,7 @@ export default function ProfilePage() {
   const fetchOrders = useCallback(async () => {
     setOrdersLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/order/my`, {
+      const res = await axios.get(`${API_URL}/api/orders/my`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = res.data?.orders || res.data;
@@ -430,25 +430,74 @@ export default function ProfilePage() {
               ) : (
                 getFilteredOrders().map(order => (
                   <div key={order._id} className="pp-ocard">
-                    <div className="pp-ocard-top">
-                      <span className="pp-oid">#{order._id.slice(-8).toUpperCase()}</span>
-                      <span className="pp-ostatus" style={{ background: STATUS_MAP[order.status]?.bg, color: STATUS_MAP[order.status]?.color }}>{STATUS_MAP[order.status]?.label}</span>
+
+                    {/* 🔹 Header ร้าน + สถานะ */}
+                    <div className="pp-shop-header">
+                      <div className="pp-shop-left">
+                        {/* ลองใช้ username หรือถ้าคุณมีระบบ Shop แยก ให้ดึงจาก product.user */}
+                        {order.items?.[0]?.product?.user?.username || "ไม่ทราบชื่อร้าน"}
+                      </div>
+
+                      <div
+                        className="pp-ostatus"
+                        style={{
+                          background: STATUS_MAP[order.status]?.bg,
+                          color: STATUS_MAP[order.status]?.color
+                        }}
+                      >
+                        {STATUS_MAP[order.status]?.label}
+                      </div>
                     </div>
+
+                    {/* 🔹 รายการสินค้า */}
                     <div className="pp-oitems">
                       {order.items?.map((item, i) => (
                         <div key={i} className="pp-oitem">
-                          <img className="pp-oimg" src={`${API_URL}${item.product?.image}`} alt={item.product?.name || "Product"} />
-                          <div className="pp-ometa"><p className="pp-oname">{item.product?.name}</p><span className="pp-oqty">x{item.quantity}</span></div>
-                          <p className="pp-oprice">฿{item.price.toLocaleString()}</p>
+                          <img
+                            className="pp-oimg"
+                            src={item.product?.images?.length > 0 ? `${API_URL}${item.product.images[0]}` : "/images/default-product.png"}
+                            alt={item.product?.title}
+                          />
+                          <div className="pp-ometa">
+                            <div className="pp-oname">
+                              {item.product?.title || "ไม่พบชื่อสินค้า"}
+                            </div>
+                            <p className="pp-odesc">
+                              {item.product?.description || "ไม่มีรายละเอียด"}
+                            </p>
+                            <span className="pp-oqty">x{item.quantity}</span>
+                          </div>
+
+                          <div className="pp-oprice">
+                            ฿{item.price.toLocaleString()}
+                          </div>
+
                         </div>
                       ))}
                     </div>
-                    <div className="pp-ofoot">
-                      <div className="pp-ototrow"><span>ยอดรวม</span><strong>฿{order.totalPrice?.toLocaleString()}</strong></div>
-                      {order.status === "Shipping" && <button className="pp-obtn confirm" onClick={() => handleConfirmReceipt(order._id)}>✅ ยืนยันการรับสินค้า</button>}
+
+                    {/* 🔹 Footer ยอดรวม */}
+                    <div className="pp-ofooter">
+                      <div className="pp-total">
+                        รวมทั้งหมด:
+                        <span>
+                          ฿{order.totalPrice?.toLocaleString()}
+                        </span>
+                      </div>
+
+                      {order.status === "Shipping" && (
+                        <button
+                          className="pp-obtn confirm"
+                          onClick={() => handleConfirmReceipt(order._id)}
+                        >
+                          ยืนยันการรับสินค้า
+                        </button>
+                      )}
                     </div>
+
                   </div>
                 ))
+
               )}
           </div>
         )}

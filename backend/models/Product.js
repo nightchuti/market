@@ -78,9 +78,16 @@ const productSchema = new mongoose.Schema({
     default: "available"
   },
   meetupAddress: {
-  type: String,
-  default: ""
-},
+    type: String,
+    default: ""
+  },
+
+  shop: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Shop",
+    required: true
+  },
+
 
 wantedName: { type: String, default: "" },
 wantedCategory: { type: String, default: "" },
