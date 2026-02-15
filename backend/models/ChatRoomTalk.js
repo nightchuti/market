@@ -15,7 +15,7 @@ const chatRoomSchema = new mongoose.Schema({
     productId: { 
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product", 
-      required: true 
+      required: null 
     },
     
     // Trade Fields
@@ -32,7 +32,7 @@ const chatRoomSchema = new mongoose.Schema({
     isLocked: { type: Boolean, default: false },
     lockedProductSnapshot: { type: Object, default: null },
     lockedOfferedProductSnapshot: { type: Object, default: null },
-
+    completedAt: { type: Date, default: null },
     // Metadata
     lastMessage: { type: String, default: "" },
     lastMessageAt: { type: Date, default: Date.now },
