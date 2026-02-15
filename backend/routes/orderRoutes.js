@@ -39,7 +39,14 @@ router.get("/my", protect, async (req, res) => {
     const skip = (page - 1) * limit;
 
     const orders = await Order.find({ user: req.user.id })
-      .populate({ path: "items.product", select: "name image price seller" })
+      .populate({
+        path: "items.product",
+        select: "title images user",
+        populate: {
+          path: "user",
+          select: "username" // สมมติว่าต้องการแสดงชื่อเจ้าของจากโมเดล User
+        }
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -356,14 +363,14 @@ router.get("/admin/all-payments", protect, async (req, res) => {
       .populate({
         path: "items.product",
         // ย้ายการเลือกฟิลด์มาไว้ที่นี่เพื่อให้ดึง seller ออกมาได้
-        select: "name price seller", 
-        populate: { 
-          path: "seller", 
-          select: "shopName" 
+        select: "name price seller",
+        populate: {
+          path: "seller",
+          select: "shopName"
         }
       })
       // เพิ่มบรรทัดนี้เพื่อแก้ปัญหา StrictPopulateError
-      .setOptions({ strictPopulate: false }) 
+      .setOptions({ strictPopulate: false })
       .sort({ updatedAt: -1 });
 
     res.json(orders);

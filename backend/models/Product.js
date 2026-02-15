@@ -82,10 +82,12 @@ const productSchema = new mongoose.Schema({
     default: ""
   },
 
-  seller: {
+  shop: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User' // ต้องมี ref ไปที่ User หรือ Shop เพื่อให้ populate ต่อได้
+    ref: "Shop",
+    required: true
   },
+
 
 
 
