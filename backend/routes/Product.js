@@ -93,56 +93,6 @@ router.get("/config/categories", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-
-// ================= UPDATE PRODUCT =================
-router.put("/:id", protect, async (req, res) => {
-  const product = await Product.findById(req.params.id);
-
-  if (!product) return res.status(404).json({ message: "Product not found" });
-  if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "Not authorized" });
-
-  // อัปเดตฟิลด์ทั่วไป
-  product.title = req.body.title || product.title;
-  product.description = req.body.description || product.description;
-  product.price = req.body.price || product.price;
-  product.category = req.body.category || product.category;
-  product.quantity = req.body.quantity || product.quantity;
-  
-  // อัปเดตฟิลด์ใหม่
-  product.deliveryType = req.body.deliveryType || product.deliveryType;
-  product.tradeOption = req.body.tradeOption || product.tradeOption;
-  product.lat = req.body.lat || product.lat;
-  product.lng = req.body.lng || product.lng;
-  product.locationName = req.body.locationName || product.locationName;
-
-  await product.save();
-  res.json({ message: "Product updated", product });
-});
-
-//==================DELETE PRODUCT ====================
-router.delete("/:id", protect, async (req, res) => {
-
-  const product = await Product.findById(req.params.id);
-
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
-  }
-
-  // ✅ ตรวจเจ้าของ
-  if (product.user.toString() !== req.user.id) {
-    return res.status(403).json({ message: "Not authorized" });
-  }
-
-  await product.deleteOne();
-
-  res.json({ message: "Product deleted" });
-
-});
-
-
-=======
->>>>>>> efbaf9b011b68336a8ba4c2683ae0da835c85753
 // ================= GET ALL PRODUCTS =================
 router.get("/", async (req, res) => {
   try {
