@@ -13,12 +13,15 @@ exports.getAllProducts = async (req, res) => {
     if (category) query.category = category;
     if (tradeOption) query.tradeOption = tradeOption;
 
-    const allItems = await Product.find(query).populate("user", "username").sort({ createdAt: -1 });
+    const allItems = await Product.find(query)
+      .populate("user", "username profileImage shopId")
+      .sort({ createdAt: -1 });
+
 
     const now = new Date();
     // แยกสินค้า Boost และสินค้าปกติ
     const boosted = allItems.filter(p => p.isBoosted && p.boostExpireAt && new Date(p.boostExpireAt) > now)
-                           .sort(() => 0.5 - Math.random()); 
+      .sort(() => 0.5 - Math.random());
     const regular = allItems.filter(p => !p.isBoosted || !p.boostExpireAt || new Date(p.boostExpireAt) <= now);
 
     // ✅ ดึงโฆษณาจริงจากหน้า Admin
@@ -33,7 +36,7 @@ exports.getAllProducts = async (req, res) => {
         mixed.push(regular[rIdx++]);
         if (mixed.length % 6 === 0 && formattedAds.length > 0) {
           const currentAd = formattedAds[adIdx % formattedAds.length];
-          mixed.push({...currentAd, _id: `ad_pos_${mixed.length}_${currentAd._id}`});
+          mixed.push({ ...currentAd, _id: `ad_pos_${mixed.length}_${currentAd._id}` });
           adIdx++;
         }
       }
@@ -71,8 +74,8 @@ exports.activateBoost = async (req, res) => {
     if (user.boostQuota > 0) {
       user.boostQuota -= 1;
       product.isBoosted = true;
-      product.boostExpireAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); 
-      
+      product.boostExpireAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+
       await user.save();
       await product.save();
       return res.json({ success: true, quotaLeft: user.boostQuota });

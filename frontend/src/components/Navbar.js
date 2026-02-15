@@ -46,7 +46,8 @@ export default function Navbar({ onLogin, onRegister }) {
   return (
     <nav className="navbar">
       <div className="logo" onClick={() => navigate("/")} style={{ cursor: 'pointer' }}>
-        YUT SHOP
+        <img src="/logo.png" alt="Logo" className="logo-img" />
+        <span>FUSION J.I.F. ZAP</span>
       </div>
 
       <div className="menu">
@@ -60,7 +61,10 @@ export default function Navbar({ onLogin, onRegister }) {
           <>
             <button className="btn-add" onClick={() => navigate("/cart")}>🛒 ตะกร้าสินค้า</button>
 
-            <div className="user-mini" onClick={() => navigate("/profile")} style={{ cursor: 'pointer' }}>
+            <div
+              className={`user-mini ${location.pathname === "/profile" ? "active" : ""}`}
+              onClick={() => navigate("/profile")}
+            >
               <img
                 src={
                   user?.profileImage

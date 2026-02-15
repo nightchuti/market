@@ -296,18 +296,26 @@ router.put("/:id/publish", protect, async (req, res) => {
   }
 });
 
+// ================= GET PRODUCTS BY USER =================
+router.get("/user/:id", async (req, res) => {
+  try {
+    const products = await Product.find({
+      user: req.params.id,
+      status: "available"
+    })
+      .sort({ createdAt: -1 });
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
+  }
+});
+
+
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate({
-        path: "user",
-        select: "username email profileImage role shopId",
-        populate: {
-          path: "shopId",
-          select: "name bannerImage description"
-        }
-
-      });
+      .populate("user", "username email profileImage role");
 
     if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
     res.json(product);
@@ -315,6 +323,7 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
   }
 });
+
 
 
 router.put("/:id/add-images", protect, upload.fields([

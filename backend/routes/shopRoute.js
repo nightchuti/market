@@ -30,6 +30,8 @@ router.post("/", protect, async (req, res) => {
       // ค่า Default ของ isPromoted จะเป็น false เองตาม Model
     });
 
+    user.shopId = shop._id;
+    await user.save();
     res.status(201).json(shop);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -41,11 +43,11 @@ router.post("/", protect, async (req, res) => {
 router.get("/my-shop", protect, async (req, res) => {
   try {
     const shop = await Shop.findOne({ ownerId: req.user.id });
-    
+
     if (!shop) {
       return res.status(404).json({ message: "Shop not found. Please create one." });
     }
-    
+
     res.json(shop);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -59,11 +61,11 @@ router.get("/feed", async (req, res) => {
     // Logic: ร้านจ่ายเงิน (Promoted) + ยังไม่หมดอายุ
     const shops = await Shop.find({
       isPromoted: true,
-      promotionExpireAt: { $gt: new Date() } 
+      promotionExpireAt: { $gt: new Date() }
     })
-    .select("name bannerImage shopUrl description lat lng") // เลือกฟิลด์ที่จะโชว์
-    .limit(20) // จำกัดจำนวน
-    .sort({ promotionTier: 1, updatedAt: -1 }); // เรียงตามความแพงของแพ็กเกจ
+      .select("name bannerImage shopUrl description lat lng") // เลือกฟิลด์ที่จะโชว์
+      .limit(20) // จำกัดจำนวน
+      .sort({ promotionTier: 1, updatedAt: -1 }); // เรียงตามความแพงของแพ็กเกจ
 
     res.json(shops);
   } catch (error) {
@@ -79,8 +81,8 @@ router.put("/", protect, async (req, res) => {
     // อัปเดตเฉพาะข้อมูลทั่วไป (ห้ามอัปเดตสถานะ isPromoted ตรงนี้ ต้องผ่าน API จ่ายเงินเท่านั้น)
     const shop = await Shop.findOneAndUpdate(
       { ownerId: req.user.id },
-      { 
-        name, description, address, lat, lng, bannerImage, shopUrl 
+      {
+        name, description, address, lat, lng, bannerImage, shopUrl
       },
       { new: true }
     );
@@ -103,10 +105,10 @@ router.get("/:id", async (req, res) => {
     if (!shop) return res.status(404).json({ message: "Shop not found" });
     res.json(shop);
   } catch (error) {
-    res.status(500).json({ message: error.message }); 
+    res.status(500).json({ message: error.message });
   }
-});    
-    
+});
+
 
 
 

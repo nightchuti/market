@@ -6,34 +6,50 @@ import "./ShopProfile.css";
 const API_URL = "http://localhost:5000";
 
 function ShopProfile() {
-  const { id } = useParams();
+  const { id } = useParams();   // ✅ ต้องชื่อ id
+
   const [shop, setShop] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!id) return;   // 🔥 ป้องกัน undefined
+
     axios
       .get(`${API_URL}/api/shops/${id}`)
-      .then(res => setShop(res.data))
-      .catch(() => setShop(null));
+      .then((res) => {
+        setShop(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.log("โหลดร้านไม่สำเร็จ", err);
+        setLoading(false);
+      });
   }, [id]);
 
-  if (!shop) return <p>กำลังโหลดร้านค้า...</p>;
+  if (loading) return <p>กำลังโหลด...</p>;
+  if (!shop) return <p>ไม่พบร้านค้า</p>;
 
   return (
     <div className="shop-profile">
 
-      <img
-        className="shop-banner"
-        src={shop.bannerImage}
-        alt=""
-      />
+      <div className="shop-header">
+        <img
+          className="shop-banner"
+          src={
+            shop.bannerImage
+              ? shop.bannerImage.startsWith("http")
+                ? shop.bannerImage
+                : `${API_URL}${shop.bannerImage}`
+              : "/noimage.png"
+          }
+          alt=""
+        />
 
-      <h2>{shop.name}</h2>
+        <h2>{shop.name}</h2>
+        <p>{shop.description}</p>
+      </div>
 
-      <p className="shop-desc">
-        {shop.description || "ยังไม่มีคำอธิบายร้าน"}
-      </p>
-
-      <div className="owner-box">
+      <div className="shop-owner">
         <img
           src={
             shop.ownerId?.profileImage
@@ -42,12 +58,18 @@ function ShopProfile() {
                 : `${API_URL}${shop.ownerId.profileImage}`
               : "/default-avatar.png"
           }
+          alt=""
         />
 
         <div>
-          <b>{shop.ownerId?.username}</b>
-          <p>เจ้าของร้าน</p>
+          <p><b>เจ้าของร้าน:</b> {shop.ownerId?.username}</p>
+          <p><b>Email:</b> {shop.ownerId?.email}</p>
         </div>
+      </div>
+
+      <div className="shop-info">
+        <p><b>ที่อยู่:</b> {shop.address || "-"}</p>
+        <p><b>ลิงก์ร้าน:</b> {shop.shopUrl || "-"}</p>
       </div>
 
     </div>

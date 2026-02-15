@@ -118,7 +118,10 @@ function ProductDetail() {
           {/* Seller */}
           <div
             className="seller-mini clickable"
-            onClick={() => navigate(`/shop/${product.user?.shopId?._id}`)}
+            onClick={() =>
+              navigate(`/profile/${product.user?._id || product.user}`)
+            }
+
           >
 
 

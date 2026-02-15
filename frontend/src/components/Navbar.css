@@ -2,19 +2,27 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 40px;
-  background: white;
-  position: sticky;
+
+  position: fixed;       /* จาก sticky → fixed */
   top: 0;
-  z-index: 100;
+  left: 0;
+  width: 100%;
+
+  height: 72px;          /* เพิ่มความสูง */
+  padding: 0 40px;
+
+  background: rgb(6, 7, 24);
+  z-index: 1000;
   border-bottom: 1px solid #eee;
 }
+
 
 .logo {
   font-weight: 700;
   font-size: 20px;
-  color: #2f5d1e;
+  color: #10bd4a;
   cursor: pointer;
+  border-radius: 999px;
 }
 
 .menu {
@@ -28,7 +36,7 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  color: #444;
+  color: #ffffff;
   transition: 0.2s;
 }
 
@@ -56,13 +64,14 @@
 }
 
 .btn-outline {
-  border: 1.8px solid #2f5d1e;
+  border: 2.5px solid #2f5d1e;   /* จาก 1.8px → 2.5px */
   background: white;
   color: #2f5d1e;
   padding: 8px 18px;
   border-radius: 999px;
   cursor: pointer;
 }
+
 
 .btn-outline:hover {
   background: #e0eadb;
@@ -100,6 +109,7 @@
   font-weight: 600;
   margin-right: 10px;
   transition: 0.2s;
+
 }
 
 .btn-add:hover {
@@ -148,7 +158,6 @@
   color: #6b7280;
 }
 
-/* ===== MOBILE ===== */
 @media (max-width: 768px) {
   .menu {
     display: none;
@@ -159,6 +168,54 @@
   }
 
   .navbar {
-    padding: 12px 18px;
+    height: 64px;
+    padding: 0 18px;
   }
+
+  .logo-img {
+    width: 42px;
+    height: 42px;
+  }
+
+  body {
+    padding-top: 64px;
+  }
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;     /* เต็มกรอบ */
+  border-radius: 50%;    /* วงกลม */
+}
+
+body {
+  padding-top: 72px;
+}
+
+/* ===== USER MINI ACTIVE (ตอนอยู่หน้าโปรไฟล์) ===== */
+
+/* พื้นหลังขาว */
+.user-mini-name,
+.user-mini-sub {
+  color: white;   /* ก่อนกด = ขาว */
+}
+.user-mini.active {
+  background: white;
+}
+.user-mini.active .user-mini-name,
+.user-mini.active .user-mini-sub {
+  color: black;   /* เมื่อกด = ดำ */
+}
+.user-mini {
+  transition: background 0.25s, color 0.25s;
+}
+ .user-mini-sub {
+  color: rgb(29, 221, 61);
 }
