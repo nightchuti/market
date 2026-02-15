@@ -1,11 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const Product = require("../models/Product");
+const Shop = require("../models/shop"); // ✅ เพิ่มการ Import Shop สำหรับเช็คว่าผู้ใช้มีร้านหรือยัง  
 const User = require("../models/User"); // ✅ เพิ่มการ Import User สำหรับเช็คโควตา
 
 // ✅ destructure เพราะ authMiddleware export เป็น { protect, admin }
 const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/upload");
+
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
