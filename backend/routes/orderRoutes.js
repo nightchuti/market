@@ -117,33 +117,43 @@ router.post("/checkout", protect, async (req, res) => {
     const orderItems = [];
 
     for (const item of items) {
-      // 1. ค้นหาพร้อมดึงข้อมูลเจ้าของสินค้า (สมมติใน Product เก็บเจ้าของในชื่อ 'user')
-      const productData = await Product.findById(item.product).session(session);
 
-      if (!productData) throw new Error("ไม่พบสินค้า");
+  const productData = await Product.findById(item.product).session(session);
 
-      // 2. ตรวจสอบ: ID เจ้าของสินค้า (productData.user) ตรงกับ ID คนซื้อ (buyerId) หรือไม่
-      // ต้องใช้ String() ครอบเพราะค่าจาก DB เป็น ObjectId
-      if (String(productData.user) === String(buyerId)) {
-        throw new Error(`ห้ามซื้อสินค้า "${productData.title}" ซึ่งเป็นของคุณเอง`);
-      }
+  if (!productData) {
+    throw new Error("ไม่พบสินค้า");
+  }
 
-      // 3. ตัดสต็อก (ใช้ findOneAndUpdate เพื่อป้องกัน Race Condition)
-      const updatedProduct = await Product.findOneAndUpdate(
-        { _id: item.product, quantity: { $gte: item.quantity } },
-        { $inc: { quantity: -item.quantity } },
-        { new: true, session }
-      );
+  // ✅ กันเจ้าของซื้อสินค้าตัวเอง (ชั้น Backend)
+  if (productData.user.toString() === req.user.id.toString()) {
+    throw new Error(
+      `ไม่สามารถสั่งซื้อสินค้า "${productData.title}" ของตนเองได้`
+    );
+  }
 
-      if (!updatedProduct) throw new Error(`สินค้า ${productData.title} หมดหรือสต็อกไม่พอ`);
+  const updatedProduct = await Product.findOneAndUpdate(
+    {
+      _id: item.product,
+      quantity: { $gte: item.quantity }
+    },
+    {
+      $inc: { quantity: -item.quantity }
+    },
+    { new: true, session }
+  );
 
-      subTotal += updatedProduct.price * item.quantity;
-      orderItems.push({
-        product: updatedProduct._id,
-        quantity: item.quantity,
-        price: updatedProduct.price
-      });
-    }
+  if (!updatedProduct) {
+    throw new Error(`สินค้า ${productData.title} หมดหรือจำนวนไม่พอ`);
+  }
+
+  subTotal += updatedProduct.price * item.quantity;
+
+  orderItems.push({
+    product: updatedProduct._id,
+    quantity: item.quantity,
+    price: updatedProduct.price
+  });
+}
 
     // ... (ส่วนคำนวณค่าส่ง/คูปอง เหมือนเดิม) ...
 
