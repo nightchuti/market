@@ -296,17 +296,18 @@ router.put("/:id/publish", protect, async (req, res) => {
   }
 });
 
-router.delete("/:id", protect, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id)
+      .populate("user", "username email profileImage role shopId");
+
     if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
-    if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "คุณไม่มีสิทธิ์ลบสินค้านี้" });
-    await product.deleteOne();
-    res.json({ message: "ลบสินค้าสำเร็จ" });
+    res.json(product);
   } catch (err) {
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการลบ", error: err.message });
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
   }
 });
+
 
 router.put("/:id/add-images", protect, upload.fields([
   { name: "images", maxCount: 6 }
