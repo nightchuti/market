@@ -26,15 +26,5 @@ router.post("/:id/verify", protect, tradeController.verifyLocation);
 router.put("/:id/confirm", protect, tradeController.confirmSwap);
 router.delete("/:id/cancel", protect, tradeController.cancelTrade);
 
-module.exports = {
-  createTrade: exports.createTrade,
-  findMatches: exports.findMatches,
-  manualSearch: exports.manualSearch,
-  searchByImage: exports.searchByImage,
-  lockTrade: exports.lockTrade,
-  verifyLocation: exports.verifyLocation,
-  confirmSwap: exports.confirmSwap,
-  getOpenTrades: exports.getOpenTrades,
-  getMyTrades: exports.getMyTrades,
-  cancelTrade: exports.cancelTrade
-};
+
+module.exports = router;

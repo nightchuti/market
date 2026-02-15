@@ -21,8 +21,35 @@ export default function AddProduct() {
     lng: "",
     address: "",
     wantedCategory: "",
-    wantedKeywords: ""
+    wantedKeywords: []
   });
+
+  const [keywordInput, setKeywordInput] = useState("");
+  const handleKeywordKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+
+      const value = keywordInput.trim();
+      if (!value) return;
+
+      if (!form.wantedKeywords.includes(value)) {
+        setForm({
+          ...form,
+          wantedKeywords: [...form.wantedKeywords, value],
+        });
+      }
+
+      setKeywordInput("");
+    }
+  };
+  const removeKeyword = (word) => {
+    setForm({
+      ...form,
+      wantedKeywords: form.wantedKeywords.filter(k => k !== word),
+    });
+  };
+
+
 
   // ---------------- IMAGE ----------------
   const handleImageChange = (e) => {
@@ -93,7 +120,11 @@ export default function AddProduct() {
 
       if (form.tradeOption === "trade_allowed") {
         formData.append("wantedCategory", form.wantedCategory);
-        formData.append("wantedKeywords", form.wantedKeywords);
+        formData.append(
+          "wantedKeywords",
+          form.wantedKeywords.join(",")
+        );
+
 
         tradeImages.forEach((img) => {
           formData.append("wantedImages", img);
@@ -270,63 +301,103 @@ export default function AddProduct() {
                 <option value="อื่นๆ">อื่นๆ</option>
               </select>
             </div>
+            <div style={{ border: "1px solid #ccc", padding: 8, borderRadius: 5 }}>
 
-            <div className="form-group">
-              <label>คำค้นหา</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {form.wantedKeywords.map((word, index) => (
+                  <span
+                    key={index}
+                    style={{
+                      background: "#1976d2",
+                      color: "#fff",
+                      padding: "4px 8px",
+                      borderRadius: 12,
+                      fontSize: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                  >
+                    {word}
+                    <button
+                      type="button"
+                      onClick={() => removeKeyword(word)}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#fff",
+                        cursor: "pointer",
+                        fontWeight: "bold"
+                      }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+
               <input
-                name="wantedKeywords"
-                value={form.wantedKeywords}
-                onChange={handleChange}
-                placeholder="เช่น หูฟัง, powerbank"
+                value={keywordInput}
+                onChange={(e) => setKeywordInput(e.target.value)}
+                onKeyDown={handleKeywordKeyDown}
+                placeholder="พิมพ์คำแล้วกด Enter"
+                style={{
+                  border: "none",
+                  outline: "none",
+                  marginTop: 6,
+                  width: "100%"
+                }}
               />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>รูปสินค้าที่อยากได้</label>
-            <input type="file" multiple accept="image/*" onChange={handleTradeImageChange} />
+            <div className="form-group">
+              <label>รูปสินค้าที่อยากได้</label>
+              <input type="file" multiple accept="image/*" onChange={handleTradeImageChange} />
 
-            <div className="image-preview">
-              {tradeImages.map((img, i) => (
-                <div key={i} className="preview-item">
-                  <img src={URL.createObjectURL(img)} alt="" />
-                  <button onClick={() => removeTradeImage(i)}>✕</button>
-                </div>
-              ))}
+              <div className="image-preview">
+                {tradeImages.map((img, i) => (
+                  <div key={i} className="preview-item">
+                    <img src={URL.createObjectURL(img)} alt="" />
+                    <button onClick={() => removeTradeImage(i)}>✕</button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </>
       )}
+      
 
-      {/* ที่อยู่ */}
-      <div className="form-group">
-        <label>ที่อยู่โดยประมาณ *</label>
-        <input
-          name="address"
-          value={form.address}
-          onChange={handleChange}
-          placeholder="กดใช้ตำแหน่งปัจจุบัน หรือพิมพ์เอง"
-        />
-      </div>
+          {/* ที่อยู่ */}
+          <div className="form-group">
+            <label>ที่อยู่โดยประมาณ *</label>
+            <input
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              placeholder="กดใช้ตำแหน่งปัจจุบัน หรือพิมพ์เอง"
+            />
+          </div>
 
-      {/* พิกัด */}
-      <div className="form-group">
-        <div className="location-header">
-          <label>พิกัด</label>
-          <button type="button" className="location-btn" onClick={getMyLocation}>
-            ใช้ตำแหน่งปัจจุบัน
+          {/* พิกัด */}
+          <div className="form-group">
+            <div className="location-header">
+              <label>พิกัด</label>
+              <button type="button" className="location-btn" onClick={getMyLocation}>
+                ใช้ตำแหน่งปัจจุบัน
+              </button>
+            </div>
+
+            <div className="form-row">
+              <input name="lat" value={form.lat} onChange={handleChange} placeholder="Latitude" />
+              <input name="lng" value={form.lng} onChange={handleChange} placeholder="Longitude" />
+            </div>
+          </div>
+
+          <button onClick={submit} className="submit-btn">
+            บันทึกสินค้า
           </button>
         </div>
-
-        <div className="form-row">
-          <input name="lat" value={form.lat} onChange={handleChange} placeholder="Latitude" />
-          <input name="lng" value={form.lng} onChange={handleChange} placeholder="Longitude" />
-        </div>
-      </div>
-
-      <button onClick={submit} className="submit-btn">
-        บันทึกสินค้า
-      </button>
-    </div>
-  );
+      );
 }
+

@@ -53,7 +53,7 @@ app.use("/api/order", orderRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/ads", adRoutes); // ✅ ใช้งานได้แล้วหลังจาก Import ด้านบน
 
-app.use("/api/shops", shopRoutes); 
+app.use("/api/shop", shopRoutes); 
 app.use("/api/subscription", subscriptionRoutes); // ระบบสมัครสมาชิก/บูสสินค้าแบบอัตโนมัติ
 
 app.use("/api/coupons", couponRoutes);

@@ -19,7 +19,7 @@ router.post("/test-upgrade-pro", protect, async (req, res) => {
 
     user.membershipTier = "PRO";
     user.boostQuota = (user.boostQuota || 0) + 10;
-    
+
     await user.save();
     res.json({ success: true, message: "อัปเกรด PRO สำเร็จ (Test Mode)", quota: user.boostQuota });
   } catch (err) {
@@ -35,7 +35,7 @@ router.post("/activate-boost/:id", protect, async (req, res) => {
     const user = await User.findById(req.user.id);
 
     if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
-    if (product.user.toString() !== req.user.id) 
+    if (product.user.toString() !== req.user.id)
       return res.status(403).json({ message: "คุณไม่ใช่เจ้าของสินค้านี้" });
 
     // 1. ตรวจสอบโควตา
@@ -49,16 +49,16 @@ router.post("/activate-boost/:id", protect, async (req, res) => {
 
     product.isBoosted = true;
     product.boostExpireAt = expireDate;
-    
+
     // 3. หักโควตา User
     user.boostQuota -= 1;
 
     await product.save();
     await user.save();
 
-    res.json({ 
-      success: true, 
-      message: "บูสสินค้าสำเร็จ! สินค้าจะอยู่ลำดับแรกๆ เป็นเวลา 3 วัน", 
+    res.json({
+      success: true,
+      message: "บูสสินค้าสำเร็จ! สินค้าจะอยู่ลำดับแรกๆ เป็นเวลา 3 วัน",
       boostExpireAt: expireDate,
       remainingQuota: user.boostQuota
     });
@@ -93,7 +93,6 @@ router.get("/config/categories", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 
 // ================= UPDATE PRODUCT =================
 router.put("/:id", protect, async (req, res) => {
@@ -108,7 +107,7 @@ router.put("/:id", protect, async (req, res) => {
   product.price = req.body.price || product.price;
   product.category = req.body.category || product.category;
   product.quantity = req.body.quantity || product.quantity;
-  
+
   // อัปเดตฟิลด์ใหม่
   product.deliveryType = req.body.deliveryType || product.deliveryType;
   product.tradeOption = req.body.tradeOption || product.tradeOption;
@@ -141,8 +140,6 @@ router.delete("/:id", protect, async (req, res) => {
 });
 
 
-=======
->>>>>>> efbaf9b011b68336a8ba4c2683ae0da835c85753
 // ================= GET ALL PRODUCTS =================
 router.get("/", async (req, res) => {
   try {
@@ -153,7 +150,7 @@ router.get("/", async (req, res) => {
       const regex = new RegExp(search.trim().split("").join(".*"), "i");
       filter.$or = [{ title: { $regex: regex } }, { description: { $regex: regex } }];
     }
-    if (category)    filter.category = category.trim();
+    if (category) filter.category = category.trim();
     if (tradeOption) filter.tradeOption = tradeOption;
     if (deliveryType) {
       if (deliveryType === "delivery") filter.deliveryType = { $in: ["delivery", "both"] };
@@ -166,12 +163,12 @@ router.get("/", async (req, res) => {
       if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
 
-    const skip     = (parseInt(page) - 1) * parseInt(limit);
+    const skip = (parseInt(page) - 1) * parseInt(limit);
     const products = await Product.find(filter)
       .populate("user", "username email membershipTier")
       .sort({ isBoosted: -1, createdAt: -1 }) // ✅ บูสแล้วจะอยู่บนสุด
       .skip(skip).limit(parseInt(limit));
-    const total    = await Product.countDocuments(filter);
+    const total = await Product.countDocuments(filter);
 
     res.json({ products, pagination: { total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) } });
   } catch (err) {
@@ -191,35 +188,59 @@ router.get("/:id", async (req, res) => {
 });
 
 // ================= CREATE PRODUCT =================
-router.post("/", protect, upload.array("images", 6), async (req, res) => {
-  try {
-    const { title, description, price, category, quantity, deliveryType, tradeOption, lat, lng, locationName } = req.body;
-    const imagePaths = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
+router.post("/", protect, upload.fields([
+  { name: "images", maxCount: 6 },
+  { name: "wantedImages", maxCount: 6 }
+]),
+  async (req, res) => {
 
-    if (!title || !category) return res.status(400).json({ message: "กรุณาระบุชื่อสินค้า และหมวดหมู่" });
-    if ((tradeOption === "sell_only" || tradeOption === "negotiable") && (!price || Number(price) <= 0))
-      return res.status(400).json({ message: "สินค้าขายต้องมีราคามากกว่า 0" });
-
-    let vector = [];
     try {
-      const model  = genAI.getGenerativeModel({ model: "text-embedding-004" });
-      const result = await model.embedContent(`Product: ${title}. Category: ${category}. Description: ${description || ""}. Delivery: ${deliveryType || "delivery"}. Price: ${price}`);
-      vector = result.embedding.values;
-    } catch (aiErr) { console.error("❌ Embedding failed:", aiErr.message); }
+      const { title, description, price, category, quantity, deliveryType, tradeOption, lat, lng, locationName } = req.body;
+      const imagePaths = req.files?.images
+        ? req.files.images.map(f => `/uploads/${f.filename}`)
+        : [];
 
-    const product = await Product.create({
-      user: req.user.id, title, description,
-      price: tradeOption === "trade_allowed" ? 0 : Number(price),
-      category: category.trim(), quantity: quantity || 1,
-      images: imagePaths, deliveryType: deliveryType || "delivery",
-      tradeOption: tradeOption || "sell_only", lat, lng, locationName, embeddings: vector,
-    });
-    await product.populate("user", "username email");
-    res.status(201).json({ message: "สร้างสินค้าสำเร็จ", product });
-  } catch (err) {
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการสร้างสินค้า", error: err.message });
-  }
-});
+      const wantedImagePaths = req.files?.wantedImages
+        ? req.files.wantedImages.map(f => `/uploads/${f.filename}`)
+        : [];
+
+
+      if (!title || !category) return res.status(400).json({ message: "กรุณาระบุชื่อสินค้า และหมวดหมู่" });
+      if ((tradeOption === "sell_only" || tradeOption === "negotiable") && (!price || Number(price) <= 0))
+        return res.status(400).json({ message: "สินค้าขายต้องมีราคามากกว่า 0" });
+
+      let vector = [];
+      try {
+        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const result = await model.embedContent(`Product: ${title}. Category: ${category}. Description: ${description || ""}. Delivery: ${deliveryType || "delivery"}. Price: ${price}`);
+        vector = result.embedding.values;
+      } catch (aiErr) { console.error("❌ Embedding failed:", aiErr.message); }
+
+      const product = await Product.create({
+        user: req.user.id,
+        title,
+        description,
+        price: tradeOption === "trade_allowed" ? 0 : Number(price),
+        category: category.trim(),
+        quantity: quantity || 1,
+        images: imagePaths,
+        wantedImages: wantedImagePaths,
+        wantedCategory: req.body.wantedCategory,
+        wantedKeywords: req.body.wantedKeywords,
+        deliveryType: deliveryType || "delivery",
+        tradeOption: tradeOption || "sell_only",
+        lat,
+        lng,
+        locationName,
+        embeddings: vector
+      });
+
+      await product.populate("user", "username email");
+      res.status(201).json({ message: "สร้างสินค้าสำเร็จ", product });
+    } catch (err) {
+      res.status(500).json({ message: "เกิดข้อผิดพลาดในการสร้างสินค้า", error: err.message });
+    }
+  });
 
 // ================= UPDATE PRODUCT =================
 router.put("/:id", protect, upload.array("images", 6), async (req, res) => {
@@ -230,26 +251,26 @@ router.put("/:id", protect, upload.array("images", 6), async (req, res) => {
 
     let finalImages = product.images;
     if (req.body.existingImages) {
-      try { finalImages = JSON.parse(req.body.existingImages); } catch {}
+      try { finalImages = JSON.parse(req.body.existingImages); } catch { }
     }
     if (req.files?.length > 0) finalImages = [...finalImages, ...req.files.map(f => `/uploads/${f.filename}`)];
 
-    product.title         = req.body.title         || product.title;
-    product.description   = req.body.description   || product.description;
-    product.price         = req.body.tradeOption === "trade_allowed" ? 0 : (req.body.price !== undefined ? Number(req.body.price) : product.price);
-    product.category      = req.body.category      ? req.body.category.trim() : product.category;
-    product.quantity      = req.body.quantity      !== undefined ? Number(req.body.quantity) : product.quantity;
+    product.title = req.body.title || product.title;
+    product.description = req.body.description || product.description;
+    product.price = req.body.tradeOption === "trade_allowed" ? 0 : (req.body.price !== undefined ? Number(req.body.price) : product.price);
+    product.category = req.body.category ? req.body.category.trim() : product.category;
+    product.quantity = req.body.quantity !== undefined ? Number(req.body.quantity) : product.quantity;
     product.deliveryType = req.body.deliveryType || product.deliveryType;
-    product.tradeOption  = req.body.tradeOption  || product.tradeOption;
-    product.lat           = req.body.lat           !== undefined ? Number(req.body.lat)  : product.lat;
-    product.lng           = req.body.lng           !== undefined ? Number(req.body.lng)  : product.lng;
+    product.tradeOption = req.body.tradeOption || product.tradeOption;
+    product.lat = req.body.lat !== undefined ? Number(req.body.lat) : product.lat;
+    product.lng = req.body.lng !== undefined ? Number(req.body.lng) : product.lng;
     product.locationName = req.body.locationName || product.locationName;
-    product.images        = finalImages;
-    product.status        = "pending";
+    product.images = finalImages;
+    product.status = "pending";
 
     if (req.body.title || req.body.description || req.body.category) {
       try {
-        const model  = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
         const result = await model.embedContent(`Product: ${product.title}. Category: ${product.category}. Description: ${product.description || ""}. Price: ${product.price}`);
         product.embeddings = result.embedding.values;
       } catch (aiErr) { console.error("❌ Embedding update failed:", aiErr.message); }
@@ -329,7 +350,7 @@ router.post("/:id/boost", protect, async (req, res) => {
       expireDate.setTime(product.boostExpireAt.getTime());
     expireDate.setDate(expireDate.getDate() + parseInt(req.body.days || 1));
 
-    product.isBoosted    = true;
+    product.isBoosted = true;
     product.boostExpireAt = expireDate;
     await product.save();
 
