@@ -93,4 +93,21 @@ router.put("/", protect, async (req, res) => {
   }
 });
 
+
+// ================= 5. GET SHOP BY ID (สำหรับโชว์หน้า Detail) =================
+router.get("/:id", async (req, res) => {
+  try {
+    const shop = await Shop.findById(req.params.id)
+      .select("name bannerImage shopUrl description lat lng ownerId")
+      .populate("ownerId", "username email profileImage"); // ดึงข้อมูลเจ้าของร้านมาด้วย    
+    if (!shop) return res.status(404).json({ message: "Shop not found" });
+    res.json(shop);
+  } catch (error) {
+    res.status(500).json({ message: error.message }); 
+  }
+});    
+    
+
+
+
 module.exports = router;

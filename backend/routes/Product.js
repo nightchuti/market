@@ -304,8 +304,9 @@ router.get("/:id", async (req, res) => {
         select: "username email profileImage role shopId",
         populate: {
           path: "shopId",
-          select: "shopName shopImage bio"
+          select: "name bannerImage description"
         }
+
       });
 
     if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });

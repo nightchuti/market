@@ -205,3 +205,10 @@
   padding:12px;
   border-radius:12px;
 }
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  opacity: 0.8;
+}

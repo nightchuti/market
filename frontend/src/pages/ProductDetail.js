@@ -116,7 +116,12 @@ function ProductDetail() {
           </div>
 
           {/* Seller */}
-          <div className="seller-mini">
+          <div
+            className="seller-mini clickable"
+            onClick={() => navigate(`/shop/${product.user?.shopId?._id}`)}
+          >
+
+
             <img
               src={
                 product.user?.profileImage
@@ -127,8 +132,9 @@ function ProductDetail() {
               }
             />
             <div>
-              <b>{product.user?.username}</b>
-              <p>ร้านค้าออนไลน์</p>
+              <b>
+                {product.user?.shopId?.name || product.user?.username}
+              </b>
             </div>
           </div>
 
