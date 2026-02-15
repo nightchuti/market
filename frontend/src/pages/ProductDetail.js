@@ -26,161 +26,203 @@ function ProductDetail() {
       .catch(() => setProduct(null));
   }, [id]);
 
-  // ✅ ฟังก์ชัน handleChat ต้องมี async อยู่ข้างหน้าแบบนี้
+  // ===== ห้ามแก้ =====
   const handleChat = async () => {
-    if (!token) {
-      alert("กรุณาเข้าสู่ระบบก่อนแชท");
-      return;
-    }
-
+    if (!token) return alert("กรุณาเข้าสู่ระบบก่อนแชท");
     if (!product) return;
 
-    // เช็คว่าเป็นสินค้าตัวเองหรือไม่
     const sellerId = product.user?._id || product.user;
-    if (String(sellerId) === String(currentUser._id)) {
-      alert("ไม่สามารถแชทกับตัวเองได้");
-      return;
-    }
+    if (String(sellerId) === String(currentUser._id))
+      return alert("ไม่สามารถแชทกับตัวเองได้");
 
     if (chatLoading) return;
     setChatLoading(true);
 
     try {
-      // ✅ ตอนนี้จะใช้ await ได้แล้วเพราะอยู่ในฟังก์ชัน async
       const res = await axios.post(
         `${API_URL}/api/chat/normal`,
         { productId: product._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       navigate(`/chat/${res.data._id}`);
-    } catch (err) {
-      const msg = err.response?.data?.error || "ไม่สามารถเปิดแชทได้";
-      alert(msg);
+    } catch {
+      alert("ไม่สามารถเปิดแชทได้");
     } finally {
       setChatLoading(false);
     }
   };
 
   const handleAddToCart = async () => {
-
-    if (!token) {
-      alert("กรุณาเข้าสู่ระบบก่อนแชท");
-      return;
-    }
-
+    if (!token) return alert("กรุณาเข้าสู่ระบบก่อน");
     if (!product) return;
 
     const sellerId = product.user?._id || product.user;
-
-    if (String(sellerId) === String(currentUser._id)) {
-      alert("ไม่สามารถเพิ่มสินค้าของตัวเองลงตะกร้าได้");
-      return;
-    }
+    if (String(sellerId) === String(currentUser._id))
+      return alert("ไม่สามารถเพิ่มสินค้าของตัวเองลงตะกร้าได้");
 
     try {
       await axios.post(
         `${API_URL}/api/cart/add`,
-        {
-          productId: product._id,
-          quantity: 1
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { productId: product._id, quantity: 1 },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       alert("เพิ่มลงตะกร้าเรียบร้อยแล้ว");
-
-    } catch (err) {
-      alert(err.response?.data?.message || "เพิ่มสินค้าไม่สำเร็จ");
+    } catch {
+      alert("เพิ่มสินค้าไม่สำเร็จ");
     }
   };
+  // ==================
 
-
-  if (!product) return <p className="loading">กำลังโหลดข้อมูลสินค้า...</p>;
+  if (!product) return <p>กำลังโหลด...</p>;
 
   const isOwnProduct =
     currentUser &&
     String(product.user?._id || product.user) === String(currentUser._id);
 
-
   return (
     <div className="product-detail">
-      <button className="btn-back" onClick={() => navigate(-1)}>← กลับ</button>
+
+      {/* ปุ่มย้อนกลับ */}
+      <button className="btn-back" onClick={() => navigate(-1)}>
+        ← กลับ
+      </button>
 
       <div className="detail-container">
-        {/* ส่วนรูปภาพ */}
-        <div className="image-section">
-          {product.images?.length > 0 && selectedImage ? (
+
+        {/* LEFT */}
+        <div>
+
+          <div className="image-box">
             <img
               className="main-image"
-              src={selectedImage.startsWith("http") ? selectedImage : `${API_URL}${selectedImage}`}
-              alt={product.title}
+              src={
+                selectedImage.startsWith("http")
+                  ? selectedImage
+                  : `${API_URL}${selectedImage}`
+              }
+              alt=""
             />
-          ) : (
-            <div className="main-image placeholder">📷 ไม่มีรูปสินค้า</div>
-          )}
 
-          <div className="thumbnail-row">
-            {product.images?.map((img, i) => (
-              <img
-                key={i}
-                className={selectedImage === img ? "active" : ""}
-                src={img.startsWith("http") ? img : `${API_URL}${img}`}
-                alt="thumb"
-                onClick={() => setSelectedImage(img)}
-              />
-            ))}
+            <div className="thumbnail-row">
+              {product.images?.map((img, i) => (
+                <img
+                  key={i}
+                  src={img.startsWith("http") ? img : `${API_URL}${img}`}
+                  className={selectedImage === img ? "active" : ""}
+                  onClick={() => setSelectedImage(img)}
+                />
+              ))}
+            </div>
           </div>
+
+          {/* Seller */}
+          <div
+            className="seller-mini clickable"
+            onClick={() => navigate(`/shop/${product.user?.shopId?._id}`)}
+          >
+
+
+            <img
+              src={
+                product.user?.profileImage
+                  ? product.user.profileImage.startsWith("http")
+                    ? product.user.profileImage
+                    : `${API_URL}${product.user.profileImage}`
+                  : "/default-avatar.png"
+              }
+            />
+            <div>
+              <b>
+                {product.user?.shopId?.name || product.user?.username}
+              </b>
+            </div>
+          </div>
+
         </div>
 
-        {/* ส่วนข้อมูลสินค้า */}
+        {/* RIGHT */}
         <div className="info-section">
-          <h2 className="title">{product.title}</h2>
-          <p className="price">฿{product.price?.toLocaleString()}</p>
-          <p className="stock">คงเหลือ {product.quantity} ชิ้น</p>
 
-          <div className="badges">
-            {product.deliveryType === "meetup" && <span>นัดรับเท่านั้น</span>}
-            {product.deliveryType === "delivery" && <span>จัดส่งเท่านั้น</span>}
-            {product.deliveryType === "both" && <span>นัดรับหรือจัดส่ง</span>}
+          <h2>{product.title}</h2>
+          <div className="price">฿{product.price}</div>
+
+          {/* badges */}
+          <div className="badge-row">
+            {product.deliveryType === "meetup" && <span>นัดรับ</span>}
+            {product.deliveryType === "delivery" && <span>จัดส่ง</span>}
+            {product.deliveryType === "both" && <span>นัดรับ/จัดส่ง</span>}
+
+            {product.tradeOption === "sell_only" && <span>ขาย</span>}
+            {product.tradeOption === "trade_allowed" && <span>รับแลก</span>}
+            {product.tradeOption === "negotiable" && <span>ซื้อ/แลก</span>}
           </div>
 
-          <div className="badges-sales">
-            {product.tradeOption === "sell_only" && <span>ขายเท่านั้น</span>}
-            {product.tradeOption === "trade_allowed" && <span>รับแลกเท่านั้น</span>}
-            {product.tradeOption === "negotiable" && <span>รับแลกหรือซื้อ</span>}
+          {/* location */}
+          <div className="location-box">
+            <p>สถานที่ : {product.locationName || "-"}</p>
+            <p>จุดนัดรับ : {product.meetupAddress || "-"}</p>
           </div>
 
-          <div className="seller-card">
-            <h4>ผู้ขาย : {product.user?.username || "ไม่ทราบชื่อ"}</h4>
-            <p>สถานที่ : {product.locationName || "ไม่ระบุ"}</p>
+          {/* description */}
+          <div className="desc-box">
+            <h4>รายละเอียดสินค้า</h4>
+            <p>{product.description || "ไม่มีรายละเอียดสินค้า"}</p>
           </div>
 
+          {/* trade wanted */}
+          {product.tradeOption === "trade_allowed" && (
+            <div className="wanted-card">
+              <img
+                src={
+                  product.wantedImages?.[0]
+                    ? product.wantedImages[0].startsWith("http")
+                      ? product.wantedImages[0]
+                      : `${API_URL}${product.wantedImages[0]}`
+                    : "/noimage.png"
+                }
+              />
+
+              <div>
+                <b>{product.wantedName || "สินค้าที่ต้องการแลก"}</b>
+                <p>{product.wantedCategory}</p>
+
+                <div className="wanted-tags">
+                  {product.wantedKeywords?.map((k, i) => (
+                    <span key={i}>#{k}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* buttons */}
           <div className="button-group">
+
             <button
               className="btn-cart"
               onClick={handleAddToCart}
               disabled={isOwnProduct}
             >
-              {isOwnProduct ? "สินค้าของคุณ" : "🛒 เพิ่มลงตะกร้า"}
+              🛒 เพิ่มลงตะกร้า
             </button>
 
             {!isOwnProduct && (
-              <button className="btn-chat" onClick={handleChat} disabled={chatLoading}>
-                {chatLoading ? "⏳ กำลังเปิด..." : "💬 แชทผู้ขาย"}
+              <button
+                className="btn-chat"
+                onClick={handleChat}
+                disabled={chatLoading}
+              >
+                💬 แชทผู้ขาย
               </button>
             )}
-          </div>
-        </div>
-      </div>
 
-      <div className="description-section">
-        <h3>รายละเอียดสินค้า</h3>
-        <p>{product.description || "ไม่มีรายละเอียดเพิ่มเติม"}</p>
+            <button className="btn-buy">
+              ⚡ ซื้อทันที
+            </button>
+
+          </div>
+
+        </div>
       </div>
     </div>
   );
