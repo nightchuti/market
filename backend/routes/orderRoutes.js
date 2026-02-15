@@ -382,24 +382,27 @@ router.patch("/:id/cancel", protect, async (req, res) => {
 // ==========================================
 //  ตรวจสอบสลืปที่อัปโหลดโดยผู้ใช้ (สำหรับ Admin)
 // ==========================================
-// ✅ แก้ไขใน orderRoutes.js (ประมาณบรรทัด 188)
+// ✅ แก้ไขใน orderRoutes.js (เส้นทาง /admin/all-payments)
 router.get("/admin/all-payments", protect, async (req, res) => {
   try {
     const orders = await Order.find({
       status: { $in: ["WaitingConfirm", "Paid"] }
     })
-      .populate("user", "username")
+      .populate("user", "username") // ข้อมูลคนซื้อ
       .populate({
         path: "items.product",
-        select: "title price shop images", // ✅ ดึงฟิลด์ shop ออกมา
+        select: "title price user", // ดึง user (เจ้าของสินค้า) ออกมา
         populate: {
-          path: "shop",                 // ✅ ดึงข้อมูลต่อจาก ID ในฟิลด์ shop
-          model: "Shop",                // ✅ ระบุให้ชัดว่าไปที่ Model Shop
-          select: "name"                // ✅ เอาเฉพาะชื่อร้านมา
+          path: "user",
+          select: "username", // ดึงชื่อเจ้าของสินค้า
         }
       })
-      .setOptions({ strictPopulate: false })
       .sort({ updatedAt: -1 });
+
+    /* หมายเหตุ: หากคุณต้องการชื่อร้าน (Shop Name) จริงๆ 
+       คุณต้องมั่นใจว่า Model Shop มีฟิลด์ ownerId ที่ตรงกับ items.product.user
+       และอาจต้องดึงข้อมูล Shop แยก หรือทำ Virtual Populate
+    */
 
     res.json(orders);
   } catch (err) {
