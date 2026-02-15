@@ -71,5 +71,5 @@ shopSchema.index({ promotionTier: 1 });
 
 // 3. (Optional) Geo Index ถ้าอนาคตอยากทำฟีเจอร์ "ร้านใกล้ฉัน"
 shopSchema.index({ lat: 1, lng: 1 });
-
+//hello world
 module.exports = mongoose.model("Shop", shopSchema);
