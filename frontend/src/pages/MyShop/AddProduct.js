@@ -285,18 +285,7 @@ export default function AddProduct() {
           </select>
         </div>
       </div>
-      {(form.deliveryType === "meetup" ||
-        form.deliveryType === "both") && (
-          <div className="form-group">
-            <label>ที่อยู่หอพัก / จุดนัดรับ</label>
-            <input
-              name="meetupAddress"
-              value={form.meetupAddress}
-              onChange={handleChange}
-              placeholder="เช่น หอ A ห้อง 203 หรือ หน้าอาคารเรียน"
-            />
-          </div>
-        )}
+
 
 
       {/* ตัวเลือกขาย */}
@@ -308,7 +297,18 @@ export default function AddProduct() {
           <option value="negotiable">ขาย/แลก</option>
         </select>
       </div>
-
+      {(form.deliveryType === "meetup" ||
+        form.deliveryType === "both") && (
+          <div className="form-group">
+            <label>จุดนัดรับ</label>
+            <input
+              name="meetupAddress"
+              value={form.meetupAddress}
+              onChange={handleChange}
+              placeholder="เช่น หอ A ห้อง 203 หรือ หน้าอาคารเรียน"
+            />
+          </div>
+        )}
       {/* ⭐ เฉพาะเทรด */}
       {form.tradeOption === "trade_allowed" && (
         <>
