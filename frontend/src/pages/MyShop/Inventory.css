@@ -1,0 +1,239 @@
+/* จัดวางรูปให้อยู่ซ้ายมือของชื่อ */
+.product-main-info {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* ระยะห่างระหว่างรูปกับชื่อ */
+}
+
+.inventory-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.inventory-thumb-placeholder {
+  width: 60px;
+  height: 60px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #aaa;
+}
+
+.title-section h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.title-section .price {
+  color: #2e7d32;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* ปุ่ม Action ด้านขวา */
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ปรับปุ่มให้ขนาดเท่ากันตามที่ต้องการ */
+.publish-btn, .edit-btn, .delete-btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.publish-btn { background: #007bff; color: white; }
+.edit-btn { background: #f2f2f2; color: #333; }
+.delete-btn { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+
+/* Status Badge */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+.status-badge.available { background: #e8f5e9; color: #2e7d32; }
+.status-badge.pending { background: #fff3e0; color: #ef6c00; }
+
+/* Dropdown */
+.card-dropdown {
+  padding-top: 15px;
+  margin-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* --- ส่วนเดิมที่คุณมี (ปรับปรุงเล็กน้อย) --- */
+
+.product-main-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.inventory-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.inventory-thumb-placeholder {
+  width: 60px;
+  height: 60px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #aaa;
+}
+
+.title-section h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+  display: flex; /* เพื่อให้ Tag บูสอยู่บรรทัดเดียวกับชื่อ */
+  align-items: center;
+  gap: 8px;
+}
+
+.title-section .price {
+  color: #2e7d32;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* --- ส่วนปุ่ม Action ที่เพิ่มปุ่ม Boost --- */
+
+.publish-btn, .edit-btn, .delete-btn, .boost-action-btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* ปุ่มบูสสินค้า */
+.boost-action-btn {
+  background: #fff8e1; /* สีส้มอ่อน */
+  color: #ff8c00;
+  border: 1px solid #ffe0b2;
+}
+
+.boost-action-btn:hover:not(:disabled) {
+  background: #ff8c00;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.boost-action-btn.active {
+  background: #e8f5e9; /* สีเขียวบอกว่าทำงานอยู่ */
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+  cursor: default;
+}
+
+/* ป้าย Tag เล็กๆ ข้างชื่อสินค้า */
+.boost-tag {
+  background: linear-gradient(45deg, #ff8c00, #ff5252);
+  color: white;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.publish-btn { background: #007bff; color: white; }
+.edit-btn { background: #f2f2f2; color: #333; }
+.delete-btn { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+
+/* --- สถานะการบูสใน Dropdown --- */
+
+.boost-expiry-text {
+  background-color: #fff8e1;
+  color: #e67e00;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  border-left: 4px solid #ff8c00;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* การเน้นขอบการ์ดเมื่อมีการบูส */
+.shop-card.boosted-border {
+  border: 1.5px solid #ff8c00;
+  box-shadow: 0 4px 12px rgba(255, 140, 0, 0.1);
+}
+
+/* --- ส่วนอื่นๆ คงเดิม --- */
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+.status-badge.available { background: #e8f5e9; color: #2e7d32; }
+.status-badge.pending { background: #fff3e0; color: #ef6c00; }
+
+.card-dropdown {
+  padding-top: 15px;
+  margin-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.boost-action-btn:not(:disabled):not(.active) {
+  animation: pulse-orange 2s infinite;
+}
+
+@keyframes pulse-orange {
+  0% { box-shadow: 0 0 0 0 rgba(255, 140, 0, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 140, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 140, 0, 0); }
+}

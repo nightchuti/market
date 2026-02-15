@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
-    trim: true // ตัดช่องว่างหัวท้าย
+    trim: true
   },
   description: {
     type: String
@@ -30,42 +30,88 @@ const productSchema = new mongoose.Schema({
       "อิเล็กทรอนิกส์",
       "อาหาร",
       "อุปกรณ์สัตว์เลี้ยง",
+      "อุปกรณ์อิเล็กทรอนิกส์",
       "อื่นๆ"
     ],
     required: true
   },
-  // เปลี่ยนจาก quantity เฉยๆ เป็นการกำหนดค่าตรวจสอบด้วย
-  quantity: { 
+  quantity: {
     type: Number,
     required: [true, "กรุณาระบุจำนวนสต็อก"],
-    min: [0, "สินค้าในสต็อกไม่สามารถติดลบได้"], // สำคัญมากสำหรับการตัดสต็อก
+    min: [0, "สินค้าในสต็อกไม่สามารถติดลบได้"],
     default: 0
   },
-  images: [
-    {
-      type: String
-    }
-  ],
-  isActive: { // เพิ่มสถานะเปิด/ปิดการขาย
+  images: [{ type: String }],
+  isActive: {
     type: Boolean,
     default: true
   },
-  
   deliveryType: {
-  type: String,
-  enum: ["meetup", "delivery", "both"],
-  default: "delivery"
+    type: String,
+    enum: ["meetup", "delivery", "both"],
+    default: "delivery"
+  },
+  tradeOption: {
+    type: String,
+    enum: ["sell_only", "trade_allowed", "negotiable"],
+    default: "sell_only"
+  },
+  lat: {
+    type: Number,
+    default: null
+  },
+  lng: {
+    type: Number,
+    default: null
+  },
+  locationName: {
+    type: String,
+    trim: true
+  },
+  embeddings: {
+    type: [Number],
+    default: []
+  },
+  status: {
+    type: String,
+    enum: ["available", "pending", "exchanged", "sold"],
+    default: "available"
+  },
+
+  // ============================================
+  // ✅ เพิ่ม 2 Fields นี้ เพื่อรองรับระบบ Boost
+  // ============================================
+  isBoosted: { 
+    type: Boolean, 
+    default: false 
+  },
+  boostExpireAt: { 
+    type: Date,
+    default: null
+  },
+  isLocked: {
+  type: Boolean,
+  default: false
 },
 
-tradeOption: {
-  type: String,
-  enum: ["sell_only", "trade_allowed", "negotiable"],
-  default: "sell_only"
-},
+lockedByRoom: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "ChatRoom",
+  default: null
+}
 
 }, { timestamps: true });
 
-// ทำ Index เพื่อให้ค้นหาด้วยชื่อหรือหมวดหมู่ได้เร็วขึ้น
-productSchema.index({ title: "text", category: 1 });
+// Index
+productSchema.index({
+  title: "text",
+  description: "text"
+});
+productSchema.index({ user: 1 });
+productSchema.index({ status: 1 });
+
+// ✅ แก้ Index ตรงนี้: ให้ MongoDB เรียงข้อมูลเร็วขึ้นเวลาเราดึงหน้า Feed
+// (เรียงคนจ่ายเงินขึ้นก่อน -> ตามด้วยของใหม่ล่าสุด)
+productSchema.index({ isBoosted: -1, createdAt: -1 });
 
 module.exports = mongoose.model("Product", productSchema);

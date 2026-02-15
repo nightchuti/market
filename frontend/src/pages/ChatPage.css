@@ -1,58 +1,318 @@
-.chat-page {
-  padding: 40px;
-  display: flex;
-  justify-content: center;
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+.cp-wrap {
+  display: flex; flex-direction: column;
+  height: 90dvh;
+  background: linear-gradient(135deg, #f0f2f5 0%, #e5e7eb 100%);
+  font-family: 'Prompt', sans-serif;
+  max-width: 600px; margin: 0 auto; overflow: hidden;
 }
 
-.chat-container {
-  width: 500px;
+/* ── Header ── */
+.cp-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e5e7eb;
+}
+.cp-back { background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; }
+.cp-havatar { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; }
+.cp-htxt { flex: 1; min-width: 0; }
+.cp-hname { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cp-htype { font-size: 11px; color: #6366f1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cp-closed-chip {
+  font-size: 10px; background: #fee2e2; color: #ef4444;
+  padding: 3px 8px; border-radius: 6px; font-weight: 600; white-space: nowrap;
+}
+
+/* ── Product Bar (normal) ── */
+.cp-pbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
   background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  border-bottom: 1px solid #e5e7eb;
+  transition: background 0.2s;
 }
-
-.chat-box {
-  height: 400px;
-  overflow-y: auto;
-  margin-bottom: 15px;
-  padding: 10px;
-  background: #f5f5f5;
+.cp-pbar img {
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
+  object-fit: cover; /* ป้องกันรูปเบี้ยว */
+  border: 1px solid #eee;
+}
+.cp-pbar:hover {
+  background: #f9fafb; /* ไฮไลท์เมื่อเอาเมาส์วาง */
+}
+.cp-pbar p  { font-size: 13px; font-weight: 500; color: #111827; }
+.cp-pbar span { font-size: 12px; color: #6366f1; font-weight: 600; }
+
+/* ── Trade Panel ── */
+.cp-trade {
+  background: #fffbeb; border-bottom: 1px solid #fde68a;
+  padding: 12px 16px;
+}
+.cp-trade-title { font-size: 12px; font-weight: 600; color: #92400e; margin-bottom: 8px; }
+.cp-trade-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.cp-tcard {
+  flex: 1; background: #fff; border-radius: 10px;
+  padding: 8px; text-align: center;
+  border: 1px solid #fde68a;
+}
+.cp-tcard img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; margin-bottom: 4px; }
+.cp-tcard p { font-size: 11px; color: #374151; margin-bottom: 2px; line-height: 1.3; }
+.cp-tcard b { font-size: 12px; color: #6366f1; }
+.cp-tswap { font-size: 20px; color: #9ca3af; flex-shrink: 0; }
+.cp-tchip {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  background: #dbeafe; color: #1d4ed8;
+  padding: 2px 6px; border-radius: 4px; margin-bottom: 6px;
+}
+.cp-tchip.alt { background: #d1fae5; color: #065f46; }
+.cp-tstatus { font-size: 12px; font-weight: 600; text-align: center; margin-top: 4px; }
+.cp-tbtns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.cp-btn {
+  flex: 1; padding: 7px 10px; border: none; border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cp-btn.accept { background: #d1fae5; color: #065f46; }
+.cp-btn.reject { background: #fee2e2; color: #991b1b; }
+.cp-btn.cancel { background: #f3f4f6; color: #374151; }
+.cp-btn:hover  { filter: brightness(.95); }
+
+/* ── Messages Area ── */
+.cp-msgs {
+  flex: 1; overflow-y: auto;
+  padding: 16px; display: flex; flex-direction: column; gap: 10px;
+}
+.cp-msgs::-webkit-scrollbar { width: 3px; }
+.cp-msgs::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+.cp-empty {
+  text-align: center; color: #9ca3af;
+  font-size: 13px; margin-top: 40px;
 }
 
-.chat-message {
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  max-width: 70%;
+/* วันที่ตรงกลาง */
+.cp-datesep {
+  display: flex; justify-content: center; width: 100%; margin: 8px 0;
+}
+.cp-datesep span {
+  font-size: 11px; background: rgba(0,0,0,0.06);
+  padding: 3px 12px; border-radius: 20px; color: #6b7280;
 }
 
-.chat-message.me {
-  background: #3498db;
-  color: white;
-  margin-left: auto;
+/* system message */
+.cp-sysmsg {
+  display: flex; justify-content: center;
+}
+.cp-sysmsg span {
+  font-size: 11.5px; color: #6b7280; background: rgba(0,0,0,0.05);
+  padding: 4px 12px; border-radius: 12px;
 }
 
-.chat-message.other {
-  background: #e0e0e0;
+/* ── แถวข้อความ ── */
+.cp-row { display: flex; width: 100%; gap: 8px; }
+.cp-row.me    { justify-content: flex-end; }
+.cp-row.other { justify-content: flex-start; }
+
+.cp-bwrap { max-width: 75%; display: flex; flex-direction: column; }
+.cp-row.me    .cp-bwrap { align-items: flex-end; }
+.cp-row.other .cp-bwrap { align-items: flex-start; }
+
+.cp-mname { font-size: 11px; color: #6b7280; margin-bottom: 3px; margin-left: 2px; }
+
+/* ── Bubble ── */
+.cp-bubble {
+  padding: 10px 14px; font-size: 14px; line-height: 1.5;
+  word-wrap: break-word;
+}
+.cp-row.me .cp-bubble {
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  color: #fff; border-radius: 18px 18px 4px 18px;
+  box-shadow: 0 4px 12px rgba(99,102,241,0.25);
+}
+.cp-row.other .cp-bubble {
+  background: #fff; color: #1f2937;
+  border-radius: 18px 18px 18px 4px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.cp-mtime { font-size: 10px; color: rgba(255,255,255,0.65); display: block; margin-top: 3px; text-align: right; }
+.cp-row.other .cp-mtime { color: #9ca3af; text-align: left; }
+
+.cp-mavatar { width: 32px; height: 32px; border-radius: 10px; align-self: flex-end; flex-shrink: 0; }
+
+/* Typing indicator */
+.cp-typing {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 0;
+}
+.cp-typing span { font-size: 12px; color: #9ca3af; }
+.cp-dots { display: flex; gap: 3px; align-items: center; }
+.cp-dots i {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #9ca3af; display: block;
+  animation: bounce 1.2s infinite;
+}
+.cp-dots i:nth-child(2) { animation-delay: .2s; }
+.cp-dots i:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce {
+  0%,60%,100% { transform: translateY(0); }
+  30%          { transform: translateY(-5px); }
 }
 
-.chat-input {
+/* ── Footer ── */
+.cp-footer {
+  padding: 10px 14px; background: #fff;
+  display: flex; gap: 10px; border-top: 1px solid #e5e7eb;
+  align-items: center;
+}
+.cp-input {
+  flex: 1; padding: 10px 16px; border-radius: 22px;
+  border: 1.5px solid #e5e7eb; outline: none;
+  background: #f9fafb; font-family: inherit; font-size: 14px;
+  transition: border-color .2s;
+}
+.cp-input:focus { border-color: #6366f1; }
+.cp-send {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: #6366f1; color: #fff; border: none;
+  cursor: pointer; font-size: 16px; flex-shrink: 0;
+  transition: background .2s, transform .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.cp-send:hover   { background: #4f46e5; }
+.cp-send:active  { transform: scale(.9); }
+.cp-send:disabled { background: #e5e7eb; cursor: not-allowed; }
+
+.cp-closed-bar {
+  flex: 1; text-align: center; font-size: 13px;
+  color: #6b7280; padding: 10px;
+}
+
+/* ── States ── */
+.cp-notice, .cp-loading, .cp-error-page {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100dvh; gap: 12px;
+  font-family: 'Prompt', sans-serif; text-align: center; padding: 24px;
+}
+.cp-spin {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid #e5e7eb; border-top-color: #6366f1;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.cp-error-page p   { font-size: 14px; color: #6b7280; }
+.cp-retry-btn {
+  padding: 10px 24px; border: none; border-radius: 10px;
+  background: #6366f1; color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.cp-retry-btn:hover { background: #4f46e5; }
+.cp-retry-btn.back  { background: #e5e7eb; color: #374151; }
+.cp-retry-btn.back:hover { background: #d1d5db; }
+.cp-pending-bar {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  color: #92400e;
+  padding: 12px;
+  background: #fffbeb; /* สีเหลืองนวลให้เข้ากับ Trade Panel */
+  border-top: 1px solid #fde68a;
+  font-weight: 500;
+}
+/* --- Trade Panel Styling --- */
+.cp-trade {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 15px;
+}
+
+.cp-trade-title {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.cp-trade-row {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
 }
 
-.chat-input input {
+.cp-tcard {
   flex: 1;
-  padding: 8px;
+  background: white;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  position: relative;
 }
 
-.chat-input button {
-  padding: 8px 15px;
-  background: #2ecc71;
-  border: none;
+.cp-tchip {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  background: #4f46e5;
   color: white;
-  border-radius: 6px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.cp-tchip.alt { background: #10b981; }
+
+.cp-tcard img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+
+.cp-tswap {
+  font-size: 20px;
+  color: #94a3b8;
+}
+
+.cp-tbtns {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.cp-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
   cursor: pointer;
+  transition: 0.2s;
+}
+
+.cp-btn.accept { background: #10b981; color: white; }
+.cp-btn.reject { background: #fee2e2; color: #ef4444; }
+.cp-btn.cancel { background: #f1f5f9; color: #64748b; }
+
+.cp-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* Status Styles */
+.cp-tstatus {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
+  font-size: 14px;
 }

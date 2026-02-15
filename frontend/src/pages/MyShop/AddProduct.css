@@ -1,0 +1,221 @@
+/* =========================
+   BASE
+========================= */
+
+body {
+  background: #f4f6f8;
+  margin: 0;
+  font-family: "Inter","Segoe UI",system-ui,sans-serif;
+}
+
+/* =========================
+   CONTAINER
+========================= */
+
+.add-product-container {
+  max-width: 760px;
+  margin: 40px auto;
+  padding: 26px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.08);
+  animation: fade .4s ease;
+}
+
+@keyframes fade {
+  from {opacity:0; transform:translateY(10px);}
+  to {opacity:1; transform:translateY(0);}
+}
+
+/* =========================
+   TITLE
+========================= */
+
+.add-product-container h1 {
+  text-align: center;
+  margin-bottom: 22px;
+  font-size: 26px;
+  font-weight: 700;
+  background: linear-gradient(90deg,#2e7d32,#43a047);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* =========================
+   FORM GROUP
+========================= */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+}
+
+label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #222;
+}
+
+/* =========================
+   INPUT STYLE
+========================= */
+
+input,
+textarea,
+select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  font-size: 14px;
+  transition: .2s;
+}
+
+textarea {min-height: 90px;}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #43a047;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(67,160,71,.15);
+}
+
+/* =========================
+   SELECT BEAUTY
+========================= */
+
+select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg,transparent 50%,#43a047 50%),
+    linear-gradient(135deg,#43a047 50%,transparent 50%);
+  background-position:
+    calc(100% - 20px) 55%,
+    calc(100% - 15px) 55%;
+  background-size:5px 5px;
+  background-repeat:no-repeat;
+}
+
+/* =========================
+   INLINE ROW
+========================= */
+
+.inline-row {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 12px;
+}
+
+.inline-row .form-group {
+  background: #fafafa;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+/* =========================
+   IMAGE PREVIEW
+========================= */
+
+.image-preview {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.preview-item {
+  position: relative;
+}
+
+.preview-item img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.15);
+}
+
+.preview-item button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+}
+
+/* =========================
+   LOCATION
+========================= */
+
+.location-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.location-btn {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.location-btn::before {
+  content: "📍 ";
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+/* =========================
+   SUBMIT
+========================= */
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background: linear-gradient(135deg,#2e7d32,#43a047);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(46,125,50,.3);
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:640px){
+  .inline-row{
+    grid-template-columns:1fr;
+  }
+
+  .preview-item img{
+    width:85px;
+    height:85px;
+  }
+
+  h1{font-size:22px;}
+}

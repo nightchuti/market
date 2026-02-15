@@ -1,85 +1,79 @@
+// 📄 routes/couponRoutes.js
 const express = require("express");
 const router = express.Router();
-
+const mongoose = require("mongoose");
 const Coupon = require("../models/Coupon");
-const protect = require("../middleware/authMiddleware");
+const CouponUsage = require("../models/CouponUsage");
+const ClaimedCoupon = require("../models/ClaimedCoupon"); // นำเข้า Model ใหม่
+const { protect } = require("../middleware/authMiddleware");
 
-// ================= CREATE COUPON (Admin) =================
-router.post("/", protect, async (req, res) => {
-  try {
-    const {
-      code,
-      discountPercent,
-      discountAmount,
-      freeShipping,
-      minSpend,
-      maxUse,
-      expireAt
-    } = req.body;
-
-    // ตรวจสอบว่า code ซ้ำหรือไม่
-    const existingCoupon = await Coupon.findOne({ code: code.toUpperCase() });
-    if (existingCoupon) {
-      return res.status(400).json({ message: "Coupon code already exists" });
-    }
-
-    const coupon = await Coupon.create({
-      code: code.toUpperCase(),
-      discountPercent: discountPercent || 0,
-      discountAmount: discountAmount || 0,
-      freeShipping: freeShipping || false,
-      minSpend: minSpend || 0,
-      maxUse: maxUse || 0,
-      expireAt
-    });
-
-    res.status(201).json(coupon);
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ================= GET ALL COUPONS =================
+// ================= 1. GET ALL FOR FEED (พร้อมสถานะการเก็บ) =================
 router.get("/", protect, async (req, res) => {
   try {
-    const coupons = await Coupon.find().sort({ createdAt: -1 });
-    res.json(coupons);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+    const userTier = req.user.membershipTier || 'FREE';
+    let allowedTiers = ['FREE'];
+    if (userTier === 'PRO') allowedTiers.push('PRO');
 
-// ================= MY COUPONS (ที่ยังใช้ได้) =================
-router.get("/my", protect, async (req, res) => {
-  try {
+    // ดึงคูปองที่ยังใช้งานได้
     const coupons = await Coupon.find({
       isActive: true,
       expireAt: { $gt: new Date() },
-      usedBy: { $ne: req.user.id }
-    });
+      requiredTier: { $in: allowedTiers }
+    }).sort({ createdAt: -1 }).lean();
 
-    res.json(coupons);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    // ดึงรายการที่ User เคยเก็บไปแล้วมาเช็คสถานะ
+    const myClaimed = await ClaimedCoupon.find({ userId: req.user.id }).select('couponId isUsed');
+    const claimedIds = myClaimed.map(c => c.couponId.toString());
+    const usedIds = myClaimed.filter(c => c.isUsed).map(c => c.couponId.toString());
+
+    // ปรับรูปแบบข้อมูลส่งกลับให้ UI ทำงานง่าย
+    const couponsWithStatus = coupons.map(coupon => ({
+      ...coupon,
+      isClaimed: claimedIds.includes(coupon._id.toString()),
+      isAlreadyUsed: usedIds.includes(coupon._id.toString()),
+      isFull: coupon.quotaLimit > 0 && coupon.quotaUsed >= coupon.quotaLimit
+    }));
+
+    res.json(couponsWithStatus);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
-// ================= USED COUPONS =================
-router.get("/used", protect, async (req, res) => {
+// ================= 2. CLAIM COUPON (กดเก็บคูปอง) =================
+router.post("/claim/:id", protect, async (req, res) => {
   try {
-    const coupons = await Coupon.find({
-      usedBy: req.user.id
-    });
+    const couponId = req.params.id;
+    const userId = req.user.id;
 
-    res.json(coupons);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const coupon = await Coupon.findOne({ _id: couponId, isActive: true, expireAt: { $gt: new Date() } });
+    if (!coupon) return res.status(404).json({ message: "ไม่พบคูปอง หรือคูปองหมดอายุแล้ว" });
+
+    // เช็ค Tier
+    const tierLevels = ['FREE', 'PRO'];
+    if (tierLevels.indexOf(req.user.membershipTier || 'FREE') < tierLevels.indexOf(coupon.requiredTier)) {
+      return res.status(403).json({ message: `เฉพาะสมาชิกระดับ ${coupon.requiredTier} เท่านั้น` });
+    }
+
+    // เช็คโควตารวม
+    if (coupon.quotaLimit > 0 && coupon.quotaUsed >= coupon.quotaLimit) {
+      return res.status(400).json({ message: "คูปองถูกเก็บจนเต็มจำนวนแล้ว" });
+    }
+
+    // บันทึกการเก็บ (Claim)
+    try {
+      await ClaimedCoupon.create({ userId, couponId });
+      res.json({ success: true, message: "เก็บคูปองลงกระเป๋าสำเร็จ!" });
+    } catch (dbErr) {
+      if (dbErr.code === 11000) return res.status(400).json({ message: "คุณเก็บคูปองนี้ไปแล้ว" });
+      throw dbErr;
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
-// ================= CHECK COUPON =================
+// ================= 3. CHECK PRICE (ใช้สำหรับคำนวณส่วนลด) =================
 router.post("/check", protect, async (req, res) => {
   try {
     const { code, subTotal } = req.body;
@@ -90,72 +84,117 @@ router.post("/check", protect, async (req, res) => {
       expireAt: { $gt: new Date() }
     });
 
-    if (!coupon)
-      return res.status(400).json({ message: "Invalid coupon" });
+    if (!coupon) return res.status(404).json({ message: "โค้ดไม่ถูกต้องหรือหมดอายุ" });
 
-    // เคยใช้แล้ว
-    if (coupon.usedBy.includes(req.user.id))
-      return res.status(400).json({ message: "Already used" });
+    if (coupon.quotaLimit > 0 && coupon.quotaUsed >= coupon.quotaLimit) {
+      return res.status(400).json({ message: "คูปองถูกใช้ครบจำนวนแล้ว" });
+    }
 
-    // จำกัดจำนวนรวม
-    if (coupon.maxUse > 0 && coupon.usedBy.length >= coupon.maxUse)
-      return res.status(400).json({ message: "Coupon fully redeemed" });
+    // เช็คว่าเคยเก็บคูปองนี้หรือยัง (บังคับต้องเก็บก่อนใช้เหมือน Shopee)
+    const claimData = await ClaimedCoupon.findOne({ userId: req.user.id, couponId: coupon._id });
+    if (!claimData) return res.status(400).json({ message: "คุณต้องเก็บคูปองนี้ก่อนใช้งาน" });
+    if (claimData.isUsed) return res.status(400).json({ message: "คุณใช้คูปองนี้ไปแล้ว" });
 
-    if (subTotal < coupon.minSpend)
-      return res.status(400).json({ message: `Minimum spend is ${coupon.minSpend} baht` });
+    if (subTotal < coupon.minSpend) {
+      return res.status(400).json({ message: `ยอดสั่งซื้อขั้นต่ำ ฿${coupon.minSpend}` });
+    }
 
-    let discount = 0;
+    // คำนวณส่วนลด
+    let discount = coupon.discountType === 'PERCENT'
+      ? (subTotal * coupon.discountValue) / 100
+      : coupon.discountValue;
 
-    if (coupon.discountPercent > 0)
-      discount = subTotal * coupon.discountPercent / 100;
+    if (coupon.maxDiscountAmount > 0 && discount > coupon.maxDiscountAmount) discount = coupon.maxDiscountAmount;
+    if (discount > subTotal) discount = subTotal;
 
-    if (coupon.discountAmount > 0)
-      discount = coupon.discountAmount;
-
-    res.json({
-      couponId: coupon._id,
-      code: coupon.code,
-      discount,
-      freeShipping: coupon.freeShipping
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.json({ valid: true, discount, finalPrice: subTotal - discount, coupon });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
-// ================= UPDATE COUPON =================
-router.put("/:id", protect, async (req, res) => {
+// ================= 4. REDEEM (ตัดยอดจริงเมื่อชำระเงิน) =================
+router.post("/redeem", protect, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const coupon = await Coupon.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
+    const { code, subTotal, orderId } = req.body;
+
+    const coupon = await Coupon.findOneAndUpdate(
+      { code: code.toUpperCase(), isActive: true, $expr: { $or: [{ $eq: ["$quotaLimit", 0] }, { $lt: ["$quotaUsed", "$quotaLimit"] }] } },
+      { $inc: { quotaUsed: 1 } },
+      { new: true, session }
     );
 
-    if (!coupon) {
-      return res.status(404).json({ message: "Coupon not found" });
-    }
+    if (!coupon) throw new Error("คูปองไม่ถูกต้องหรือโควตาเต็มแล้ว");
 
-    res.json(coupon);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    // อัปเดตสถานะในกระเป๋าคูปองเป็น "ใช้แล้ว"
+    const updateClaim = await ClaimedCoupon.findOneAndUpdate(
+      { userId: req.user.id, couponId: coupon._id, isUsed: false },
+      { isUsed: true },
+      { session }
+    );
+
+    if (!updateClaim) throw new Error("คุณใช้คูปองนี้ไปแล้ว หรือยังไม่ได้เก็บคูปอง");
+
+    // บันทึกประวัติการใช้
+    let discount = coupon.discountType === 'PERCENT' ? (subTotal * coupon.discountValue) / 100 : coupon.discountValue;
+    if (coupon.maxDiscountAmount > 0 && discount > coupon.maxDiscountAmount) discount = coupon.maxDiscountAmount;
+
+    await CouponUsage.create([{
+      couponId: coupon._id, userId: req.user.id, orderId, discountSnapshot: discount
+    }], { session });
+
+    await session.commitTransaction();
+    res.json({ success: true, discount });
+  } catch (err) {
+    await session.abortTransaction();
+    res.status(400).json({ message: err.message });
+  } finally {
+    session.endSession();
   }
 });
 
-// ================= DELETE COUPON =================
-router.delete("/:id", protect, async (req, res) => {
+// ================= 5. CREATE (Admin Only) =================
+router.post("/", protect, async (req, res) => {
   try {
-    const coupon = await Coupon.findByIdAndDelete(req.params.id);
+    const { code, tier, expireAt } = req.body;
+    const existing = await Coupon.findOne({ code: code.toUpperCase() });
+    if (existing) return res.status(400).json({ message: "มีโค้ดนี้ในระบบแล้ว" });
 
-    if (!coupon) {
-      return res.status(404).json({ message: "Coupon not found" });
-    }
-
-    res.json({ message: "Coupon deleted" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const coupon = await Coupon.create({
+      ...req.body,
+      code: code.toUpperCase(),
+      requiredTier: tier || 'FREE'
+    });
+    res.status(201).json(coupon);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
+
+// ================= 6. GET MY CLAIMED COUPONS =================
+router.get("/my", protect, async (req, res) => {
+  try {
+    const claimed = await ClaimedCoupon.find({
+      userId: req.user.id,
+      isUsed: false
+    }).populate("couponId");
+
+    const validCoupons = claimed
+      .map(c => c.couponId)
+      .filter(c =>
+        c &&
+        c.isActive &&
+        c.expireAt > new Date()
+      );
+
+    res.json(validCoupons);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 module.exports = router;

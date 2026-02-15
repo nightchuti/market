@@ -1,0 +1,86 @@
+/* AdminCoupon.css */
+.admin-coupon-container {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  padding: 50px 20px;
+  font-family: 'Prompt', sans-serif;
+}
+
+.admin-card {
+  background: white;
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+  border: 1px solid #f0f0f0;
+}
+
+.admin-card h2 {
+  color: #1a1a1a;
+  font-size: 28px;
+  margin-bottom: 30px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* การจัดเลย์เอาท์ฟอร์ม */
+.admin-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* แบ่งเป็น 2 คอลัมน์ */
+  gap: 20px;
+}
+
+.full-width { grid-column: span 2; } /* สำหรับ Input ที่ยาวเต็มบรรทัด */
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.input-group input, 
+.input-group select, 
+.input-group textarea {
+  padding: 12px 16px;
+  border: 2px solid #eee;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: 0.3s;
+  outline: none;
+}
+
+.input-group input:focus, 
+.input-group select:focus {
+  border-color: #2e7d32;
+  background-color: #f1f8e9;
+}
+
+.btn-submit {
+  grid-column: span 2;
+  background: linear-gradient(135deg, #2e7d32, #66bb6a);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: 0.3s;
+  box-shadow: 0 4px 15px rgba(46, 125, 50, 0.2);
+}
+
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(46, 125, 50, 0.3);
+}

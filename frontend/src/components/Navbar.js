@@ -1,63 +1,92 @@
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import axios from "axios"; // เพิ่ม axios
 import "./Navbar.css";
 
 export default function Navbar({ onLogin, onRegister }) {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const navigate = useNavigate();
   const location = useLocation();
+  const API_URL = "http://127.0.0.1:5000";
+  const token = localStorage.getItem("token");
 
-  const isActive = (path) => location.pathname === path;
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!token) {
+        setUser(null);
+        return;
+      }
+      try {
+        // ดึงข้อมูลใหม่ล่าสุดจาก Backend เพื่อเอารูปและชื่อ
+        const res = await axios.get(`${API_URL}/api/auth/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(res.data);
+      } catch (err) {
+        console.error("Navbar fetch error:", err);
+        // ถ้า error หรือ token หมดอายุ ให้ลองใช้ข้อมูลเก่าใน localStorage ไปก่อน
+        const savedUser = localStorage.getItem("user");
+        if (savedUser) setUser(JSON.parse(savedUser));
+      }
+    };
+
+    fetchUserData();
+  }, [location, token]); // เช็คใหม่เมื่อเปลี่ยนหน้า หรือ token เปลี่ยน
+
+  const handleLogout = () => {
+    if (window.confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
+      localStorage.clear();
+      setUser(null);
+      navigate("/");
+      window.location.reload();
+    }
+  };
 
   return (
     <nav className="navbar">
-      <div className="logo">YUT SHOP</div>
+      <div className="logo" onClick={() => navigate("/")} style={{ cursor: 'pointer' }}>
+        YUT SHOP
+      </div>
 
       <div className="menu">
-        <Link
-          to="/"
-          className={`nav-link ${isActive("/") ? "active" : ""}`}
-        >
-          หน้าหลัก
-        </Link>
-
-        <Link
-          to="/products"
-          className={`nav-link ${isActive("/products") ? "active" : ""}`}
-        >
-          สินค้าทั้งหมด
-        </Link>
-
-        {user?.role === "shop" && (
-          <Link
-            to="/add-product"
-            className={`nav-link ${isActive("/add-product") ? "active" : ""}`}
-          >
-            ลงขาย
-          </Link>
-        )}
+        <Link to="/" className={`nav-link ${location.pathname === "/" ? "active" : ""}`}>หน้าหลัก</Link>
+        <Link to="/products" className={`nav-link ${location.pathname === "/products" ? "active" : ""}`}>สินค้าทั้งหมด</Link>
+        <Link to="/my-shop" className={`nav-link ${location.pathname === "/my-shop" ? "active" : ""}`}>ร้านค้าของฉัน</Link>
       </div>
 
       <div className="nav-btn">
         {user ? (
           <>
-            <span className="username">{user.username}</span>
-            <button
-              className="btn-outline"
-              onClick={() => {
-                localStorage.clear();
-                window.location.reload();
-              }}
-            >
-              Logout
-            </button>
+            <button className="btn-add" onClick={() => navigate("/cart")}>🛒 ตะกร้าสินค้า</button>
+
+            <div className="user-mini" onClick={() => navigate("/profile")} style={{ cursor: 'pointer' }}>
+              <img
+                src={
+                  user?.profileImage
+                    ? `${API_URL}${user.profileImage}`
+                    : "/images/default-avatar.png"
+                }
+                alt="profile"
+                className="mini-avatar"
+                onError={(e) => {
+                  e.currentTarget.src = "/images/default-avatar.png";
+                }}
+              />
+
+              <div className="user-mini-info">
+                {/* ดึงชื่อมาแสดง */}
+                <span className="user-mini-name">{user.username}</span>
+                <span className="user-mini-sub">บัญชีของฉัน</span>
+              </div>
+            </div>
+
+            <button className="btn-outline" onClick={handleLogout}>Logout</button>
           </>
         ) : (
           <>
-            <button className="btn-outline" onClick={onLogin}>
-              Login
-            </button>
-            <button className="btn-solid" onClick={onRegister}>
-              Register
-            </button>
+            <button className="btn-outline" onClick={onLogin}>Login</button>
+            <button className="btn-solid" onClick={onRegister}>Register</button>
           </>
         )}
       </div>

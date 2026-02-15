@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Address = require("../models/Address");
-const protect = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
 // เพิ่มที่อยู่
 router.post("/", protect, async (req, res) => {

@@ -12,7 +12,7 @@ const Shop = require("../models/shop");
 const Coupon = require("../models/Coupon");
 const Product = require("../models/Product");
 
-const protect = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 const calculateDistance = require("../utils/distance");
 const calculateDeliveryFee = require("../utils/deliveryFee");
 

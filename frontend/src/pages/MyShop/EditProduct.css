@@ -1,0 +1,255 @@
+/* ===== PAGE WRAPPER ===== */
+.edit-page {
+  max-width: 850px;
+  margin: 40px auto;
+  padding: 35px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.06);
+}
+
+.edit-page h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #2e7d32;
+  font-weight: 700;
+  font-size: 22px;
+}
+
+/* ===== FORM STRUCTURE ===== */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===== FORM GROUP ===== */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+/* ===== INPUT / SELECT / TEXTAREA ===== */
+.edit-form input,
+.edit-form textarea,
+.edit-form select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: #fafafa;
+}
+
+.edit-form textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.edit-form input:focus,
+.edit-form textarea:focus,
+.edit-form select:focus {
+  outline: none;
+  border-color: #43a047;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(67, 160, 71, 0.15);
+}
+
+/* ===== FILE INPUT ===== */
+.edit-form input[type="file"] {
+  padding: 8px;
+  border: none;
+  background: transparent;
+}
+
+/* ===== IMAGE PREVIEW SECTION ===== */
+.image-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.image-preview div {
+  position: relative;
+}
+
+.image-preview img {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  transition: 0.2s ease;
+}
+
+.image-preview img:hover {
+  transform: scale(1.05);
+}
+
+/* ===== REMOVE IMAGE BUTTON ===== */
+.image-preview button {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.image-preview button:hover {
+  background: #c62828;
+  transform: scale(1.1);
+}
+
+/* ===== ACTION BUTTONS ===== */
+.form-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 25px;
+}
+
+/* Cancel Button */
+.cancel-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid #9e9e9e;
+  background: white;
+  color: #555;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: #f5f5f5;
+  transform: translateY(-1px);
+}
+
+/* Save Button */
+.save-btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: bold;
+  background: linear-gradient(135deg, #2e7d32, #43a047);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(46, 125, 50, 0.3);
+}
+
+.save-btn:active {
+  transform: scale(0.98);
+}
+
+/* ===== STATUS DROPDOWN STYLE ===== */
+select[name="status"] {
+  font-weight: 600;
+}
+
+/* ===== LOADING TEXT ===== */
+.edit-page div {
+  font-size: 15px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .edit-page {
+    padding: 20px;
+    margin: 20px;
+  }
+
+  .image-preview img {
+    width: 85px;
+    height: 85px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+}
+
+/* ===== IMAGE SECTION ===== */
+.image-section {
+  margin-top: 10px;
+  padding: 15px;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+.image-section h4 {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ===== IMAGE PREVIEW GRID ===== */
+.image-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+/* ===== IMAGE CARD ===== */
+.image-card {
+  position: relative;
+}
+
+.image-card img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  transition: 0.2s ease;
+}
+
+.image-card img:hover {
+  transform: scale(1.05);
+}
+
+/* ปุ่มลบ */
+.image-card button {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.image-card button:hover {
+  background: #c62828;
+  transform: scale(1.1);
+}

@@ -1,93 +1,99 @@
 const express = require("express");
 const router = express.Router();
 const Product = require("../models/Product");
-const protect = require("../middleware/authMiddleware");
+const User = require("../models/User"); // ✅ เพิ่มการ Import User สำหรับเช็คโควตา
+
+// ✅ destructure เพราะ authMiddleware export เป็น { protect, admin }
+const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/upload");
 
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ================= UPLOAD MANY IMAGES =================
+// ================= [NEW] TEST UPGRADE PRO =================
+// ใช้สำหรับจำลองการซื้อโปร 99 บาท (เติม 10 สิทธิ์)
+router.post("/test-upgrade-pro", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
+
+    user.membershipTier = "PRO";
+    user.boostQuota = (user.boostQuota || 0) + 10;
+    
+    await user.save();
+    res.json({ success: true, message: "อัปเกรด PRO สำเร็จ (Test Mode)", quota: user.boostQuota });
+  } catch (err) {
+    res.status(500).json({ message: "Error", error: err.message });
+  }
+});
+
+// ================= [NEW] ACTIVATE BOOST =================
+// ฟังก์ชันที่ Frontend (Inventory.js) เรียกเพื่อหักโควตาและดันโพสต์
+router.post("/activate-boost/:id", protect, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    const user = await User.findById(req.user.id);
+
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    if (product.user.toString() !== req.user.id) 
+      return res.status(403).json({ message: "คุณไม่ใช่เจ้าของสินค้านี้" });
+
+    // 1. ตรวจสอบโควตา
+    if (user.boostQuota <= 0) {
+      return res.status(400).json({ success: false, message: "โควตาบูสของคุณหมดแล้ว" });
+    }
+
+    // 2. ตั้งค่าการบูส (3 วันนับจากปัจจุบัน)
+    const expireDate = new Date();
+    expireDate.setDate(expireDate.getDate() + 3);
+
+    product.isBoosted = true;
+    product.boostExpireAt = expireDate;
+    
+    // 3. หักโควตา User
+    user.boostQuota -= 1;
+
+    await product.save();
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      message: "บูสสินค้าสำเร็จ! สินค้าจะอยู่ลำดับแรกๆ เป็นเวลา 3 วัน", 
+      boostExpireAt: expireDate,
+      remainingQuota: user.boostQuota
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error", error: err.message });
+  }
+});
+
+// ================= UPLOAD IMAGES =================
 router.post("/upload", upload.array("images", 6), (req, res) => {
-
-  const images = req.files.map(file =>
-    `/uploads/${file.filename}`
-  );
-
-  res.json({
-    message: "Upload success",
-    images
-  });
-
+  const images = req.files.map(file => `/uploads/${file.filename}`);
+  res.json({ message: "Upload success", images });
 });
 
 // ================= MY PRODUCTS =================
 router.get("/my", protect, async (req, res) => {
-
-  const products = await Product.find({
-    user: req.user.id
-  });
-
-  res.json(products);
-
-});
-
-// ================= CREATE PRODUCT =================
-router.post("/", protect, async (req, res) => {
   try {
-    const { 
-      title, description, price, category, quantity, images, 
-      deliveryType, tradeOption, lat, lng, locationName 
-    } = req.body;
-
-    // --- ส่วนของ AI Embedding ---
-    let vector = [];
-    try {
-      const model = genAI.getGenerativeModel({ model: "embedding-001" });
-      const textToEmbed = `Product: ${title}. Category: ${category}. Description: ${description || ''}. Delivery: ${deliveryType}.`;
-      const result = await model.embedContent(textToEmbed);
-      vector = result.embedding.values;
-    } catch (aiErr) {
-      console.error("AI Embedding failed:", aiErr.message);
-      // ถ้า AI พัง ยังยอมให้สร้างสินค้าได้ แต่ไม่มี vector (หรือจะ return error ก็ได้)
-    }
-
-    const product = await Product.create({
-      user: req.user.id,
-      title,
-      description,
-      price,
-      category,
-      quantity,
-      images,
-      deliveryType, // เก็บข้อมูลนัดรับ/จัดส่ง
-      tradeOption,  // เก็บตัวเลือกการแลก
-      lat,          // เก็บละติจูดจริงจากหน้าบ้าน
-      lng,          // เก็บลองจิจูดจริงจากหน้าบ้าน
-      locationName, // ชื่อสถานที่นัดพบ
-      embeddings: vector // เก็บตัวเลข AI 768 มิติ
-    });
-
-    res.status(201).json(product);
+    const products = await Product.find({ user: req.user.id }).sort({ createdAt: -1 });
+    res.json(products);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// ================= GET PRODUCT BY ID =================
-router.get("/:id", async (req, res) => {
+// ================= GET CATEGORIES =================
+router.get("/config/categories", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id)
-      .populate("user", "username rating reviewCount location");
-
-    if (!product) {
-      return res.status(404).json({ message: "ไม่พบสินค้า" });
-    }
-
-    res.json(product);
+    const categories = Product.schema.path("category").enumValues;
+    res.json({ categories });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
   }
 });
 
+<<<<<<< HEAD
 
 // ================= UPDATE PRODUCT =================
 router.put("/:id", protect, async (req, res) => {
@@ -135,82 +141,212 @@ router.delete("/:id", protect, async (req, res) => {
 });
 
 
+=======
+>>>>>>> efbaf9b011b68336a8ba4c2683ae0da835c85753
 // ================= GET ALL PRODUCTS =================
 router.get("/", async (req, res) => {
+  try {
+    const { search, category, minPrice, maxPrice, deliveryType, tradeOption, page = 1, limit = 18 } = req.query;
+    let filter = { isActive: true, status: "available" };
 
-  const { search, category, minPrice, maxPrice } = req.query;
+    if (search && search.trim() !== "") {
+      const regex = new RegExp(search.trim().split("").join(".*"), "i");
+      filter.$or = [{ title: { $regex: regex } }, { description: { $regex: regex } }];
+    }
+    if (category)    filter.category = category.trim();
+    if (tradeOption) filter.tradeOption = tradeOption;
+    if (deliveryType) {
+      if (deliveryType === "delivery") filter.deliveryType = { $in: ["delivery", "both"] };
+      else if (deliveryType === "meetup") filter.deliveryType = { $in: ["meetup", "both"] };
+      else filter.deliveryType = deliveryType;
+    }
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
 
-  let filter = {};
+    const skip     = (parseInt(page) - 1) * parseInt(limit);
+    const products = await Product.find(filter)
+      .populate("user", "username email membershipTier")
+      .sort({ isBoosted: -1, createdAt: -1 }) // ✅ บูสแล้วจะอยู่บนสุด
+      .skip(skip).limit(parseInt(limit));
+    const total    = await Product.countDocuments(filter);
 
-  // 🔍 ค้นตามชื่อ
-  if (search) {
-    filter.title = { $regex: search, $options: "i" };
+    res.json({ products, pagination: { total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) } });
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
   }
+});
 
-  // 📂 ค้นตามหมวดหมู่
-  if (category) {
-    filter.category = category;
+// ================= GET SINGLE PRODUCT =================
+router.get("/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).populate("user", "username email");
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
   }
+});
 
-  // 💰 ค้นตามราคา
-  if (minPrice || maxPrice) {
-    filter.price = {};
+// ================= CREATE PRODUCT =================
+router.post("/", protect, upload.array("images", 6), async (req, res) => {
+  try {
+    const { title, description, price, category, quantity, deliveryType, tradeOption, lat, lng, locationName } = req.body;
+    const imagePaths = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
 
-    if (minPrice) filter.price.$gte = Number(minPrice);
-    if (maxPrice) filter.price.$lte = Number(maxPrice);
+    if (!title || !category) return res.status(400).json({ message: "กรุณาระบุชื่อสินค้า และหมวดหมู่" });
+    if ((tradeOption === "sell_only" || tradeOption === "negotiable") && (!price || Number(price) <= 0))
+      return res.status(400).json({ message: "สินค้าขายต้องมีราคามากกว่า 0" });
+
+    let vector = [];
+    try {
+      const model  = genAI.getGenerativeModel({ model: "text-embedding-004" });
+      const result = await model.embedContent(`Product: ${title}. Category: ${category}. Description: ${description || ""}. Delivery: ${deliveryType || "delivery"}. Price: ${price}`);
+      vector = result.embedding.values;
+    } catch (aiErr) { console.error("❌ Embedding failed:", aiErr.message); }
+
+    const product = await Product.create({
+      user: req.user.id, title, description,
+      price: tradeOption === "trade_allowed" ? 0 : Number(price),
+      category: category.trim(), quantity: quantity || 1,
+      images: imagePaths, deliveryType: deliveryType || "delivery",
+      tradeOption: tradeOption || "sell_only", lat, lng, locationName, embeddings: vector,
+    });
+    await product.populate("user", "username email");
+    res.status(201).json({ message: "สร้างสินค้าสำเร็จ", product });
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการสร้างสินค้า", error: err.message });
   }
+});
 
-  const products = await Product.find(filter)
-    .populate("user", "username");
+// ================= UPDATE PRODUCT =================
+router.put("/:id", protect, upload.array("images", 6), async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "คุณไม่มีสิทธิ์แก้ไขสินค้านี้" });
+
+    let finalImages = product.images;
+    if (req.body.existingImages) {
+      try { finalImages = JSON.parse(req.body.existingImages); } catch {}
+    }
+    if (req.files?.length > 0) finalImages = [...finalImages, ...req.files.map(f => `/uploads/${f.filename}`)];
+
+    product.title         = req.body.title         || product.title;
+    product.description   = req.body.description   || product.description;
+    product.price         = req.body.tradeOption === "trade_allowed" ? 0 : (req.body.price !== undefined ? Number(req.body.price) : product.price);
+    product.category      = req.body.category      ? req.body.category.trim() : product.category;
+    product.quantity      = req.body.quantity      !== undefined ? Number(req.body.quantity) : product.quantity;
+    product.deliveryType = req.body.deliveryType || product.deliveryType;
+    product.tradeOption  = req.body.tradeOption  || product.tradeOption;
+    product.lat           = req.body.lat           !== undefined ? Number(req.body.lat)  : product.lat;
+    product.lng           = req.body.lng           !== undefined ? Number(req.body.lng)  : product.lng;
+    product.locationName = req.body.locationName || product.locationName;
+    product.images        = finalImages;
+    product.status        = "pending";
+
+    if (req.body.title || req.body.description || req.body.category) {
+      try {
+        const model  = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const result = await model.embedContent(`Product: ${product.title}. Category: ${product.category}. Description: ${product.description || ""}. Price: ${product.price}`);
+        product.embeddings = result.embedding.values;
+      } catch (aiErr) { console.error("❌ Embedding update failed:", aiErr.message); }
+    }
+
+    await product.save();
+    res.json({ message: "อัพเดตสินค้าสำเร็จ", product });
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการอัพเดต", error: err.message });
+  }
+});
+
+// ================= PUBLISH / DELETE / IMAGE MGMT =================
+// (ส่วนนี้เหมือนเดิมตามที่คุณส่งมา)
+router.put("/:id/publish", protect, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "ไม่มีสิทธิ์" });
+    product.status = "available";
+    await product.save();
+    res.json({ message: "ลงขายสินค้าสำเร็จ", status: "available" });
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
+  }
+});
+
+router.delete("/:id", protect, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "คุณไม่มีสิทธิ์ลบสินค้านี้" });
+    await product.deleteOne();
+    res.json({ message: "ลบสินค้าสำเร็จ" });
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการลบ", error: err.message });
+  }
+});
+
+router.put("/:id/add-images", protect, upload.array("images", 6), async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "คุณไม่มีสิทธิ์แก้ไข" });
+    const newImages = req.files.map(f => `/uploads/${f.filename}`);
+    if (product.images.length + newImages.length > 6) return res.status(400).json({ message: "สามารถเพิ่มรูปได้สูงสุด 6 รูป" });
+    product.images.push(...newImages);
+    await product.save();
+    res.json({ message: "เพิ่มรูปภาพสำเร็จ", product });
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
+  }
+});
+
+router.put("/:id/remove-image", protect, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "คุณไม่มีสิทธิ์แก้ไข" });
+    product.images = product.images.filter(img => img !== req.body.image);
+    await product.save();
+    res.json({ message: "ลบรูปภาพสำเร็จ", product });
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
+  }
+});
+
+// ✅ รักษาฟังก์ชันเดิมไว้เผื่อใช้งานในรูปแบบอื่น
+router.post("/:id/boost", protect, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
+    if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "คุณไม่ใช่เจ้าของสินค้านี้" });
+
+    const expireDate = new Date();
+    if (product.isBoosted && product.boostExpireAt > new Date())
+      expireDate.setTime(product.boostExpireAt.getTime());
+    expireDate.setDate(expireDate.getDate() + parseInt(req.body.days || 1));
+
+    product.isBoosted    = true;
+    product.boostExpireAt = expireDate;
+    await product.save();
+
+    res.json({ message: `ดันโพสต์สำเร็จ! ถึงวันที่ ${expireDate.toLocaleDateString()}`, boostExpireAt: expireDate });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.post("/bulk", async (req, res) => {
+  const products = await Product.find({
+    _id: { $in: req.body.ids },
+    status: "available"
+  });
 
   res.json(products);
 });
 
-
-
-// ================= ADD IMAGE =================
-router.put("/:id/add-images",
-  protect,
-  upload.array("images", 6),
-  async (req, res) => {
-
-    const product = await Product.findById(req.params.id);
-
-    if (!product)
-      return res.status(404).json({ message: "Product not found" });
-
-    if (product.user.toString() !== req.user.id)
-      return res.status(403).json({ message: "Not authorized" });
-
-    const newImages = req.files.map(f =>
-      `/uploads/${f.filename}`
-    );
-
-    product.images.push(...newImages);
-    await product.save();
-
-    res.json(product);
-});
-
-
-// ================= REMOVE IMAGE =================
-router.put("/:id/remove-image", protect, async (req, res) => {
-
-  const product = await Product.findById(req.params.id);
-
-  if (!product)
-    return res.status(404).json({ message: "Product not found" });
-
-  if (product.user.toString() !== req.user.id)
-    return res.status(403).json({ message: "Not authorized" });
-
-  product.images = product.images.filter(
-    img => img !== req.body.image
-  );
-
-  await product.save();
-
-  res.json(product);
-});
 
 module.exports = router;
