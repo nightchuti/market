@@ -13,6 +13,8 @@ const cartRoutes = require("./routes/Cart");
 const orderRoutes = require("./routes/orderRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const adRoutes = require("./routes/adRoutes"); // ✅ เพิ่มบรรทัดนี้เพื่อแก้ไข ReferenceError
+const messageRoutes = require("./routes/messageRoutes");
+
 
 // Shop & Promotion System
 const shopRoutes = require("./routes/shopRoute"); 
@@ -57,6 +59,7 @@ app.use("/api/subscription", subscriptionRoutes); // ระบบสมัคร
 app.use("/api/coupons", couponRoutes);
 app.use("/api/trades", tradeRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/messages", messageRoutes);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

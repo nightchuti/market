@@ -16,16 +16,34 @@ const messageSchema = new mongoose.Schema(
       type: String,
       default: ""
     },
+
     // ประเภทข้อความพิเศษ
     messageType: {
       type: String,
-      enum: ["text", "system", "trade_request", "trade_accept", "trade_reject", "trade_cancel", "trade_complete"],
+      enum: [
+        "text",
+        "system",
+        "trade_request",
+        "trade_accept",
+        "trade_reject",
+        "trade_cancel",
+        "trade_complete"
+      ],
       default: "text"
     },
-    // ข้อมูลเพิ่มเติม (เช่น snapshot สินค้าตอนส่ง trade request)
+
+    // ⭐ แนะนำให้กำหนดโครงสร้างชัดเจน
     metadata: {
-      type: mongoose.Schema.Types.Mixed,
-      default: null
+      tradeId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Trade"
+      },
+
+      // snapshot สินค้าที่แนบมากับคำขอ
+      productSnapshot: {
+        type: Object,
+        default: null
+      }
     }
   },
   { timestamps: true }

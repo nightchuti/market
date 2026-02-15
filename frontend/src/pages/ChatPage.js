@@ -22,7 +22,7 @@ const getAvatar = (user) => {
 };
 
 const getImgUrl = (path) => {
-  if (!path) return "public/images/default-avatar.pm";
+  if (!path) return "public/images/default-avatar.png";
 
   return path.startsWith("http")
     ? path
@@ -30,20 +30,20 @@ const getImgUrl = (path) => {
 };
 
 export default function ChatPage() {
-  const params = useParams();
-  const roomId = params.roomId || params.sellerId;
+  const params  = useParams();
+  const roomId  = params.roomId || params.sellerId;
   const navigate = useNavigate();
 
-  const socketRef = useRef(null);
-  const bottomRef = useRef(null);
+  const socketRef   = useRef(null);
+  const bottomRef   = useRef(null);
   const typingTimer = useRef(null);
 
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
-  const [room, setRoom] = useState(null);
-  const [typing, setTyping] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [text, setText]         = useState("");
+  const [room, setRoom]         = useState(null);
+  const [typing, setTyping]     = useState("");
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -64,7 +64,7 @@ export default function ChatPage() {
       setCurrentUser(fresh);
 
       const [roomRes, msgRes] = await Promise.all([
-        axios.get(`${API_URL}/api/chat/${roomId}`, { headers }),
+        axios.get(`${API_URL}/api/chat/${roomId}`,          { headers }),
         axios.get(`${API_URL}/api/chat/${roomId}/messages`, { headers }),
       ]);
       setRoom(roomRes.data);
@@ -113,10 +113,10 @@ export default function ChatPage() {
       socket.emit("mark_read", { roomId, userId: myId });
     });
 
-    socket.on("user_typing", ({ username }) => setTyping(username));
-    socket.on("user_stop_typing", () => setTyping(""));
-    socket.on("chat_error", ({ message }) => alert(message));
-    socket.on("trade_updated", ({ status }) =>
+    socket.on("user_typing",      ({ username }) => setTyping(username));
+    socket.on("user_stop_typing", ()             => setTyping(""));
+    socket.on("chat_error",       ({ message })  => alert(message));
+    socket.on("trade_updated",    ({ status })   =>
       setRoom(prev => prev ? { ...prev, tradeStatus: status } : prev));
 
     return () => {
@@ -147,7 +147,7 @@ export default function ChatPage() {
 
   const isClosed = () => {
     if (!room) return false;
-    if (room.type === "trade" && ["rejected", "cancelled", "completed"].includes(room.tradeStatus)) return true;
+    if (room.type === "trade"  && ["rejected","cancelled","completed"].includes(room.tradeStatus)) return true;
     if (room.type === "normal" && room.inquiryStatus === "closed") return true;
     return false;
   };
@@ -162,7 +162,7 @@ export default function ChatPage() {
       await axios.put(`${API_URL}/api/chat/${roomId}/${action}`, {}, { headers });
       socketRef.current?.emit("trade_status_update", {
         roomId,
-        status: action === "accept" ? "accepted" : action === "reject" ? "rejected" : "cancelled",
+        status:    action==="accept" ? "accepted" : action==="reject" ? "rejected" : "cancelled",
         updatedBy: myId,
       });
       fetchRoom();
@@ -172,21 +172,21 @@ export default function ChatPage() {
   // ✅ ใช้ getAvatar แทน .profileImage ตรงๆ
   const otherUser = room?.participants?.find(p => String(p._id || p) !== myId);
 
-  const fmt = d => d ? new Date(d).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "";
-  const fmtDate = d => d ? new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short" }) : "";
+  const fmt     = d => d ? new Date(d).toLocaleTimeString("th-TH", { hour:"2-digit", minute:"2-digit" }) : "";
+  const fmtDate = d => d ? new Date(d).toLocaleDateString("th-TH",  { day:"numeric", month:"short" })    : "";
 
   const STATUS = {
-    pending: { t: "⏳ รอตอบรับ", c: "#f59e0b" },
-    negotiating: { t: "💬 กำลังเจรจา", c: "#3b82f6" },
-    accepted: { t: "✅ ตกลงแล้ว", c: "#10b981" },
-    rejected: { t: "❌ ปฏิเสธแล้ว", c: "#ef4444" },
-    cancelled: { t: "🚫 ยกเลิกแล้ว", c: "#6b7280" },
-    completed: { t: "🎉 เสร็จสิ้น", c: "#8b5cf6" },
+    pending:     { t: "⏳ รอตอบรับ",    c: "#f59e0b" },
+    negotiating: { t: "💬 กำลังเจรจา",  c: "#3b82f6" },
+    accepted:    { t: "✅ ตกลงแล้ว",    c: "#10b981" },
+    rejected:    { t: "❌ ปฏิเสธแล้ว",  c: "#ef4444" },
+    cancelled:   { t: "🚫 ยกเลิกแล้ว",  c: "#6b7280" },
+    completed:   { t: "🎉 เสร็จสิ้น",   c: "#8b5cf6" },
   };
 
   if (!token) return <div className="cp-notice">กรุณาเข้าสู่ระบบก่อน</div>;
-  if (loading) return <div className="cp-loading"><div className="cp-spin" /><p>กำลังโหลด...</p></div>;
-  if (error) return (
+  if (loading) return <div className="cp-loading"><div className="cp-spin"/><p>กำลังโหลด...</p></div>;
+  if (error)   return (
     <div className="cp-error-page">
       <p>⚠️ {error}</p>
       <button className="cp-retry-btn" onClick={fetchRoom}>ลองใหม่</button>
@@ -201,11 +201,7 @@ export default function ChatPage() {
       <header className="cp-header">
         <button className="cp-back" onClick={() => navigate(-1)}>←</button>
         {/* ✅ getAvatar — ไม่มี broken image */}
-        <img
-          className="cp-havatar"
-          src={getAvatar(otherUser)}
-          alt=""
-        />
+        <img className="cp-havatar" src={getAvatar(otherUser)} alt="" />
         <div className="cp-htxt">
           <p className="cp-hname">{otherUser?.username || "..."}</p>
           <p className="cp-htype">
@@ -240,7 +236,7 @@ export default function ChatPage() {
               {STATUS[room.tradeStatus]?.t}
             </p>
           )}
-          {["pending", "negotiating"].includes(room?.tradeStatus) && (
+          {["pending","negotiating"].includes(room?.tradeStatus) && (
             <div className="cp-tbtns">
               {isOwner() && (
                 <>
@@ -261,13 +257,13 @@ export default function ChatPage() {
       {room?.type === "normal" && room?.productId && (
         <div className="cp-pbar"
           onClick={() => navigate(`/products/${room.productId._id || room.productId}`)}
-          style={{ cursor: "pointer" }}>
+          style={{ cursor:"pointer" }}>
           <img src={getImgUrl(room.productId.images?.[0])} alt="" />
           <div>
             <p>{room.productId.title}</p>
             <span>฿{room.productId.price?.toLocaleString()}</span>
           </div>
-          <div style={{ marginLeft: "auto", color: "#9ca3af" }}>›</div>
+          <div style={{ marginLeft:"auto", color:"#9ca3af" }}>›</div>
         </div>
       )}
 
@@ -277,9 +273,9 @@ export default function ChatPage() {
           <p className="cp-empty">ยังไม่มีข้อความ — เริ่มสนทนาได้เลย 👋</p>
         )}
         {messages.map((msg, i) => {
-          const me = String(msg.sender?._id || msg.sender) === myId;
+          const me    = String(msg.sender?._id || msg.sender) === myId;
           const isSys = msg.messageType && msg.messageType !== "text";
-          const showDate = i === 0 || fmtDate(msg.createdAt) !== fmtDate(messages[i - 1].createdAt);
+          const showDate = i === 0 || fmtDate(msg.createdAt) !== fmtDate(messages[i-1].createdAt);
 
           return (
             <React.Fragment key={msg._id || i}>
@@ -305,7 +301,7 @@ export default function ChatPage() {
         {typing && (
           <div className="cp-typing">
             <span>{typing} กำลังพิมพ์...</span>
-            <div className="cp-dots"><i /><i /><i /></div>
+            <div className="cp-dots"><i/><i/><i/></div>
           </div>
         )}
         <div ref={bottomRef} />
@@ -318,7 +314,7 @@ export default function ChatPage() {
         ) : (
           <>
             <input className="cp-input" value={text} onChange={handleInput}
-              onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
+              onKeyDown={e => e.key==="Enter" && !e.shiftKey && sendMessage()}
               placeholder="พิมพ์ข้อความ..." />
             <button className="cp-send" onClick={sendMessage} disabled={!text.trim()}>➤</button>
           </>

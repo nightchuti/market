@@ -83,6 +83,43 @@ const socketManager = (io) => {
       }
     });
 
+    // ── 🔁 ส่ง Trade Message ─────────────────────────────
+socket.on("send_trade_message", async (data) => {
+  const { roomId, sender, messageType, metadata } = data || {};
+  if (!roomId || !sender || !messageType) return;
+
+  try {
+    const room = await ChatRoom.findById(roomId);
+    if (!room) return;
+
+    const participants = room.participants.map(p => String(p));
+    if (!participants.includes(String(sender))) return;
+
+    const saved = await Message.create({
+      roomId,
+      sender,
+      messageType,   // trade_request | trade_accept | trade_reject
+      metadata
+    });
+
+    const others = participants.filter(p => p !== String(sender));
+
+    await ChatRoom.findByIdAndUpdate(roomId, {
+      lastMessage: messageType,
+      lastMessageAt: new Date(),
+      $addToSet: { unreadBy: { $each: others } }
+    });
+
+    const populated = await saved.populate("sender", "username profileImage");
+
+    io.to(String(roomId)).emit("receive_trade_message", populated);
+
+  } catch (err) {
+    console.error("send_trade_message:", err);
+  }
+});
+
+
     socket.on("typing",      ({ roomId, userId, username }) =>
       socket.to(String(roomId)).emit("user_typing", { userId, username }));
     socket.on("stop_typing", ({ roomId, userId }) =>
