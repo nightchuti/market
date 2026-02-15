@@ -67,76 +67,144 @@ router.get("/seller/orders", protect, async (req, res) => {
 });
 
 // ==========================================
-// 3. [BUYER] ROUTE สำหรับการ CHECKOUT
+// 3. [BUYER] CHECKOUT (รองรับ PICKUP + DELIVERY)
 // ==========================================
 router.post("/checkout", protect, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
+
   try {
-    const { addressId, paymentMethod, deliveryService, couponCode } = req.body;
+    const {
+      items,
+      shippingAddress,
+      deliveryMode,
+      shippingService,
+      couponCode,
+      paymentMethod
+    } = req.body;
 
-    const address = await Address.findById(addressId);
-    if (!address) throw new Error("ไม่พบที่อยู่สำหรับการจัดส่ง");
+    if (!items || items.length === 0)
+      throw new Error("ไม่มีสินค้าในคำสั่งซื้อ");
 
-    const shop = await Shop.findOne();
-    if (!shop) throw new Error("ระบบร้านค้ายังไม่พร้อมใช้งาน");
+    if (!deliveryMode)
+      throw new Error("กรุณาเลือกรูปแบบการรับสินค้า");
 
-    const cart = await Cart.findOne({ user: req.user.id }).populate("items.product");
-    const selectedItems = cart.items.filter(i => i.selected);
-    if (!cart || selectedItems.length === 0) throw new Error("ไม่มีสินค้าในตะกร้า");
-
-    // บันทึก ID ผู้ขายจากสินค้าชิ้นแรก (สมมติ 1 ออเดอร์ต่อ 1 ผู้ขาย)
-    const sellerId = selectedItems[0].product.seller;
+    // นัดรับห้าม COD
+    if (deliveryMode === "PICKUP" && paymentMethod === "COD")
+      throw new Error("นัดรับสินค้าไม่สามารถเก็บเงินปลายทางได้");
 
     let subTotal = 0;
     const orderItems = [];
 
-    for (const item of selectedItems) {
-      const updatedProduct = await Product.findOneAndUpdate(
-        { _id: item.product._id, quantity: { $gte: item.quantity } },
+    // ===== ตรวจ stock และตัดสต็อก =====
+    for (const item of items) {
+      const product = await Product.findOneAndUpdate(
+        { _id: item.product, quantity: { $gte: item.quantity } },
         { $inc: { quantity: -item.quantity } },
         { new: true, session }
       );
-      if (!updatedProduct) throw new Error(`สินค้า ${item.product.name} สต็อกไม่พอ`);
 
-      subTotal += item.product.price * item.quantity;
-      orderItems.push({ product: item.product._id, quantity: item.quantity, price: item.product.price });
+      if (!product)
+        throw new Error("สินค้าสต็อกไม่พอ");
+
+      subTotal += product.price * item.quantity;
+
+      orderItems.push({
+        product: product._id,
+        quantity: item.quantity,
+        price: product.price
+      });
     }
 
-    const distance = calculateDistance(shop.lat, shop.lng, address.lat, address.lng);
-    let deliveryFee = calculateDeliveryFee(deliveryService, distance);
+    // ===== ผู้ขาย (สมมติ 1 seller ต่อ order) =====
+    const sellerId = (await Product.findById(items[0].product)).seller;
 
+    // ===== คำนวณค่าจัดส่ง =====
+    let deliveryFee = 0;
+
+    if (deliveryMode === "DELIVERY") {
+      if (!shippingAddress)
+        throw new Error("กรุณาเลือกที่อยู่จัดส่ง");
+
+      const shop = await Shop.findOne();
+      const distance = calculateDistance(
+        shop.lat,
+        shop.lng,
+        shippingAddress.lat,
+        shippingAddress.lng
+      );
+
+      deliveryFee = calculateDeliveryFee(shippingService, distance);
+    }
+
+    // ===== คำนวณคูปอง =====
     let discount = 0;
     let coupon = null;
+
     if (couponCode) {
-      coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true, expireAt: { $gt: new Date() } }).session(session);
-      if (coupon && !coupon.usedBy.includes(req.user.id) && subTotal >= coupon.minSpend) {
-        discount = coupon.discountPercent > 0 ? Math.round(subTotal * coupon.discountPercent / 100) : coupon.discountAmount;
+      coupon = await Coupon.findOne({
+        code: couponCode.toUpperCase(),
+        isActive: true,
+        expireAt: { $gt: new Date() }
+      }).session(session);
+
+      if (
+        coupon &&
+        !coupon.usedBy.includes(req.user.id) &&
+        subTotal >= coupon.minSpend
+      ) {
+        discount =
+          coupon.discountPercent > 0
+            ? Math.round((subTotal * coupon.discountPercent) / 100)
+            : coupon.discountAmount;
+
         if (coupon.freeShipping) deliveryFee = 0;
+
         coupon.usedBy.push(req.user.id);
         await coupon.save({ session });
       }
     }
 
-    const order = await Order.create([{
-      user: req.user.id,
-      seller: sellerId,
-      items: orderItems,
-      shippingAddress: { dormName: address.dormName, room: address.room, lat: address.lat, lng: address.lng, note: address.note },
-      paymentMethod,
-      deliveryService,
-      deliveryFee,
-      subTotal,
-      discount,
-      totalPrice: (subTotal - discount) + deliveryFee,
-      status: "PendingPayment" // เริ่มต้นที่รอชำระเงิน
-    }], { session });
+    const totalPrice = Math.max(0, subTotal - discount + deliveryFee);
 
-    cart.items = cart.items.filter(i => !i.selected);
-    await cart.save({ session });
+    // ===== กำหนดสถานะเริ่มต้น =====
+    let initialStatus = "PendingPayment";
+
+    if (deliveryMode === "PICKUP") {
+      initialStatus = "WaitingMeetup";
+    }
+
+    // ===== สร้าง Order =====
+    const order = await Order.create(
+      [
+        {
+          user: req.user.id,
+          seller: sellerId,
+          items: orderItems,
+          shippingAddress:
+            deliveryMode === "DELIVERY" ? shippingAddress : null,
+          deliveryMode,
+          deliveryService:
+            deliveryMode === "DELIVERY" ? shippingService : null,
+          deliveryFee,
+          subTotal,
+          discount,
+          totalPrice,
+          paymentMethod,
+          status: initialStatus
+        }
+      ],
+      { session }
+    );
 
     await session.commitTransaction();
-    res.status(201).json({ success: true, order: order[0] });
+
+    res.status(201).json({
+      success: true,
+      message: "สร้างคำสั่งซื้อสำเร็จ",
+      order: order[0]
+    });
+
   } catch (err) {
     await session.abortTransaction();
     res.status(400).json({ message: err.message });
@@ -144,6 +212,7 @@ router.post("/checkout", protect, async (req, res) => {
     session.endSession();
   }
 });
+
 
 // ==========================================
 // 4. [BUYER] อัปโหลดสลิปแจ้งโอนเงิน

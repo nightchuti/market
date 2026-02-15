@@ -283,17 +283,12 @@ const CheckoutPage = () => {
             if (deliveryMode === "PICKUP" && paymentMethod === "COD")
                 return alert("นัดรับสินค้าไม่สามารถเก็บเงินปลายทางได้");
 
-            let initialStatus = "PENDING_PAYMENT";
-            if (deliveryMode === "PICKUP") {
-                initialStatus = "WAITING_MEETUP";
-            }
-
             const orderData = {
                 items: cartItems.map(i => ({
                     product: i._id,
-                    quantity: i.qty,
-                    price: i.price
+                    quantity: i.qty
                 })),
+
                 shippingAddress:
                     deliveryMode === "DELIVERY"
                         ? {
@@ -304,37 +299,21 @@ const CheckoutPage = () => {
                             lng: selectedAddr.lng
                         }
                         : null,
+
                 deliveryMode,
-                deliveryFee,
                 shippingService:
                     deliveryMode === "DELIVERY" ? shippingService : null,
                 couponCode,
-                discount,
-                paymentMethod,
-                subTotal,
-                totalPrice: total,
-                status: initialStatus
+                paymentMethod
             };
 
-            const orderRes = await axios.post(`${API_URL}/api/orders`, orderData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            // ✅ ถ้ามีคูปอง -> Redeem
-            if (couponCode && discount > 0) {
-                await axios.post(
-                    `${API_URL}/api/coupons/redeem`,
-                    {
-                        code: couponCode,
-                        subTotal,
-                        orderId: orderRes.data._id
-                    },
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
-            }
-
+            const orderRes = await axios.post(
+                `${API_URL}/api/orders/checkout`,
+                orderData,
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
 
             alert("สั่งซื้อสำเร็จ!");
             navigate("/profile");
@@ -414,7 +393,7 @@ const CheckoutPage = () => {
                     <div className="section-title">รูปแบบการรับสินค้า</div>
 
                     {!deliveryMode && (
-                        <p style={{ color: "red" , marginBottom: "12px"}}>
+                        <p style={{ color: "red", marginBottom: "12px" }}>
                             กรุณาเลือกรูปแบบการรับสินค้า
                         </p>
                     )}
