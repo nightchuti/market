@@ -94,31 +94,6 @@ router.get("/config/categories", async (req, res) => {
 });
 
 
-// ================= UPDATE PRODUCT =================
-router.put("/:id", protect, async (req, res) => {
-  const product = await Product.findById(req.params.id);
-
-  if (!product) return res.status(404).json({ message: "Product not found" });
-  if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "Not authorized" });
-
-  // อัปเดตฟิลด์ทั่วไป
-  product.title = req.body.title || product.title;
-  product.description = req.body.description || product.description;
-  product.price = req.body.price || product.price;
-  product.category = req.body.category || product.category;
-  product.quantity = req.body.quantity || product.quantity;
-
-  // อัปเดตฟิลด์ใหม่
-  product.deliveryType = req.body.deliveryType || product.deliveryType;
-  product.tradeOption = req.body.tradeOption || product.tradeOption;
-  product.lat = req.body.lat || product.lat;
-  product.lng = req.body.lng || product.lng;
-  product.locationName = req.body.locationName || product.locationName;
-
-  await product.save();
-  res.json({ message: "Product updated", product });
-});
-
 //==================DELETE PRODUCT ====================
 router.delete("/:id", protect, async (req, res) => {
 
@@ -211,7 +186,7 @@ router.post("/", protect, upload.fields([
 
       let vector = [];
       try {
-        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const model = genAI.getGenerativeModel({ model: "embedding-001" });
         const result = await model.embedContent(`Product: ${title}. Category: ${category}. Description: ${description || ""}. Delivery: ${deliveryType || "delivery"}. Price: ${price}`);
         vector = result.embedding.values;
       } catch (aiErr) { console.error("❌ Embedding failed:", aiErr.message); }
@@ -257,7 +232,7 @@ router.put("/:id", protect, upload.fields([
       try { finalImages = JSON.parse(req.body.existingImages); } catch { }
     }
     if (req.files?.images?.length > 0)
-  finalImages = [...finalImages, ...req.files.images.map(f => `/uploads/${f.filename}`)];
+      finalImages = [...finalImages, ...req.files.images.map(f => `/uploads/${f.filename}`)];
 
 
     product.title = req.body.title || product.title;
@@ -275,7 +250,7 @@ router.put("/:id", protect, upload.fields([
 
     if (req.body.title || req.body.description || req.body.category) {
       try {
-        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const model = genAI.getGenerativeModel({ model: "embedding-001" });
         const result = await model.embedContent(`Product: ${product.title}. Category: ${product.category}. Description: ${product.description || ""}. Price: ${product.price}`);
         product.embeddings = result.embedding.values;
       } catch (aiErr) { console.error("❌ Embedding update failed:", aiErr.message); }
@@ -322,7 +297,10 @@ router.put("/:id/add-images", protect, upload.fields([
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
     if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "คุณไม่มีสิทธิ์แก้ไข" });
-    const newImages = req.files.map(f => `/uploads/${f.filename}`);
+    const newImages = req.files?.images
+      ? req.files.images.map(f => `/uploads/${f.filename}`)
+      : [];
+
     if (product.images.length + newImages.length > 6) return res.status(400).json({ message: "สามารถเพิ่มรูปได้สูงสุด 6 รูป" });
     product.images.push(...newImages);
     await product.save();
