@@ -39,6 +39,16 @@
   background: #333;
 }
 
+selectAllLabel {
+  display: "flex";
+  alignItems: "center";
+  marginBottom: "20px";
+  fontSize: "16px";
+}
+selectAllCheckbox {
+  marginRight: "10px";
+}
+
 /* ================= TOP BAR ================= */
 .cart-top {
   display: flex;

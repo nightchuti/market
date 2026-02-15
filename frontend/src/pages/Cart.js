@@ -189,16 +189,17 @@ function Cart() {
       ) : (
         <>
           <div className="cart-top">
-            <label>
+            <label >
               <input
                 type="checkbox"
+                className="selectAllCheckbox"
                 checked={
                   selectedItems.length === cart.items.length &&
                   cart.items.length > 0
                 }
                 onChange={(e) => selectAll(e.target.checked)}
               />
-              เลือกทั้งหมด
+              <span className="selectAllText">เลือกทั้งหมด</span>
             </label>
 
             <button
