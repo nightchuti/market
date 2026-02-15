@@ -71,6 +71,31 @@ function ProductDetail() {
       alert("เพิ่มสินค้าไม่สำเร็จ");
     }
   };
+
+  const handleBuyNow = () => {
+    if (!token) return alert("กรุณาเข้าสู่ระบบก่อนซื้อสินค้า");
+    if (!product) return;
+
+    const sellerId = product.user?._id || product.user;
+    if (String(sellerId) === String(currentUser._id))
+      return alert("ไม่สามารถซื้อสินค้าของตัวเองได้");
+
+    // สร้างข้อมูล Item ให้ตรงตามโครงสร้างที่ CheckoutPage ต้องการ
+    const itemToBuy = {
+      _id: product._id,
+      product: { _id: product._id }, // ดึง ID ไว้ใช้ใน backend
+      title: product.title,
+      price: product.price,
+      images: product.images,
+      qty: 1, // ซื้อทันทีเริ่มที่ 1 ชิ้น
+      deliveryType: product.deliveryType // สำคัญ: ใช้เช็ค deliveryMode ในหน้า Checkout
+    };
+
+    // navigate ไปหน้า checkout พร้อมส่ง state
+    navigate("/checkout", {
+      state: { items: [itemToBuy] }
+    });
+  };
   // ==================
 
   if (!product) return <p>กำลังโหลด...</p>;
@@ -174,41 +199,41 @@ function ProductDetail() {
 
 
           {/* ส่วนที่แก้ไข: ข้อมูลการเทรด (Trade Wanted) */}
-{(product.tradeOption === "trade_allowed" || product.tradeOption === "negotiable") && (
-  <div className="wanted-card">
-    <div className="wanted-img-container">
-      <img
-        src={
-          product.wantedImages?.[0] 
-            ? (product.wantedImages[0].startsWith("http") 
-                ? product.wantedImages[0] 
-                : `${API_URL}${product.wantedImages[0]}`)
-            : "/images/noimage.png"
-        }
-        alt="wanted"
-        onError={(e) => e.target.src = "/images/noimage.png"}
-      />
-    </div>
+          {(product.tradeOption === "trade_allowed" || product.tradeOption === "negotiable") && (
+            <div className="wanted-card">
+              <div className="wanted-img-container">
+                <img
+                  src={
+                    product.wantedImages?.[0]
+                      ? (product.wantedImages[0].startsWith("http")
+                        ? product.wantedImages[0]
+                        : `${API_URL}${product.wantedImages[0]}`)
+                      : "/images/noimage.png"
+                  }
+                  alt="wanted"
+                  onError={(e) => e.target.src = "/images/noimage.png"}
+                />
+              </div>
 
-    <div className="wanted-text-info">
-      <span className="wanted-label-top">ต้องการแลกกับ:</span>
-      {/* ดึงหมวดหมู่ที่ส่งมาจาก Backend */}
-      <h4 className="wanted-category-name">
-        หมวดหมู่: {product.wantedCategory || "ไม่ระบุ"}
-      </h4>
+              <div className="wanted-text-info">
+                <span className="wanted-label-top">ต้องการแลกกับ:</span>
+                {/* ดึงหมวดหมู่ที่ส่งมาจาก Backend */}
+                <h4 className="wanted-category-name">
+                  หมวดหมู่: {product.wantedCategory || "ไม่ระบุ"}
+                </h4>
 
-      <div className="wanted-tags">
-        {product.wantedKeywords && product.wantedKeywords.length > 0 ? (
-          product.wantedKeywords.map((k, i) => (
-            <span key={i} className="tag-blue">#{k}</span>
-          ))
-        ) : (
-          <span className="tag-blue">#รับแลกทุกอย่าง</span>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+                <div className="wanted-tags">
+                  {product.wantedKeywords && product.wantedKeywords.length > 0 ? (
+                    product.wantedKeywords.map((k, i) => (
+                      <span key={i} className="tag-blue">#{k}</span>
+                    ))
+                  ) : (
+                    <span className="tag-blue">#รับแลกทุกอย่าง</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* buttons */}
           <div className="button-group">
@@ -231,7 +256,9 @@ function ProductDetail() {
               </button>
             )}
 
-            <button className="btn-buy">
+            <button className="btn-buy"
+              onClick={handleBuyNow}
+              disabled={isOwnProduct}>
               ⚡ ซื้อทันที
             </button>
 
