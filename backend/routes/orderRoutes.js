@@ -276,7 +276,7 @@ router.patch("/:id/call-delivery", protect, async (req, res) => {
     // จำลองการเรียก API ขนส่ง
     order.status = "Shipping";
     order.deliveryDetails = { riderName: "สมชาย ขยันส่ง", riderPhone: "081-234-5678", trackingUrl: "https://track.grab.com/mock" };
-    
+
     await order.save();
     res.json({ success: true, message: "เรียกไรเดอร์สำเร็จ!", order });
   } catch (err) {
@@ -304,12 +304,19 @@ router.patch("/:id/complete", protect, async (req, res) => {
 // ==========================================
 // 9. รายละเอียดออเดอร์เดียว & ยกเลิกออเดอร์
 // ==========================================
+// orderRoutes.js 
 router.get("/:id", protect, async (req, res) => {
   try {
-    const order = await Order.findOne({ _id: req.params.id, $or: [{ user: req.user.id }, { seller: req.user.id }] }).populate("items.product user seller");
+    // แก้ไข: นำ seller ออกหากใน Model Order.js ไม่มีฟิลด์นี้
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user.id // ค้นหาเฉพาะออเดอร์ของผู้ใช้นี้
+    }).populate("items.product user");
+
     if (!order) return res.status(404).json({ message: "ไม่พบออเดอร์" });
     res.json(order);
   } catch (err) {
+    // บรรทัดนี้จะส่ง Error ที่แท้จริงกลับไปให้ Frontend เห็น
     res.status(500).json({ message: err.message });
   }
 });
@@ -334,6 +341,24 @@ router.patch("/:id/cancel", protect, async (req, res) => {
   } finally {
     session.endSession();
   }
+});
+
+// ==========================================
+//  ตรวจสอบสลืปที่อัปโหลดโดยผู้ใช้ (สำหรับ Admin)
+// ==========================================
+// ดึงออเดอร์ทั้งหมดที่โอนเงินมาแล้วแต่ยังไม่ได้ตรวจ
+router.get("/admin/waiting-confirm", protect, async (req, res) => {
+  // ใส่ Logic เช็คว่าเป็น Admin หรือไม่ตรงนี้
+  const orders = await Order.find({ status: "WaitingConfirm" }).populate("user");
+  res.json(orders);
+});
+
+// Admin กดยืนยันเงินเข้า
+router.patch("/:id/admin-confirm", protect, async (req, res) => {
+  const order = await Order.findById(req.params.id);
+  order.status = "Paid";
+  await order.save();
+  res.json({ message: "Updated" });
 });
 
 module.exports = router;

@@ -16,6 +16,7 @@ import CheckoutPage from "./pages/Checkout/CheckoutPage";
 import CouponCenter from "./pages/coupon/CouponCenter";
 import AdminCoupon from "./pages/coupon/AdminCoupon";
 import AddressPage from "./pages/Checkout/AddressPage";
+import PaymentPage from "./pages/Checkout/PaymentPage";
 import ShopProfile from "./pages/ShopProfile/ShopProfile";
 
 
@@ -40,6 +41,8 @@ function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/coupons" element={<CouponCenter />} />
           <Route path="/admin/coupons" element={<AdminCoupon />} />
+          <Route path="/address" element={<AddressPage />} />
+          <Route path="/payment/:orderId" element={<PaymentPage />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/address" element={<AddressPage />} />
           <Route path="/shop/:id" element={<ShopProfile />} />

@@ -49,7 +49,7 @@ connectDB();
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
-app.use("/api/order", orderRoutes);
+app.use("/api/orders", orderRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/ads", adRoutes); // ✅ ใช้งานได้แล้วหลังจาก Import ด้านบน
 app.use("/api/location", locationRoutes);

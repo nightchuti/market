@@ -284,42 +284,44 @@ const CheckoutPage = () => {
                 return alert("นัดรับสินค้าไม่สามารถเก็บเงินปลายทางได้");
 
             const orderData = {
-                items: cartItems.map(i => ({
-                    product: i._id,
-                    quantity: i.qty
+                // Backend ใช้โครงสร้าง { product, quantity, price }
+                items: cartItems.map(item => ({
+                    product: item.product?._id || item._id, // ดึงเฉพาะ ID ของสินค้า
+                    quantity: item.quantity || item.qty,
+                    price: item.price
                 })),
-
-                shippingAddress:
-                    deliveryMode === "DELIVERY"
-                        ? {
-                            dormName: selectedAddr.dormName,
-                            room: selectedAddr.room,
-                            note: selectedAddr.note,
-                            lat: selectedAddr.lat,
-                            lng: selectedAddr.lng
-                        }
-                        : null,
-
-                deliveryMode,
-                shippingService:
-                    deliveryMode === "DELIVERY" ? shippingService : null,
-                couponCode,
-                paymentMethod
+                // ถ้านัดรับ (PICKUP) ให้ส่งเป็น null หรือไม่ส่ง (ตาม Logic Backend)
+                shippingAddress: deliveryMode === "PICKUP" ? null : {
+                    dormName: selectedAddr.dormName,
+                    room: selectedAddr.room,
+                    note: selectedAddr.note,
+                    lat: selectedAddr.lat,
+                    lng: selectedAddr.lng
+                },
+                deliveryMode: deliveryMode,     // "DELIVERY" หรือ "PICKUP"
+                paymentMethod: paymentMethod,   // "PROMPTPAY" หรือ "COD"
+                subTotal: subTotal,
+                deliveryFee: deliveryFee,
+                totalPrice: total,
+                couponCode: appliedCoupon ? appliedCoupon.code : null
             };
 
-            const orderRes = await axios.post(
-                `${API_URL}/api/orders/checkout`,
-                orderData,
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            const res = await axios.post(`${API_URL}/api/orders/checkout`, orderData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-            alert("สั่งซื้อสำเร็จ!");
-            navigate("/profile");
+            if (res.data.success) {
+                alert("สั่งซื้อสำเร็จ!");
+                // ถ้าโอนเงิน ให้ไปหน้า Payment ถ้า COD ให้ไปหน้า Profile
+                if (paymentMethod === "PROMPTPAY") {
+                    navigate(`/payment/${res.data.order._id}`);
+                } else {
+                    navigate("/profile");
+                }
+            }
 
         } catch (err) {
-            console.error(err);
+            console.error("Backend Error Message:", err.response?.data?.message);
             alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
         }
     };
@@ -468,6 +470,45 @@ const CheckoutPage = () => {
                         </div>
                     )}
 
+                </div>
+            </div>
+
+            {/* payment-method-section */}
+            <div className="sh-card payment-method-section">
+                <h3>ช่องทางการชำระเงิน</h3>
+                <div className="payment-options">
+
+                    {/* ตัวเลือก PromptPay */}
+                    <label className={`payment-card ${paymentMethod === "PROMPTPAY" ? "active" : ""}`}>
+                        <input
+                            type="radio"
+                            name="payment"
+                            value="PROMPTPAY"
+                            checked={paymentMethod === "PROMPTPAY"}
+                            onChange={(e) => setPaymentMethod(e.target.value)}
+                        />
+                        <div className="payment-info">
+                            <span className="payment-name">Thai QR Payment / โอนเงินผ่านธนาคาร</span>
+                            <span className="payment-subtext">ตรวจสอบยอดเงินทันทีผ่านสลิป</span>
+                        </div>
+                    </label>
+
+                    {/* ตัวเลือก COD (แสดงเมื่อไม่ใช่ Pickup) */}
+                    {deliveryMode !== "PICKUP" && (
+                        <label className={`payment-card ${paymentMethod === "COD" ? "active" : ""}`}>
+                            <input
+                                type="radio"
+                                name="payment"
+                                value="COD"
+                                checked={paymentMethod === "COD"}
+                                onChange={(e) => setPaymentMethod(e.target.value)}
+                            />
+                            <div className="payment-info">
+                                <span className="payment-name">ชำระเงินปลายทาง (COD)</span>
+                                <span className="payment-subtext">จ่ายเงินเมื่อได้รับสินค้าเท่านั้น</span>
+                            </div>
+                        </label>
+                    )}
                 </div>
             </div>
 
