@@ -157,12 +157,32 @@
     grid-template-columns:1fr;
   }
 }
-.btn-back{
-  background:none;
-  border:none;
-  font-size:16px;
-  cursor:pointer;
-  margin-bottom:10px;
+/* Wrapper สำหรับควบคุมการชิดซ้าย */
+.back-button-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start; /* ชิดซ้าย */
+    margin-bottom: 15px;
+}
+
+/* สไตล์ปุ่มแบบ Global ที่คุณต้องการ */
+.btn-back-global {
+    background: none;
+    border: none;
+    color: #555; /* สีเทาเข้มดูแพง */
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-back-global:hover {
+    color: #000; /* เปลี่ยนเป็นสีดำเมื่อชี้ */
+    transform: translateX(-3px); /* เลื่อนไปซ้ายนิดๆ ให้ดูมีลูกเล่น */
 }
 
 .info-section{
@@ -196,19 +216,55 @@
   border-radius:50%;
 }
 
-/* wanted */
-.wanted-card{
-  margin-top:15px;
-  display:flex;
-  gap:12px;
-  background:#ecfeff;
-  padding:12px;
-  border-radius:12px;
-}
+
 .clickable {
   cursor: pointer;
 }
 
 .clickable:hover {
   opacity: 0.8;
+}
+/* กล่องเทรด เส้นประสีเขียว ชิดซ้าย */
+.wanted-card {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+  background: #f0fdfa; /* สีเขียวมิ้นต์อ่อน */
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px dashed #2d5a27; /* เส้นประเขียวเข้ม */
+  align-items: center;
+}
+
+.wanted-img-container img {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.wanted-label-top {
+  display: block;
+  font-size: 11px;
+  color: #2d5a27;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.wanted-category-name {
+  font-size: 17px;
+  margin: 0;
+  color: #333;
+}
+
+.tag-blue {
+  background: #2563eb; /* สีน้ำเงินตามรูป */
+  color: #fff;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  display: inline-block;
+  margin-top: 8px;
+  margin-right: 5px;
 }

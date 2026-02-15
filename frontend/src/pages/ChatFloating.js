@@ -7,15 +7,15 @@ import "./ChatFloating.css";
 const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:5000";
 
 export default function ChatFloating() {
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
   const socketRef = useRef(null);
 
-  const [open, setOpen]       = useState(false);
-  const [rooms, setRooms]     = useState([]);
-  const [unread, setUnread]   = useState(0);
+  const [open, setOpen] = useState(false);
+  const [rooms, setRooms] = useState([]);
+  const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const token       = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   // ✅ รองรับทั้ง _id และ id
   const myId = String(currentUser._id || currentUser.id || "");
@@ -64,8 +64,8 @@ export default function ChatFloating() {
   const fmtTime = (d) => {
     if (!d) return "";
     const diff = Date.now() - new Date(d).getTime();
-    if (diff < 60000)    return "เมื่อกี้";
-    if (diff < 3600000)  return `${Math.floor(diff / 60000)} นาที`;
+    if (diff < 60000) return "เมื่อกี้";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} นาที`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)} ชม.`;
     return new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short" });
   };
@@ -94,10 +94,10 @@ export default function ChatFloating() {
             )}
 
             {!loading && rooms.map((room) => {
-              const other      = getOther(room);
+              const other = getOther(room);
               const unreadRoom = hasUnread(room);
               // ✅ ดึงข้อมูลสินค้า
-              const product    = room.productId;
+              const product = room.productId;
               const productImg = product?.images?.[0];
               const isTradeRoom = room.type === "trade";
 
@@ -112,10 +112,17 @@ export default function ChatFloating() {
                     <img
                       className="cf-avatar"
                       src={
-                        other?.profileImage ||
-                        `https://ui-avatars.com/api/?name=${encodeURIComponent(other?.username || "U")}&background=random`
+                        other?.profileImage
+                          ? (other.profileImage.startsWith("http")
+                            ? other.profileImage
+                            : `${API_URL}${other.profileImage.startsWith("/") ? "" : "/"}${other.profileImage}`)
+                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(other?.username || "U")}&background=random`
                       }
                       alt=""
+                      onError={(e) => {
+                        // ถ้าโหลดรูปจาก Server พัง ให้ใช้ UI-Avatar แทน
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(other?.username || "U")}&background=random`;
+                      }}
                     />
                     {/* รูปสินค้าเล็กๆ มุมขวาล่างของ avatar */}
                     {productImg && (

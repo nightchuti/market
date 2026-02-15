@@ -214,7 +214,9 @@ router.post("/", protect, upload.fields([
         images: imagePaths,
         wantedImages: wantedImagePaths,
         wantedCategory: req.body.wantedCategory,
-        wantedKeywords: req.body.wantedKeywords,
+        wantedKeywords: req.body.wantedKeywords
+          ? req.body.wantedKeywords.split(",")
+          : [],
         meetupAddress: req.body.meetupAddress,
         deliveryType: deliveryType || "delivery",
         tradeOption: tradeOption || "sell_only",

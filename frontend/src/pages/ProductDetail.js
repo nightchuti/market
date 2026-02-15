@@ -20,12 +20,12 @@ function ProductDetail() {
     axios
       .get(`${API_URL}/api/products/${id}`)
       .then((res) => {
+        console.log("Product Data:", res.data); // ลองเปิด Console ดูชื่อ Field ที่นี่
         setProduct(res.data);
         if (res.data.images?.length) setSelectedImage(res.data.images[0]);
       })
       .catch(() => setProduct(null));
   }, [id]);
-
   // ===== ห้ามแก้ =====
   const handleChat = async () => {
     if (!token) return alert("กรุณาเข้าสู่ระบบก่อนแชท");
@@ -81,11 +81,12 @@ function ProductDetail() {
 
   return (
     <div className="product-detail">
-
-      {/* ปุ่มย้อนกลับ */}
-      <button className="btn-back" onClick={() => navigate(-1)}>
-        ← กลับ
-      </button>
+      {/* ส่วนปุ่มย้อนกลับที่ปรับใหม่ */}
+      <div className="back-button-wrapper">
+        <button className="btn-back-global" onClick={() => navigate(-1)}>
+          ← กลับ
+        </button>
+      </div>
 
       <div className="detail-container">
 
@@ -116,28 +117,27 @@ function ProductDetail() {
           </div>
 
           {/* Seller */}
+          {/* ส่วนข้อมูลผู้ขาย (Seller) */}
+
           <div
-            className="seller-mini clickable"
-            onClick={() =>
-              navigate(`/profile/${product.user?._id || product.user}`)
-            }
-
+            className="seller-mini"
+            onClick={() => product.user?._id && navigate(`/profile/${product.user._id}`)}
+            style={{ cursor: 'pointer' }}
           >
-
-
             <img
               src={
                 product.user?.profileImage
-                  ? product.user.profileImage.startsWith("http")
+                  ? (product.user.profileImage.startsWith("http")
                     ? product.user.profileImage
-                    : `${API_URL}${product.user.profileImage}`
-                  : "/default-avatar.png"
+                    : `${API_URL}${product.user.profileImage.startsWith('/') ? '' : '/'}${product.user.profileImage}`)
+                  : "/images/default-avatar.png"
               }
+              alt="seller"
+              onError={(e) => e.target.src = "/images/default-avatar.png"}
             />
             <div>
-              <b>
-                {product.user?.shopId?.name || product.user?.username}
-              </b>
+              <b>{product.user?.username || "ผู้ขาย"}</b>
+              <p>ดูหน้าร้านค้าออนไลน์ →</p>
             </div>
           </div>
 
@@ -172,31 +172,43 @@ function ProductDetail() {
             <p>{product.description || "ไม่มีรายละเอียดสินค้า"}</p>
           </div>
 
-          {/* trade wanted */}
-          {product.tradeOption === "trade_allowed" && (
-            <div className="wanted-card">
-              <img
-                src={
-                  product.wantedImages?.[0]
-                    ? product.wantedImages[0].startsWith("http")
-                      ? product.wantedImages[0]
-                      : `${API_URL}${product.wantedImages[0]}`
-                    : "/noimage.png"
-                }
-              />
 
-              <div>
-                <b>{product.wantedName || "สินค้าที่ต้องการแลก"}</b>
-                <p>{product.wantedCategory}</p>
+          {/* ส่วนที่แก้ไข: ข้อมูลการเทรด (Trade Wanted) */}
+{(product.tradeOption === "trade_allowed" || product.tradeOption === "negotiable") && (
+  <div className="wanted-card">
+    <div className="wanted-img-container">
+      <img
+        src={
+          product.wantedImages?.[0] 
+            ? (product.wantedImages[0].startsWith("http") 
+                ? product.wantedImages[0] 
+                : `${API_URL}${product.wantedImages[0]}`)
+            : "/images/noimage.png"
+        }
+        alt="wanted"
+        onError={(e) => e.target.src = "/images/noimage.png"}
+      />
+    </div>
 
-                <div className="wanted-tags">
-                  {product.wantedKeywords?.map((k, i) => (
-                    <span key={i}>#{k}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+    <div className="wanted-text-info">
+      <span className="wanted-label-top">ต้องการแลกกับ:</span>
+      {/* ดึงหมวดหมู่ที่ส่งมาจาก Backend */}
+      <h4 className="wanted-category-name">
+        หมวดหมู่: {product.wantedCategory || "ไม่ระบุ"}
+      </h4>
+
+      <div className="wanted-tags">
+        {product.wantedKeywords && product.wantedKeywords.length > 0 ? (
+          product.wantedKeywords.map((k, i) => (
+            <span key={i} className="tag-blue">#{k}</span>
+          ))
+        ) : (
+          <span className="tag-blue">#รับแลกทุกอย่าง</span>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
           {/* buttons */}
           <div className="button-group">

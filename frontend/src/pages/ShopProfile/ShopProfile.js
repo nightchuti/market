@@ -1,79 +1,106 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./ShopProfile.css";
+import "./ShopProfile.css"; 
 
 const API_URL = "http://localhost:5000";
+const DEFAULT_AVATAR = "/images/default-avatar.png";
+const NO_IMAGE = "/images/noimage.png";
 
-function ShopProfile() {
-  const { id } = useParams();   // ✅ ต้องชื่อ id
+export default function ShopProfile() {
+    const { id } = useParams(); 
+    const navigate = useNavigate();
+    const [seller, setSeller] = useState(null);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-  const [shop, setShop] = useState(null);
-  const [loading, setLoading] = useState(true);
+    // ✅ ฟังก์ชันจัดการ URL รูปภาพให้ถูกต้อง (ป้องกันเครื่องหมาย / ซ้ำหรือหาย)
+    const getFullUrl = (path, isAvatar = false) => {
+        if (!path) return isAvatar ? DEFAULT_AVATAR : NO_IMAGE;
+        if (path.startsWith("http")) return path;
+        const cleanPath = path.startsWith("/") ? path : `/${path}`;
+        return `${API_URL}${cleanPath}`;
+    };
 
-  useEffect(() => {
-    if (!id) return;   // 🔥 ป้องกัน undefined
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!id) return;
+            try {
+                // ✅ เรียก API: /api/auth/user/:id (อ้างอิงจาก server.js ที่คุณใช้ authRoutes)
+                // หาก Backend คุณใช้ /api/users/:id ให้เปลี่ยนที่นี่
+                const [userRes, prodRes] = await Promise.all([
+                    axios.get(`${API_URL}/api/auth/user/${id}`).catch(() => axios.get(`${API_URL}/api/users/${id}`)), 
+                    axios.get(`${API_URL}/api/products/user/${id}`)
+                ]);
+                
+                setSeller(userRes.data);
+                setProducts(prodRes.data);
+            } catch (err) {
+                console.error("Error fetching shop data:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [id]);
 
-    axios
-      .get(`${API_URL}/api/shops/${id}`)
-      .then((res) => {
-        setShop(res.data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.log("โหลดร้านไม่สำเร็จ", err);
-        setLoading(false);
-      });
-  }, [id]);
-
-  if (loading) return <p>กำลังโหลด...</p>;
-  if (!shop) return <p>ไม่พบร้านค้า</p>;
-
-  return (
-    <div className="shop-profile">
-
-      <div className="shop-header">
-        <img
-          className="shop-banner"
-          src={
-            shop.bannerImage
-              ? shop.bannerImage.startsWith("http")
-                ? shop.bannerImage
-                : `${API_URL}${shop.bannerImage}`
-              : "/noimage.png"
-          }
-          alt=""
-        />
-
-        <h2>{shop.name}</h2>
-        <p>{shop.description}</p>
-      </div>
-
-      <div className="shop-owner">
-        <img
-          src={
-            shop.ownerId?.profileImage
-              ? shop.ownerId.profileImage.startsWith("http")
-                ? shop.ownerId.profileImage
-                : `${API_URL}${shop.ownerId.profileImage}`
-              : "/default-avatar.png"
-          }
-          alt=""
-        />
-
-        <div>
-          <p><b>เจ้าของร้าน:</b> {shop.ownerId?.username}</p>
-          <p><b>Email:</b> {shop.ownerId?.email}</p>
+    if (loading) return <div className="loading-screen">กำลังโหลดร้านค้า...</div>;
+    
+    if (!seller) return (
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+            <p>ไม่พบข้อมูลร้านค้า (ID: {id})</p>
+            <button onClick={() => navigate(-1)}>ย้อนกลับ</button>
         </div>
-      </div>
+    );
 
-      <div className="shop-info">
-        <p><b>ที่อยู่:</b> {shop.address || "-"}</p>
-        <p><b>ลิงก์ร้าน:</b> {shop.shopUrl || "-"}</p>
-      </div>
+    return (
+        <div className="shop-profile-container">
+        {/* ส่วนปุ่มย้อนกลับที่ปรับใหม่ */}
+        <div className="back-button-wrapper">
+            <button className="btn-back-global" onClick={() => navigate(-1)}>
+                ← ย้อนกลับ
+            </button>
+        </div>
+            <div className="shop-header-section">
+                <div className="shop-profile-card">
+                    <img 
+                        className="shop-avatar-img" 
+                        src={getFullUrl(seller.profileImage, true)} 
+                        alt={seller.username}
+                        onError={(e) => e.target.src = DEFAULT_AVATAR} 
+                    />
+                    <div className="shop-details">
+                        <h1 className="shop-name">{seller.shopId?.name || seller.username}</h1>
+                        <p className="shop-email">✉️ {seller.email}</p>
+                        
+                    </div>
+                </div>
+            </div>
 
-    </div>
-  );
+            <div className="shop-content-section">
+                <h3 className="grid-title">สินค้าทั้งหมด ({products.length})</h3>
+                <div className="shop-product-grid">
+                    {products.length > 0 ? (
+                        products.map(p => (
+                            <div key={p._id} className="product-item-card" onClick={() => navigate(`/products/${p._id}`)}>
+                                <div className="product-img-box">
+                                    <img 
+                                        src={getFullUrl(p.images?.[0])} 
+                                        alt={p.title} 
+                                        onError={(e) => e.target.src = NO_IMAGE}
+                                    />
+                                </div>
+                                <div className="product-info-box">
+                                    <div className="product-item-title">{p.title}</div>
+                                    <div className="product-item-price">฿{p.price?.toLocaleString()}</div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="no-product">ผู้ขายท่านนี้ยังไม่มีการลงสินค้า</p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 }
-
-export default ShopProfile;

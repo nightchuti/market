@@ -13,15 +13,12 @@ exports.getAllProducts = async (req, res) => {
     if (category) query.category = category;
     if (tradeOption) query.tradeOption = tradeOption;
 
-    const allItems = await Product.find(query)
-      .populate("user", "username profileImage shopId")
-      .sort({ createdAt: -1 });
-
+    const allItems = await Product.find(query).populate("user", "username").sort({ createdAt: -1 });
 
     const now = new Date();
     // แยกสินค้า Boost และสินค้าปกติ
     const boosted = allItems.filter(p => p.isBoosted && p.boostExpireAt && new Date(p.boostExpireAt) > now)
-      .sort(() => 0.5 - Math.random());
+                           .sort(() => 0.5 - Math.random()); 
     const regular = allItems.filter(p => !p.isBoosted || !p.boostExpireAt || new Date(p.boostExpireAt) <= now);
 
     // ✅ ดึงโฆษณาจริงจากหน้า Admin
@@ -36,7 +33,7 @@ exports.getAllProducts = async (req, res) => {
         mixed.push(regular[rIdx++]);
         if (mixed.length % 6 === 0 && formattedAds.length > 0) {
           const currentAd = formattedAds[adIdx % formattedAds.length];
-          mixed.push({ ...currentAd, _id: `ad_pos_${mixed.length}_${currentAd._id}` });
+          mixed.push({...currentAd, _id: `ad_pos_${mixed.length}_${currentAd._id}`});
           adIdx++;
         }
       }
@@ -74,8 +71,8 @@ exports.activateBoost = async (req, res) => {
     if (user.boostQuota > 0) {
       user.boostQuota -= 1;
       product.isBoosted = true;
-      product.boostExpireAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-
+      product.boostExpireAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); 
+      
       await user.save();
       await product.save();
       return res.json({ success: true, quotaLeft: user.boostQuota });
@@ -83,5 +80,49 @@ exports.activateBoost = async (req, res) => {
     res.status(402).json({ message: "โควตาของคุณหมดแล้ว กรุณาสมัครเพิ่ม" });
   } catch (err) {
     res.status(500).json({ message: "เกิดข้อผิดพลาด" });
+  }
+};
+
+// เพิ่ม/แก้ไข ฟังก์ชันใน Backend Controller ของคุณ
+exports.createProduct = async (req, res) => {
+  try {
+    const { 
+      title, description, price, category, quantity, 
+      deliveryType, tradeOption, locationName, meetupAddress,
+      wantedCategory, wantedKeywords // ✅ รับค่าที่ส่งมาจาก AddProduct
+    } = req.body;
+
+    const productData = {
+      user: req.user.id,
+      title,
+      description,
+      price: tradeOption === "trade_allowed" ? 0 : Number(price),
+      category,
+      quantity: Number(quantity),
+      deliveryType,
+      tradeOption,
+      locationName,
+      meetupAddress,
+      wantedCategory, // ✅ บันทึกหมวดหมู่ที่อยากได้
+      // ✅ แปลง Tag จาก String "A,B,C" กลับเป็น Array ["A","B","C"]
+      wantedKeywords: wantedKeywords ? wantedKeywords.split(",") : [],
+      
+      // ✅ จัดการรูปหลักสินค้า
+      images: req.files && req.files['images'] 
+        ? req.files['images'].map(f => `/uploads/${f.filename}`) 
+        : [],
+
+      // ✅ จัดการรูปสินค้าที่อยากได้ (Wanted Images)
+      wantedImages: req.files && req.files['wantedImages'] 
+        ? req.files['wantedImages'].map(f => `/uploads/${f.filename}`) 
+        : []
+    };
+
+    const product = new Product(productData);
+    await product.save();
+    res.status(201).json(product);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "ไม่สามารถบันทึกสินค้าได้" });
   }
 };

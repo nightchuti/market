@@ -82,7 +82,10 @@ const productSchema = new mongoose.Schema({
   default: ""
 },
 
-
+wantedName: { type: String, default: "" },
+wantedCategory: { type: String, default: "" },
+wantedKeywords: [{ type: String }],
+wantedImages: [{ type: String }],
 
   // ============================================
   // ✅ เพิ่ม 2 Fields นี้ เพื่อรองรับระบบ Boost
