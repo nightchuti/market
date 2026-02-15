@@ -19,9 +19,10 @@ export default function AddProduct() {
     tradeOption: "sell_only",
     lat: "",
     lng: "",
-    address: "",
+    locationName: "",
     wantedCategory: "",
-    wantedKeywords: []
+    wantedKeywords: [],
+    meetupAddress: ""
   });
 
   const [keywordInput, setKeywordInput] = useState("");
@@ -89,15 +90,30 @@ export default function AddProduct() {
       !form.category ||
       !form.deliveryType ||
       !form.tradeOption ||
-      !form.address ||
+      !form.locationName ||
       form.quantity === "" ||
       (mustHavePrice && !form.price) ||
+      ((form.deliveryType === "meetup" || form.deliveryType === "both")
+        && !form.meetupAddress) ||   // ✅ เพิ่ม
       (form.tradeOption === "trade_allowed" &&
         (!form.wantedCategory || !form.wantedKeywords))
     ) {
       alert("กรุณากรอกข้อมูลให้ครบ");
       return;
     }
+
+    // ✅ ต้องมีรูปสินค้าอย่างน้อย 1 รูป
+    if (images.length === 0) {
+      alert("กรุณาเพิ่มรูปสินค้าอย่างน้อย 1 รูป");
+      return;
+    }
+
+    // ✅ ถ้าเป็นโหมดแลก ต้องมีรูปสินค้าที่อยากได้
+    if (form.tradeOption === "trade_allowed" && tradeImages.length === 0) {
+      alert("กรุณาเพิ่มรูปสินค้าที่อยากได้อย่างน้อย 1 รูป");
+      return;
+    }
+
 
     try {
       const formData = new FormData();
@@ -107,14 +123,14 @@ export default function AddProduct() {
       formData.append("category", form.category);
       formData.append("deliveryType", form.deliveryType);
       formData.append("tradeOption", form.tradeOption);
-      formData.append("address", form.address);
+      formData.append("locationName", form.locationName);
       formData.append("quantity", Number(form.quantity));
 
       formData.append(
         "price",
         form.tradeOption === "trade_allowed" ? 0 : Number(form.price)
       );
-
+      formData.append("meetupAddress", form.meetupAddress);
       formData.append("lat", form.lat);
       formData.append("lng", form.lng);
 
@@ -176,7 +192,7 @@ export default function AddProduct() {
             ...prev,
             lat: String(latitude),
             lng: String(longitude),
-            address:
+            locationName:
               data.display_name ||
               data.address?.road ||
               data.address?.suburb ||
@@ -213,7 +229,7 @@ export default function AddProduct() {
 
       {/* รูปสินค้า */}
       <div className="form-group">
-        <label>รูปสินค้า</label>
+        <label>รูปสินค้า *</label>
         <input type="file" multiple accept="image/*" onChange={handleImageChange} />
 
         <div className="image-preview">
@@ -269,6 +285,19 @@ export default function AddProduct() {
           </select>
         </div>
       </div>
+      {(form.deliveryType === "meetup" ||
+        form.deliveryType === "both") && (
+          <div className="form-group">
+            <label>ที่อยู่หอพัก / จุดนัดรับ</label>
+            <input
+              name="meetupAddress"
+              value={form.meetupAddress}
+              onChange={handleChange}
+              placeholder="เช่น หอ A ห้อง 203 หรือ หน้าอาคารเรียน"
+            />
+          </div>
+        )}
+
 
       {/* ตัวเลือกขาย */}
       <div className="form-group">
@@ -357,7 +386,7 @@ export default function AddProduct() {
             </div>
 
             <div className="form-group">
-              <label>รูปสินค้าที่อยากได้</label>
+              <label>รูปสินค้าที่อยากได้ *</label>
               <input type="file" multiple accept="image/*" onChange={handleTradeImageChange} />
 
               <div className="image-preview">
@@ -378,8 +407,8 @@ export default function AddProduct() {
       <div className="form-group">
         <label>ที่อยู่โดยประมาณ</label>
         <input
-          name="address"
-          value={form.address}
+          name="locationName"
+          value={form.locationName}
           onChange={handleChange}
           placeholder="กดใช้ตำแหน่งปัจจุบัน หรือพิมพ์เอง"
         />

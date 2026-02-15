@@ -23,6 +23,7 @@ function EditProduct() {
         lat: "",
         lng: "",
         locationName: "",
+        meetupAddress: "",
         status: "pending" // กำหนดเป็น pending รอไว้
     });
 
@@ -48,6 +49,7 @@ function EditProduct() {
                 lat: data.lat || "",
                 lng: data.lng || "",
                 locationName: data.locationName || "",
+                meetupAddress: data.meetupAddress || "",
                 status: "pending" // เมื่อโหลดมาแก้ไข ให้เตรียมสถานะเป็น pending เสมอ
             });
 
@@ -152,7 +154,7 @@ function EditProduct() {
                     <div className="image-preview">
                         {existingImages.map((img, index) => (
                             <div key={index} className="image-card">
-                                <img src={`${API_URL}/${img}`} alt="old" />
+                                <img src={`${API_URL}${img}`} alt="old" />
                                 <button type="button" onClick={() => removeOldImage(index)}>✕</button>
                             </div>
                         ))}
@@ -208,6 +210,18 @@ function EditProduct() {
                         <option value="both">จัดส่งหรือนัดรับ</option>
                     </select>
                 </div>
+                {(form.deliveryType === "meetup" ||
+                    form.deliveryType === "both") && (
+                        <div className="form-group">
+                            <label>ที่อยู่หอพัก / จุดนัดรับ</label>
+                            <input
+                                name="meetupAddress"
+                                value={form.meetupAddress}
+                                onChange={handleChange}
+                                placeholder="เช่น หอ A ห้อง 203 หรือ หน้าอาคารเรียน"
+                            />
+                        </div>
+                    )}
 
                 <div className="form-group">
                     <label>ตัวเลือกการขาย</label>
