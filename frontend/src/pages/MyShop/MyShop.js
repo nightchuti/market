@@ -4,16 +4,18 @@ import "./MyShop.css";
 import { useNavigate } from "react-router-dom";
 import Inventory from "./Inventory";
 import SalesHistory from "./SalesHistory";
+import SellerOrderManagement from "./SellerOrderManagement"; // ✅ นำเข้า Component ใหม่
 
 const API_URL = "http://localhost:5000";
 
 function MyShop() {
   const [products, setProducts] = useState([]);
-  const [user, setUser] = useState(null); // ✅ เพิ่มเก็บข้อมูล User
+  const [user, setUser] = useState(null); 
   const [activeTab, setActiveTab] = useState("inventory");
   const [openId, setOpenId] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [orderCount, setOrderCount] = useState(0); // เก็บจำนวนออเดอร์ใหม่
 
   const navigate = useNavigate();
 
@@ -25,22 +27,20 @@ function MyShop() {
     } else {
       setIsLoggedIn(true);
       fetchMyProducts();
-      fetchUserProfile(); // ✅ ดึงข้อมูล Profile เพื่อเช็คสถานะ PRO
+      fetchUserProfile(); 
     }
   }, []);
 
-// 📄 แก้ไขไฟล์ MyShop.js
-
-const fetchUserProfile = async () => {
-  try {
-    const res = await axios.get(`${API_URL}/api/auth/profile`, { // ✅ เปลี่ยนจาก /me เป็น /profile
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-    });
-    setUser(res.data); // ตอนนี้ค่า user จะมีข้อมูล boostQuota แล้วครับ
-  } catch (err) {
-    console.error("โหลดโปรไฟล์ไม่สำเร็จ", err);
-  }
-};
+  const fetchUserProfile = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/auth/profile`, { 
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      setUser(res.data);
+    } catch (err) {
+      console.error("โหลดโปรไฟล์ไม่สำเร็จ", err);
+    }
+  };
 
   const fetchMyProducts = async () => {
     try {
@@ -60,7 +60,6 @@ const fetchUserProfile = async () => {
     }
   };
 
-  // ... (ฟังก์ชัน handleDelete และ publishProduct เหมือนเดิมของคุณ) ...
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm("ต้องการลบสินค้านี้หรือไม่?");
     if (!confirmDelete) return;
@@ -114,7 +113,6 @@ const fetchUserProfile = async () => {
         </button>
       </div>
 
-      {/* ✅ ส่วนที่เพิ่มมาใหม่: Card สำหรับ Ad Request เฉพาะคนเป็น PRO */}
       {user?.membershipTier === "PRO" && (
         <div className="ad-request-card">
           <div className="ad-card-content">
@@ -155,8 +153,11 @@ const fetchUserProfile = async () => {
         <button className={activeTab === "inventory" ? "active" : ""} onClick={() => setActiveTab("inventory")}>
           คลังสินค้า ({inventoryProducts.length})
         </button>
+        <button className={activeTab === "orders" ? "active" : ""} onClick={() => setActiveTab("orders")}>
+          คำสั่งซื้อใหม่ ({orderCount})
+        </button>
         <button className={activeTab === "sales" ? "active" : ""} onClick={() => setActiveTab("sales")}>
-          ประวัติการขาย ({soldProducts.length})
+          สำเร็จแล้ว ({soldProducts.length})
         </button>
       </div>
 
@@ -169,15 +170,19 @@ const fetchUserProfile = async () => {
             handleDelete={handleDelete}
             navigate={navigate}
             publishProduct={publishProduct}
-            // ✅ ส่งค่าที่ดึงมาจาก State user
             userQuota={user?.boostQuota || 0}
-            // ✅ ส่งฟังก์ชันโหลดข้อมูลใหม่ เพื่อให้ Quota และรายการสินค้าอัปเดตหลังกดบูส
             refreshProducts={() => {
               fetchMyProducts();
               fetchUserProfile();
             }}
           />
         )}
+
+        {/* ✅ เพิ่มส่วนเรียกใช้ SellerOrderManagement */}
+        {activeTab === "orders" && (
+          <SellerOrderManagement setOrderCount={setOrderCount} />
+        )}
+
         {activeTab === "sales" && <SalesHistory products={soldProducts} />}
       </div>
     </div>

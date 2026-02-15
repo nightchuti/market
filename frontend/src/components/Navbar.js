@@ -10,11 +10,13 @@ export default function Navbar({ onLogin, onRegister }) {
   const token = localStorage.getItem("token");
 
   const [user, setUser] = useState(null);
+  const [orderCount, setOrderCount] = useState(0);
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (!token) {
         setUser(null);
+        setOrderCount(0);
         return;
       }
       try {
@@ -23,6 +25,12 @@ export default function Navbar({ onLogin, onRegister }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(res.data);
+
+        const orderRes = await axios.get(`${API_URL}/api/orders/seller/all`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const pendingOrders = orderRes.data.filter(o => o.status === "Paid");
+        setOrderCount(pendingOrders.length);
       } catch (err) {
         console.error("Navbar fetch error:", err);
         // ถ้า error หรือ token หมดอายุ ให้ลองใช้ข้อมูลเก่าใน localStorage ไปก่อน
@@ -38,6 +46,7 @@ export default function Navbar({ onLogin, onRegister }) {
     if (window.confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
       localStorage.clear();
       setUser(null);
+      setOrderCount(0);
       navigate("/");
       window.location.reload();
     }
@@ -53,7 +62,13 @@ export default function Navbar({ onLogin, onRegister }) {
       <div className="menu">
         <Link to="/" className={`nav-link ${location.pathname === "/" ? "active" : ""}`}>หน้าหลัก</Link>
         <Link to="/products" className={`nav-link ${location.pathname === "/products" ? "active" : ""}`}>สินค้าทั้งหมด</Link>
-        <Link to="/my-shop" className={`nav-link ${location.pathname === "/my-shop" ? "active" : ""}`}>ร้านค้าของฉัน</Link>
+        <Link
+          to="/my-shop"
+          className={`nav-link shop-link-container ${location.pathname === "/my-shop" ? "active" : ""}`}
+        >
+          ร้านค้าของฉัน
+          {orderCount > 0 && <span className="nav-badge">{orderCount}</span>}
+        </Link>
       </div>
 
       <div className="nav-btn">

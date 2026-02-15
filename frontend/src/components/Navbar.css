@@ -219,3 +219,36 @@ body {
  .user-mini-sub {
   color: rgb(29, 221, 61);
 }
+
+/* 🆕 เพิ่ม: จัดตำแหน่งให้ Link ร้านค้าเป็นแนวระนาบเพื่อวาง Badge */
+.shop-link-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* 🆕 เพิ่ม: สไตล์ของตัวเลขแจ้งเตือน */
+.nav-badge {
+  position: absolute;
+  top: -2px;              /* ขยับขึ้นด้านบน */
+  right: -2px;             /* ขยับไปทางขวา */
+  background-color: #ff4d4f; /* สีแดง */
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2px;
+  border: 2px solid rgb(6, 7, 24); /* ขอบสีเดียวกับพื้นหลัง Navbar */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  pointer-events: none;    /* ไม่ให้ตัวเลขขวางการคลิกเมนู */
+}
+
+/* 🆕 เพิ่ม: ขยายช่องว่างระหว่างเมนูเล็กน้อย ไม่ให้ Badge ทับเมนูข้างๆ */
+.menu {
+  gap: 15px; 
+}
