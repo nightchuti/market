@@ -319,7 +319,7 @@ export default function ProfilePage() {
 
       <div className="pp-tabs">
         <button className={`pp-tab ${tab === "profile" ? "on" : ""}`} onClick={() => safeTabChange("profile")} style={{ opacity: editing && tab !== "profile" ? 0.5 : 1 }}>👤 โปรไฟล์</button>
-        <button className={`pp-tab ${tab === "orders" ? "on" : ""}`} onClick={() => safeTabChange("orders")} style={{ opacity: editing && tab !== "orders" ? 0.5 : 1 }}>🛍️ คำสั่งซื้อ</button>
+        <button className={`pp-tab ${tab === "orders" ? "on" : ""}`} onClick={() => safeTabChange("orders")} style={{ opacity: editing && tab !== "orders" ? 0.5 : 1 }}>🛍️ คำสั่งซื้อของฉัน</button>
       </div>
 
       <div className="pp-body">
