@@ -382,20 +382,20 @@ router.patch("/:id/cancel", protect, async (req, res) => {
 // ==========================================
 //  ตรวจสอบสลืปที่อัปโหลดโดยผู้ใช้ (สำหรับ Admin)
 // ==========================================
-// ดึงออเดอร์ทั้งหมดที่โอนเงินมาแล้วแต่ยังไม่ได้ตรวจ
-// ✅ แก้ไขส่วนดึงรายการชำระเงินสำหรับ Admin (orderRoutes.js)
+// ✅ แก้ไขใน orderRoutes.js (ประมาณบรรทัด 188)
 router.get("/admin/all-payments", protect, async (req, res) => {
   try {
     const orders = await Order.find({
       status: { $in: ["WaitingConfirm", "Paid"] }
     })
-      .populate("user", "username") 
+      .populate("user", "username")
       .populate({
         path: "items.product",
-        select: "title price shop", // ✅ ดึงฟิลด์ shop ออกมาจาก Product
+        select: "title price shop images", // ✅ ดึงฟิลด์ shop ออกมา
         populate: {
-          path: "shop",             // ✅ ทำ Populate ต่อเข้าไปที่ Model Shop
-          select: "name"            // ✅ ดึงเฉพาะฟิลด์ name (ชื่อร้าน) มา
+          path: "shop",                 // ✅ ดึงข้อมูลต่อจาก ID ในฟิลด์ shop
+          model: "Shop",                // ✅ ระบุให้ชัดว่าไปที่ Model Shop
+          select: "name"                // ✅ เอาเฉพาะชื่อร้านมา
         }
       })
       .setOptions({ strictPopulate: false })
@@ -403,7 +403,7 @@ router.get("/admin/all-payments", protect, async (req, res) => {
 
     res.json(orders);
   } catch (err) {
-    res.status(500).json({ message: "Error", error: err.message });
+    res.status(500).json({ message: "Server Error", error: err.message });
   }
 });
 

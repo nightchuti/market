@@ -88,7 +88,7 @@ const AdminDashboardPay = () => {
                                         </div>
                                         <div style={{ fontSize: '12px', color: '#00467f' }}>
                                             {/* 🆕 แก้ไข: ดึงชื่อร้านจาก product.shop.name */}
-                                            {order.items[0]?.product?.shop?.title || "ร้านค้าทั่วไป"}
+                                            {order.items[0]?.product?.shop?.name || "ร้านค้าทั่วไป"}
                                         </div>
                                     </td>
 
