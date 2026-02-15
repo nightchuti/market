@@ -376,7 +376,7 @@ export default function AddProduct() {
 
       {/* ที่อยู่ */}
       <div className="form-group">
-        <label>ที่อยู่โดยประมาณ *</label>
+        <label>ที่อยู่โดยประมาณ</label>
         <input
           name="address"
           value={form.address}
