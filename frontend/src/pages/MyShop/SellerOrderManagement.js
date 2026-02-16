@@ -41,8 +41,9 @@ function SellerOrderManagement({ setOrderCount }) {
   }, [setOrderCount]);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+  fetchOrders();
+}, [fetchOrders]);
+
 
   // ================= PREPARE ORDER =================
   const handlePrepare = async (orderId) => {

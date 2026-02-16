@@ -8,7 +8,7 @@ const AddressPage = () => {
   const location = useLocation();
 
   const [addresses, setAddresses] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
+
 
   const [showModal, setShowModal] = useState(false);
 

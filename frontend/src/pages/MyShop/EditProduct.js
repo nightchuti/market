@@ -60,8 +60,9 @@ function EditProduct() {
   }, [id]);
 
   useEffect(() => {
-    fetchProduct();
-  }, [fetchProduct]);
+  fetchProduct();
+}, [id, fetchProduct]);
+
 
   // ================= HANDLERS =================
   const handleChange = (e) => {

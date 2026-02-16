@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import "./AllProducts.css";
-import { useSearchParams } from "react-router-dom";   // ❌ ลบ useNavigate
+import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 
 function AllProducts() {
@@ -12,9 +12,10 @@ function AllProducts() {
   const [tradeOption, setTradeOption] = useState("");
   const [deliveryType, setDeliveryType] = useState("");
 
+  // ❌ ลบ useNavigate
+
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ================= โหลดข้อมูลเมื่อ URL เปลี่ยน =================
   useEffect(() => {
     const page = parseInt(searchParams.get("page")) || 1;
     const searchQuery = searchParams.get("search") || "";
@@ -22,7 +23,6 @@ function AllProducts() {
     const tradeQuery = searchParams.get("tradeOption") || "";
     const deliveryQuery = searchParams.get("deliveryType") || "";
 
-    // sync state กับ URL
     setSearch(searchQuery);
     setCategory(categoryQuery);
     setTradeOption(tradeQuery);
@@ -37,23 +37,16 @@ function AllProducts() {
     });
   }, [searchParams]);
 
-  // ================= ดึงสินค้าจาก Backend =================
   const fetchProducts = async (params = {}) => {
     try {
-      const res = await api.get("/api/products", {
-        params
-      });
-
+      const res = await api.get("/api/products", { params });
       setProducts(res.data.products);
       setPagination(res.data.pagination);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setProducts([]);
-      setPagination(null);
     }
   };
 
-  // ================= กดค้นหา =================
   const handleSearch = () => {
     setSearchParams({
       page: 1,
@@ -68,9 +61,7 @@ function AllProducts() {
     <div className="all-products">
       <h1>สินค้าทั้งหมด</h1>
 
-      {/* ===== FILTER BAR ===== */}
       <div className="filter-bar">
-
         <input
           placeholder="ค้นหาสินค้า..."
           value={search}
@@ -83,85 +74,19 @@ function AllProducts() {
           <option value="เครื่องใช้ไฟฟ้า">เครื่องใช้ไฟฟ้า</option>
           <option value="หนังสือ">หนังสือ</option>
           <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
-          <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
-          <option value="อาหาร">อาหาร</option>
-          <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
-          <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
           <option value="อื่นๆ">อื่นๆ</option>
         </select>
 
-        <select value={tradeOption} onChange={(e) => setTradeOption(e.target.value)}>
-          <option value="">ทุกประเภทการขาย</option>
-          <option value="sell_only">ขายเท่านั้น</option>
-          <option value="trade_allowed">แลกเปลี่ยนเท่านั้น</option>
-          <option value="negotiable">ต่อรองได้</option>
-        </select>
-
-        <select value={deliveryType} onChange={(e) => setDeliveryType(e.target.value)}>
-          <option value="">ทุกประเภทการส่ง</option>
-          <option value="delivery">จัดส่ง</option>
-          <option value="meetup">นัดรับ</option>
-        </select>
-
-        <button className="btn-main" onClick={handleSearch}>
-          ค้นหา
-        </button>
+        <button onClick={handleSearch}>ค้นหา</button>
       </div>
 
-      {/* ===== PRODUCT GRID ===== */}
       <div className="product-grid">
         {products.map((p) => (
           <ProductCard key={p._id} product={p} />
         ))}
       </div>
 
-      {products.length === 0 && (
-        <p className="empty">ไม่พบสินค้า</p>
-      )}
-
-      {/* ===== PAGINATION ===== */}
-      {pagination && (
-        <div className="pagination-container">
-
-          <button
-            className="page-btn"
-            disabled={pagination.page === 1}
-            onClick={() =>
-              setSearchParams({
-                page: pagination.page - 1,
-                search,
-                category,
-                tradeOption,
-                deliveryType
-              })
-            }
-          >
-            ← ก่อนหน้า
-          </button>
-
-          <div className="page-info">
-            หน้า <span>{pagination.page}</span> จาก {pagination.pages}
-          </div>
-
-          <button
-            className="page-btn"
-            disabled={pagination.page === pagination.pages}
-            onClick={() =>
-              setSearchParams({
-                page: pagination.page + 1,
-                search,
-                category,
-                tradeOption,
-                deliveryType
-              })
-            }
-          >
-            ถัดไป →
-          </button>
-
-        </div>
-      )}
-
+      {products.length === 0 && <p>ไม่พบสินค้า</p>}
     </div>
   );
 }
