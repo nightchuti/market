@@ -46,16 +46,13 @@ function RegisterModal({ close }) {
 
       setLoading(true);
 
-      const res = await axios.post(
-        axios.post(`${API}/api/auth/register`, data),
-        {
-          username: form.username,
-          email: form.email,
-          phonenumber: form.phonenumber,
-          password: form.password,
-          role: form.role,
-        }
-      );
+      const res = await axios.post(`${API}/api/auth/register`, {
+        username: form.username,
+        email: form.email,
+        phonenumber: form.phonenumber,
+        password: form.password,
+        role: form.role,
+      });
 
       // สมัครเสร็จ = login อัตโนมัติ
       if (res.data.token) {
