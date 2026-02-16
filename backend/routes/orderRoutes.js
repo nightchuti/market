@@ -8,7 +8,7 @@ const fs = require("fs");
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const Address = require("../models/Address");
-const Shop = require("../models/shop");
+const shop = require("../models/shop");
 const Coupon = require("../models/Coupon");
 const Product = require("../models/Product");
 

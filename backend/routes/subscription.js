@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Shop = require("../models/shop");
+const shop = require("../models/shop");
 const User = require("../models/User");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -11,7 +11,7 @@ router.post("/upgrade", protect, async (req, res) => {
     const userId = req.user.id;
 
     // 1. หา Shop ของ User คนนี้
-    const shop = await Shop.findOne({ ownerId: userId });
+    const shop = await shop.findOne({ ownerId: userId });
     if (!shop) return res.status(404).json({ message: "กรุณาสร้างร้านค้าก่อนสมัครสมาชิก PRO" });
 
     // --- LOGIC การชำระเงิน (สมมติว่าผ่านแล้ว) ---

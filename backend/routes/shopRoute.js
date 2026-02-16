@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Shop = require("../models/shop"); // ตรวจสอบตัวพิมพ์เล็ก/ใหญ่ให้ตรงกับไฟล์จริง
+const shop = require("../models/shop"); // ตรวจสอบตัวพิมพ์เล็ก/ใหญ่ให้ตรงกับไฟล์จริง
 const { protect } = require("../middleware/authMiddleware");// *ต้องมี
 
 // ================= 1. CREATE SHOP (สร้างร้านค้า) =================
@@ -10,8 +10,8 @@ router.post("/", protect, async (req, res) => {
     const user = req.user;
 
     // 1. เช็คว่าคนนี้มีร้านอยู่แล้วหรือยัง? (1 User = 1 Shop)
-    const existingShop = await Shop.findOne({ ownerId: user.id });
-    if (existingShop) {
+    const existingshop = await shop.findOne({ ownerId: user.id });
+    if (existingshop) {
       return res.status(400).json({ message: "You already have a shop." });
     }
 
@@ -19,7 +19,7 @@ router.post("/", protect, async (req, res) => {
     const { name, lat, lng, address, description, shopUrl } = req.body;
 
     // 3. สร้างร้าน (ผูก ownerId อัตโนมัติ)
-    const shop = await Shop.create({
+    const newShop = await shop.create({
       ownerId: user.id, // *สำคัญมาก
       name,
       lat,
