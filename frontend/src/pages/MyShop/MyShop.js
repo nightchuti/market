@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-import "./MyShop.css";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";   // ✅ ต้องมีบรรทัดนี้
+import "./MyShop.css";
 import Inventory from "./Inventory";
 import SalesHistory from "./SalesHistory";
 import SellerOrderManagement from "./SellerOrderManagement"; // ✅ นำเข้า Component ใหม่
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 
 function MyShop() {
