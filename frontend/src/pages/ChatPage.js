@@ -91,7 +91,7 @@ function TradeProductBar({ room, getImgUrl, navigate }) {
 // ── Trade Message Card (แสดงใน messages list) ───────────
 function TradeMessageCard({ msg, myId, getImgUrl }) {
   const meta = msg.metadata || {};
-  const isMe = String(msg.sender?._id || msg.sender) === myId;
+  //const isMe = String(msg.sender?._id || msg.sender) === myId;
 
   const typeLabel = {
     trade_request: { icon: "🔄", label: "ขอเทรดสินค้า",    bg: "#eff6ff", border: "#bfdbfe" },

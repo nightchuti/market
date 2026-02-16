@@ -23,7 +23,8 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(true);
 
   const [discount, setDiscount] = useState(0);
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  //const [appliedCoupon, setAppliedCoupon] = useState(null);
+const [appliedCoupon] = useState(null);
 
   // ================= REDIRECT IF EMPTY =================
   useEffect(() => {

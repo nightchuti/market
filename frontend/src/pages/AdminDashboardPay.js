@@ -112,35 +112,35 @@ const AdminDashboardPay = () => {
 }
 
 
-const styles = {
-    container: { padding: "30px", maxWidth: "1000px", margin: "0 auto", fontFamily: "'Prompt', sans-serif" },
-    title: { color: "#00467f", marginBottom: "20px" },
-    tabContainer: { display: "flex", gap: "20px", marginBottom: "20px", borderBottom: "1px solid #ddd" },
-    tabBtn: { padding: "10px 15px", cursor: "pointer", background: "none", border: "none", fontSize: "16px", fontWeight: "600" },
-    tableWrapper: { backgroundColor: "#fff", borderRadius: "12px", boxShadow: "0 4px 15px rgba(0,0,0,0.05)", overflow: "hidden" },
-    table: { width: "100%", borderCollapse: "collapse" },
-    thRow: { backgroundColor: "#f9fafb" },
-    th: { padding: "15px", textAlign: "left", fontSize: "14px", color: "#666" },
-    tr: { borderBottom: "1px solid #f1f1f1" },
-    td: { padding: "15px", fontSize: "15px" },
-    thumbnail: { width: "50px", height: "70px", objectFit: "cover", borderRadius: "6px", cursor: "pointer", border: "1px solid #eee" },
+// const styles = {
+//     container: { padding: "30px", maxWidth: "1000px", margin: "0 auto", fontFamily: "'Prompt', sans-serif" },
+//     title: { color: "#00467f", marginBottom: "20px" },
+//     tabContainer: { display: "flex", gap: "20px", marginBottom: "20px", borderBottom: "1px solid #ddd" },
+//     tabBtn: { padding: "10px 15px", cursor: "pointer", background: "none", border: "none", fontSize: "16px", fontWeight: "600" },
+//     tableWrapper: { backgroundColor: "#fff", borderRadius: "12px", boxShadow: "0 4px 15px rgba(0,0,0,0.05)", overflow: "hidden" },
+//     table: { width: "100%", borderCollapse: "collapse" },
+//     thRow: { backgroundColor: "#f9fafb" },
+//     th: { padding: "15px", textAlign: "left", fontSize: "14px", color: "#666" },
+//     tr: { borderBottom: "1px solid #f1f1f1" },
+//     td: { padding: "15px", fontSize: "15px" },
+//     thumbnail: { width: "50px", height: "70px", objectFit: "cover", borderRadius: "6px", cursor: "pointer", border: "1px solid #eee" },
 
-    // ปุ่มเริ่มต้น
-    initBtn: {
-        backgroundColor: "#00467f", color: "#fff", border: "none",
-        padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px"
-    },
-    // กลุ่มปุ่มยืนยัน
-    confirmGroup: { display: "flex", gap: "5px" },
-    yesBtn: {
-        backgroundColor: "#28a745", color: "#fff", border: "none",
-        padding: "8px 12px", borderRadius: "6px", cursor: "pointer", width: "50px"
-    },
-    noBtn: {
-        backgroundColor: "#6c757d", color: "#fff", border: "none",
-        padding: "8px 12px", borderRadius: "6px", cursor: "pointer"
-    },
-    statusPaid: { color: "#28a745", fontWeight: "600", fontSize: "14px" }
-};
+//     // ปุ่มเริ่มต้น
+//     initBtn: {
+//         backgroundColor: "#00467f", color: "#fff", border: "none",
+//         padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px"
+//     },
+//     // กลุ่มปุ่มยืนยัน
+//     confirmGroup: { display: "flex", gap: "5px" },
+//     yesBtn: {
+//         backgroundColor: "#28a745", color: "#fff", border: "none",
+//         padding: "8px 12px", borderRadius: "6px", cursor: "pointer", width: "50px"
+//     },
+//     noBtn: {
+//         backgroundColor: "#6c757d", color: "#fff", border: "none",
+//         padding: "8px 12px", borderRadius: "6px", cursor: "pointer"
+//     },
+//     statusPaid: { color: "#28a745", fontWeight: "600", fontSize: "14px" }
+// };
 
 export default AdminDashboardPay;
