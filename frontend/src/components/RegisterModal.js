@@ -20,6 +20,8 @@ function RegisterModal({ close }) {
     setError("");
   };
 
+  const API = process.env.REACT_APP_API_URL;
+
   const submit = async () => {
     try {
       setError("");
@@ -45,7 +47,7 @@ function RegisterModal({ close }) {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        axios.post(`${API}/api/auth/register`, data),
         {
           username: form.username,
           email: form.email,
