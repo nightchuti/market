@@ -18,13 +18,16 @@ function ProductCard({ product }) {
     } = product;
 
     // ✅ ปรับ Logic การดึง URL รูปภาพ
-    const API_URL = "http://localhost:5000";
-    const imageUrl =
-        images && images.length > 0
-            ? images[0].startsWith("http")
-                ? images[0]
-                : `${API_URL}/uploads/${images[0].replace(/^\/?uploads\/?/, "")}`
-            : "/no-image.png"; // 👈 เปลี่ยนจาก placeholder เป็นรูปในเครื่องเรา (เก็บไว้ใน public folder)
+// ✅ ปรับ Logic การดึง URL รูปภาพ
+const API_URL = import.meta.env.VITE_API_URL;
+
+const imageUrl =
+  images && images.length > 0
+    ? images[0].startsWith("http")
+      ? images[0]
+      : `${API_URL}${images[0]}`
+    : "/no-image.png";
+
 
     // ✅ ฟังก์ชันดักจับถ้ารูปภาพจาก Server โหลดไม่ได้
     const handleImageError = (e) => {

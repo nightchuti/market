@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../api";
 import "./ProductDetail.css";
 
-const API_URL = "http://localhost:5000";
+
+
 
 function ProductDetail() {
   const { id } = useParams();
@@ -17,8 +18,8 @@ function ProductDetail() {
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
-    axios
-      .get(`${API_URL}/api/products/${id}`)
+    api
+      .get(`/api/products/${id}`)
       .then((res) => {
         console.log("Product Data:", res.data); // ลองเปิด Console ดูชื่อ Field ที่นี่
         setProduct(res.data);
@@ -39,8 +40,8 @@ function ProductDetail() {
     setChatLoading(true);
 
     try {
-      const res = await axios.post(
-        `${API_URL}/api/chat/normal`,
+      const res = await api.post(
+        "/api/chat/normal",
         { productId: product._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -61,8 +62,8 @@ function ProductDetail() {
       return alert("ไม่สามารถเพิ่มสินค้าของตัวเองลงตะกร้าได้");
 
     try {
-      await axios.post(
-        `${API_URL}/api/cart/add`,
+      await api.post(
+        "/api/cart/add",
         { productId: product._id, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );

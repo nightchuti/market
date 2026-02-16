@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import api from "../../api";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./CheckoutPage.css";
 
-const API_URL = "http://127.0.0.1:5000";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const CheckoutPage = () => {
     const navigate = useNavigate();
@@ -175,8 +175,8 @@ const CheckoutPage = () => {
         try {
             const token = localStorage.getItem("token");
 
-            const res = await axios.post(
-                `${API_URL}/api/coupons/check`,
+            const res = await api.post(
+                "/api/coupons/check",
                 {
                     code,
                     subTotal
@@ -243,8 +243,8 @@ const CheckoutPage = () => {
         try {
             const token = localStorage.getItem("token");
 
-            const res = await axios.post(
-                `${API_URL}/api/coupons/check`,
+            const res = await api.post(
+                "/api/coupons/check",
                 {
                     code: couponCode,
                     subTotal
@@ -306,7 +306,7 @@ const CheckoutPage = () => {
                 couponCode: appliedCoupon ? appliedCoupon.code : null
             };
 
-            const res = await axios.post(`${API_URL}/api/orders/checkout`, orderData, {
+            const res = await api.post("/api/orders/checkout", orderData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

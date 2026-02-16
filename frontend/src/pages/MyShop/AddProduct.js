@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import "./AddProduct.css";
 
@@ -92,8 +92,8 @@ export default function AddProduct() {
         formData.append("wantedImages", file);
       });
 
-      const res = await axios.post(
-        "http://localhost:5000/api/products",
+      const res = await api.post(
+        "/api/products",
         formData,
         {
           headers: {
@@ -122,7 +122,7 @@ export default function AddProduct() {
       async ({ coords: { latitude, longitude } }) => {
         try {
           const res = await fetch(
-            `http://localhost:5000/api/location/reverse?lat=${latitude}&lon=${longitude}`
+            `${import.meta.env.VITE_API_URL}/api/location/reverse?lat=${latitude}&lon=${longitude}`
           );
           const data = await res.json();
           setForm(prev => ({

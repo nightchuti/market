@@ -3,10 +3,11 @@ import './AdCard.css';
 
 const AdCard = ({ ad }) => {
   // ตรวจสอบว่ารูปภาพเป็น URL เต็มหรือเป็น Path
-  const imageUrl = ad.imageUrl?.startsWith('http') 
-    ? ad.imageUrl 
-    : `http://localhost:5000${ad.imageUrl}`;
+const BASE_URL = import.meta.env.VITE_API_URL;
 
+const imageUrl = ad.imageUrl?.startsWith("http")
+  ? ad.imageUrl
+  : `${BASE_URL}${ad.imageUrl}`;
   return (
     <a href={ad.link} target="_blank" rel="noopener noreferrer" className="ad-card-link">
       <div className="ad-card-native">

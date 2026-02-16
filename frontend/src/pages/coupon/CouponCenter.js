@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from "../../api";
 import './CouponCenter.css';
 
 const CouponCenter = () => {
@@ -14,7 +14,7 @@ const CouponCenter = () => {
   const fetchCoupons = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/coupons", {
+      const res = await api.get("/api/coupons", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCoupons(res.data);
@@ -28,8 +28,8 @@ const CouponCenter = () => {
   const handleClaim = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.post(
-        `http://localhost:5000/api/coupons/claim/${id}`,
+      await api.post(
+        `/api/coupons/claim/${id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

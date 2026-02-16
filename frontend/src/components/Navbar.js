@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios"; // เพิ่ม axios
+import api from "../api";
+ // เพิ่ม axios
 import "./Navbar.css";
 
 export default function Navbar({ onLogin, onRegister }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const API_URL = "http://127.0.0.1:5000";
+  const API_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
 
   const [user, setUser] = useState(null);

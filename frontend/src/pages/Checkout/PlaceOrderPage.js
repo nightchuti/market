@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../api";
 
 export default function PlaceOrderPage({
     cartItems,
@@ -17,7 +17,7 @@ export default function PlaceOrderPage({
         try {
             setLoading(true);
 
-            const res = await axios.post(
+            const res = await api.post(
                 "/api/orders",
                 {
                     items: cartItems,

@@ -10,14 +10,21 @@ const createProductSnapshot = (product) => ({
   lockedAt: new Date(),
 });
 
-const toAvatarUrl = (user, apiUrl = "http://127.0.0.1:5000") => {
-  if (!user) return `https://ui-avatars.com/api/?name=U&background=475569&color=fff&size=80`;
+const API_URL = process.env.REACT_APP_API_URL || "https://testt-zu9t.onrender.com";
+
+const toAvatarUrl = (user) => {
+  if (!user)
+    return "https://ui-avatars.com/api/?name=U&background=475569&color=fff&size=80";
+
   if (user.profileImage) {
     return user.profileImage.startsWith("http")
       ? user.profileImage
-      : `${apiUrl}${user.profileImage}`;
+      : `${API_URL}${user.profileImage}`;
   }
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "U")}&background=475569&color=fff&size=80`;
+
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    user.username || "U"
+  )}&background=475569&color=fff&size=80`;
 };
 
 // ── 1. เริ่มแชทปกติ ───────────────────────────────────────

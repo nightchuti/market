@@ -1,8 +1,8 @@
 import React from 'react';
 import './Inventory.css';
-import axios from 'axios'; // อย่าลืมลง axios หรือใช้ตัวส่ง request ที่คุณมี
+import api from "../../api"; // อย่าลืมลง axios หรือใช้ตัวส่ง request ที่คุณมี
+const API_URL = import.meta.env.VITE_API_URL;
 
-const API_URL = "http://localhost:5000";
 
 function Inventory({ products, openId, setOpenId, handleDelete, navigate, publishProduct, userQuota, refreshProducts }) {
   
@@ -16,7 +16,7 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
     if (window.confirm(`ใช้ 1 สิทธิ์บูสสำหรับสินค้าชิ้นนี้? (คงเหลือ ${userQuota} สิทธิ์)`)) {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.post(`${API_URL}/api/products/activate-boost/${productId}`, {}, {
+        const res = await api.post(`/api/products/activate-boost/${productId}`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
 

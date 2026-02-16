@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import "./AuthModal.css";
+import api from "../api";
 
 function RegisterModal({ close }) {
   const [form, setForm] = useState({
@@ -15,16 +15,18 @@ function RegisterModal({ close }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ===== handle input =====
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError("");
   };
 
+  // ===== submit register =====
   const submit = async () => {
     try {
       setError("");
 
-      // ✅ เช็คแค่กรอกไม่ครบ
+      // ✅ ตรวจสอบกรอกครบ
       if (
         !form.username ||
         !form.email ||
@@ -36,7 +38,7 @@ function RegisterModal({ close }) {
         return;
       }
 
-      // ✅ เช็ครหัสผ่านตรงกัน
+      // ✅ ตรวจสอบรหัสผ่านตรงกัน
       if (form.password !== form.confirmPassword) {
         setError("รหัสผ่านไม่ตรงกัน");
         return;
@@ -44,18 +46,23 @@ function RegisterModal({ close }) {
 
       setLoading(true);
 
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        {
-          username: form.username,
-          email: form.email,
-          phonenumber: form.phonenumber,
-          password: form.password,
-          role: form.role,
-        }
-      );
+      console.log("Register payload:", {
+        username: form.username,
+        email: form.email,
+        phonenumber: form.phonenumber,
+        password: form.password,
+        role: form.role,
+      });
 
-      // สมัครเสร็จ = login อัตโนมัติ
+      const res = await api.post("/api/auth/register", {
+        username: form.username,
+        email: form.email,
+        phonenumber: form.phonenumber,
+        password: form.password,
+        role: form.role,
+      });
+
+      // ✅ สมัครเสร็จ → login อัตโนมัติ
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
       }
@@ -67,15 +74,18 @@ function RegisterModal({ close }) {
       close();
 
     } catch (err) {
-      setError(err.response?.data?.message || "สมัครไม่สำเร็จ");
+      console.error(err);
+      alert(err.response?.data?.message || "Register failed");
     } finally {
       setLoading(false);
     }
   };
 
+  // ===== UI =====
   return (
     <div className="modal-overlay">
       <div className="modal-card">
+
         <button className="close" onClick={close}>×</button>
 
         <h2>สมัครสมาชิก</h2>
@@ -136,6 +146,7 @@ function RegisterModal({ close }) {
         >
           {loading ? "กำลังสมัคร..." : "สมัครสมาชิก"}
         </button>
+
       </div>
     </div>
   );

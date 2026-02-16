@@ -8,7 +8,7 @@ const AdminDashboardPay = () => {
     const [confirmId, setConfirmId] = useState(null); // เก็บ ID ออเดอร์ที่กำลังจะกดยืนยัน
     const [isUpdating, setIsUpdating] = useState(false);
 
-    const SERVER_URL = "http://127.0.0.1:5000";
+    const SERVER_URL = import.meta.env.VITE_API_URL;
 
     const fetchOrders = async () => {
         setLoading(true);

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../api";
 import "./ShopProfile.css"; 
 
-const API_URL = "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL;
+
 const DEFAULT_AVATAR = "/images/default-avatar.png";
 const NO_IMAGE = "/images/noimage.png";
 

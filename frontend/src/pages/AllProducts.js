@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api";
 import "./AllProducts.css";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
@@ -40,8 +40,8 @@ function AllProducts() {
 
   const fetchProducts = async (params = {}) => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/products",
+      const res = await api.get(
+        "/api/products",
         { params }
       );
 

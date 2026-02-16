@@ -1,9 +1,12 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../api";
 import "./AuthModal.css";
 
 function LoginModal({ close, switchToRegister }) {
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState({
+    email: "",
+    password: ""
+  });
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -11,16 +14,20 @@ function LoginModal({ close, switchToRegister }) {
 
   const submit = async () => {
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        form
-      );
+      const res = await api.post("/api/auth/login", {
+        email: form.email,
+        password: form.password
+      });
 
+      // เก็บ token + user
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+
       close();
+      window.location.reload();
     } catch (err) {
-      alert("Login failed");
+      console.log(err.response?.data);
+      alert(err.response?.data?.message || "Login failed");
     }
   };
 
@@ -34,12 +41,15 @@ function LoginModal({ close, switchToRegister }) {
         <input
           name="email"
           placeholder="Email"
+          value={form.email}
           onChange={handleChange}
         />
+
         <input
           name="password"
           type="password"
           placeholder="Password"
+          value={form.password}
           onChange={handleChange}
         />
 

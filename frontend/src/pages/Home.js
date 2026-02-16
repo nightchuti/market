@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api";
 import "./Home.css";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
@@ -9,7 +9,7 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/products")
+    api.get("/api/products")
       .then((res) => setProducts(res.data.products || []))
       .catch((err) => console.log(err));
   }, []);

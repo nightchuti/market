@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import "./AddressPage.css";
 import { useLocation } from "react-router-dom";
 
 
-const API_URL = "http://127.0.0.1:5000";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const AddressPage = () => {
     const navigate = useNavigate();
@@ -98,8 +98,8 @@ const AddressPage = () => {
 
             } else {
                 // เพิ่มใหม่
-                res = await axios.post(
-                    `${API_URL}/api/address`,
+                res = await api.post(
+                    "/api/address",
                     cleanData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
