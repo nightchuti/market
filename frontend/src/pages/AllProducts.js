@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import "./AllProducts.css";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";   // ❌ ลบ useNavigate
 import ProductCard from "../components/ProductCard";
 
 function AllProducts() {
@@ -12,10 +12,9 @@ function AllProducts() {
   const [tradeOption, setTradeOption] = useState("");
   const [deliveryType, setDeliveryType] = useState("");
 
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ✅ โหลดข้อมูลทุกครั้งที่ URL เปลี่ยน
+  // ================= โหลดข้อมูลเมื่อ URL เปลี่ยน =================
   useEffect(() => {
     const page = parseInt(searchParams.get("page")) || 1;
     const searchQuery = searchParams.get("search") || "";
@@ -38,22 +37,23 @@ function AllProducts() {
     });
   }, [searchParams]);
 
+  // ================= ดึงสินค้าจาก Backend =================
   const fetchProducts = async (params = {}) => {
     try {
-      const res = await api.get(
-        "/api/products",
-        { params }
-      );
+      const res = await api.get("/api/products", {
+        params
+      });
 
       setProducts(res.data.products);
       setPagination(res.data.pagination);
     } catch (err) {
-      console.log(err);
+      console.error(err);
       setProducts([]);
+      setPagination(null);
     }
   };
 
-  // ✅ กดค้นหา = เปลี่ยน URL
+  // ================= กดค้นหา =================
   const handleSearch = () => {
     setSearchParams({
       page: 1,
@@ -70,6 +70,7 @@ function AllProducts() {
 
       {/* ===== FILTER BAR ===== */}
       <div className="filter-bar">
+
         <input
           placeholder="ค้นหาสินค้า..."
           value={search}
@@ -121,6 +122,7 @@ function AllProducts() {
       {/* ===== PAGINATION ===== */}
       {pagination && (
         <div className="pagination-container">
+
           <button
             className="page-btn"
             disabled={pagination.page === 1}
@@ -156,8 +158,10 @@ function AllProducts() {
           >
             ถัดไป →
           </button>
+
         </div>
       )}
+
     </div>
   );
 }

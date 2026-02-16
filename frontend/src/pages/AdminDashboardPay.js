@@ -1,146 +1,116 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const AdminDashboardPay = () => {
-    const [orders, setOrders] = useState([]);
-    const [activeTab, setActiveTab] = useState("waiting");
-    const [loading, setLoading] = useState(true);
-    const [confirmId, setConfirmId] = useState(null); // เก็บ ID ออเดอร์ที่กำลังจะกดยืนยัน
-    const [isUpdating, setIsUpdating] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [activeTab, setActiveTab] = useState("waiting");
+  const [loading, setLoading] = useState(true);
+  const [confirmId, setConfirmId] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-    const SERVER_URL = process.env.REACT_APP_API_URL;
+  const fetchOrders = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(
+        `${API_URL}/api/orders/admin/all-payments`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setOrders(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    const fetchOrders = async () => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get(`${SERVER_URL}/api/orders/admin/all-payments`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setOrders(res.data);
-        } catch (err) {
-            console.error("Error:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
-    useEffect(() => { fetchOrders(); }, []);
+  const handleConfirmFinal = async (id) => {
+    try {
+      setIsUpdating(true);
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        `${API_URL}/api/orders/${id}/admin-confirm`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setConfirmId(null);
+      fetchOrders();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
-    const handleConfirmFinal = async (orderId) => {
-        setIsUpdating(true);
-        try {
-            const token = localStorage.getItem("token");
-            await axios.patch(`${SERVER_URL}/api/orders/${orderId}/admin-confirm`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setConfirmId(null);
-            fetchOrders();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsUpdating(false);
-        }
-    };
+  const filteredOrders = orders.filter((o) =>
+    activeTab === "waiting"
+      ? o.status === "WaitingConfirm"
+      : o.status === "Paid"
+  );
 
-    const filteredOrders = orders.filter(order =>
-        activeTab === "waiting" ? order.status === "WaitingConfirm" : order.status === "Paid"
-    );
+  if (loading) return <p>กำลังโหลด...</p>;
 
-    return (
-        <div style={styles.container}>
-            <h2 style={styles.title}>ระบบจัดการบัญชีกลาง</h2>
+  return (
+    <div>
+      <h2>ระบบจัดการบัญชีกลาง</h2>
 
-            <div style={styles.tabContainer}>
-                <button
-                    onClick={() => { setActiveTab("waiting"); setConfirmId(null); }}
-                    style={{ ...styles.tabBtn, color: activeTab === "waiting" ? "#00467f" : "#888", borderBottom: activeTab === "waiting" ? "3px solid #00467f" : "none" }}
-                >
-                    รอตรวจสอบ ({orders.filter(o => o.status === "WaitingConfirm").length})
-                </button>
-                <button
-                    onClick={() => { setActiveTab("approved"); setConfirmId(null); }}
-                    style={{ ...styles.tabBtn, color: activeTab === "approved" ? "#00467f" : "#888", borderBottom: activeTab === "approved" ? "3px solid #00467f" : "none" }}
-                >
-                    อนุมัติแล้ว
-                </button>
-            </div>
+      <button onClick={() => setActiveTab("waiting")}>
+        รอตรวจสอบ
+      </button>
+      <button onClick={() => setActiveTab("approved")}>
+        อนุมัติแล้ว
+      </button>
 
-            {loading ? <p style={{ textAlign: 'center' }}>กำลังโหลดข้อมูล...</p> : (
-                <div style={styles.tableWrapper}>
-                    <table style={styles.table}>
-                        <thead>
-                            <tr style={styles.thRow}>
-                                <th style={styles.th}>รหัส/ร้านค้า</th>
-                                <th style={styles.th}>รายการสินค้า</th>
-                                <th style={styles.th}>ยอดเงิน</th>
-                                <th style={styles.th}>สลิป</th>
-                                <th style={styles.th}>จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredOrders.map(order => (
-                                <tr key={order._id} style={styles.tr}>
-                                    {/* ข้อมูลออเดอร์และร้านค้า */}
-                                    <td style={styles.td}>
-                                        <div style={{ fontWeight: 'bold', color: '#333' }}>
-                                            #{order._id.slice(-6).toUpperCase()}
-                                        </div>
-                                        <div style={{ fontSize: '12px', color: '#00467f' }}>
-                                            {/* 🆕 แก้ไข: ดึงชื่อร้านจาก product.shop.name */}
-                                            {order.items[0]?.product?.user?.username || "ร้านค้าทั่วไป"}
-                                        </div>
-                                    </td>
+      <table>
+        <thead>
+          <tr>
+            <th>ร้านค้า</th>
+            <th>ยอดเงิน</th>
+            <th>สถานะ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredOrders.map((o) => (
+            <tr key={o._id}>
+              <td>{o.shopName}</td>
+              <td>{o.totalPrice}</td>
+              <td>
+                {o.status === "WaitingConfirm" ? (
+                  confirmId === o._id ? (
+                    <>
+                      <button
+                        disabled={isUpdating}
+                        onClick={() => handleConfirmFinal(o._id)}
+                      >
+                        ใช่
+                      </button>
+                      <button onClick={() => setConfirmId(null)}>
+                        ไม่
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => setConfirmId(o._id)}>
+                      อนุมัติ
+                    </button>
+                  )
+                ) : (
+                  "จ่ายแล้ว"
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
-                                    {/* รายการสินค้าที่ซื้อ */}
-                                    <td style={styles.td}>
-                                        {order.items.map((item, index) => (
-                                            <div key={index} style={{ fontSize: '13px', color: '#555' }}>
-                                                {/* 🆕 แก้ไข: เปลี่ยนจาก .name เป็น .title ตาม Model Product */}
-                                                • {item.product?.title || "ไม่พบชื่อสินค้า"} (x{item.quantity})
-                                            </div>
-                                        ))}
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        <strong style={{ fontSize: '16px', color: '#ee4d2d' }}>
-                                            ฿{order.totalPrice.toLocaleString()}
-                                        </strong>
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        <img
-                                            src={`${SERVER_URL}/${order.paymentSlip}`}
-                                            style={styles.thumbnail}
-                                            onClick={() => window.open(`${SERVER_URL}/${order.paymentSlip}`)}
-                                            alt="slip"
-                                        />
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        {/* ส่วนปุ่มกดยืนยัน (เหมือนเดิม) */}
-                                        {activeTab === "waiting" ? (
-                                            confirmId === order._id ? (
-                                                <div style={styles.confirmGroup}>
-                                                    <button disabled={isUpdating} onClick={() => handleConfirmFinal(order._id)} style={styles.yesBtn}>ใช่</button>
-                                                    <button disabled={isUpdating} onClick={() => setConfirmId(null)} style={styles.noBtn}>ไม่</button>
-                                                </div>
-                                            ) : (
-                                                <button onClick={() => setConfirmId(order._id)} style={styles.initBtn}>อนุมัติ</button>
-                                            )
-                                        ) : (
-                                            <span style={styles.statusPaid}>✔️ จ่ายแล้ว</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-        </div>
-    );
-};
 
 const styles = {
     container: { padding: "30px", maxWidth: "1000px", margin: "0 auto", fontFamily: "'Prompt', sans-serif" },

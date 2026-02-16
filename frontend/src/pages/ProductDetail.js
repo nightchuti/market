@@ -128,7 +128,8 @@ function ProductDetail() {
 
   const isOwnProduct =
     currentUser &&
-    String(product.user?._id || product.user) === String(currentUser._id);
+    String(product.user?._id || product.user) ===
+      String(currentUser._id);
 
   return (
     <div className="product-detail">
@@ -147,7 +148,7 @@ function ProductDetail() {
             <img
               className="main-image"
               src={getImageUrl(selectedImage)}
-              alt=""
+              alt={product.title}
             />
 
             <div className="thumbnail-row">
@@ -155,6 +156,7 @@ function ProductDetail() {
                 <img
                   key={i}
                   src={getImageUrl(img)}
+                  alt={`thumb-${i}`}
                   className={selectedImage === img ? "active" : ""}
                   onClick={() => setSelectedImage(img)}
                 />
@@ -177,7 +179,7 @@ function ProductDetail() {
                   ? getImageUrl(product.user.profileImage)
                   : "/images/default-avatar.png"
               }
-              alt="seller"
+              alt="seller-avatar"
               onError={(e) => {
                 e.target.src = "/images/default-avatar.png";
               }}
@@ -225,7 +227,7 @@ function ProductDetail() {
                       ? getImageUrl(product.wantedImages[0])
                       : "/images/noimage.png"
                   }
-                  alt="wanted"
+                  alt="wanted-item"
                 />
               </div>
 
@@ -280,6 +282,7 @@ function ProductDetail() {
             </button>
 
           </div>
+
         </div>
       </div>
     </div>

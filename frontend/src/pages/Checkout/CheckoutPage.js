@@ -9,7 +9,8 @@ const CheckoutPage = () => {
 
   const selectedItems = location.state?.items || [];
 
-  const [cartItems, setCartItems] = useState(selectedItems);
+  // ================= STATE =================
+  const [cartItems] = useState(selectedItems);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddr, setSelectedAddr] = useState(null);
 
@@ -17,18 +18,11 @@ const CheckoutPage = () => {
     location.state?.deliveryMode || ""
   );
 
-  const [shippingService, setShippingService] = useState("GRAB");
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [distance, setDistance] = useState(0);
-
   const [loading, setLoading] = useState(true);
 
-  const [paymentMethod, setPaymentMethod] = useState("PROMPTPAY");
-  const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
-
-  const [showCouponModal, setShowCouponModal] = useState(false);
-  const [availableCoupons, setAvailableCoupons] = useState([]);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   // ================= REDIRECT IF EMPTY =================
@@ -57,19 +51,11 @@ const CheckoutPage = () => {
   // ================= SET DEFAULT ADDRESS =================
   useEffect(() => {
     if (addresses.length > 0) {
-
-      if (location.state?.selectedAddressId) {
-        const updated = addresses.find(
-          addr => addr._id === location.state.selectedAddressId
-        );
-        if (updated) setSelectedAddr(updated);
-      }
-
-      if (location.state?.deliveryMode) {
-        setDeliveryMode(location.state.deliveryMode);
-      }
+      const defaultAddr =
+        addresses.find((a) => a.isDefault) || addresses[0];
+      setSelectedAddr(defaultAddr);
     }
-  }, [addresses, location.state]);
+  }, [addresses]);
 
   // ================= DETERMINE DELIVERY MODE =================
   useEffect(() => {
@@ -78,7 +64,6 @@ const CheckoutPage = () => {
 
       if (type === "meetup") setDeliveryMode("PICKUP");
       else if (type === "delivery") setDeliveryMode("DELIVERY");
-      else if (type === "both") setDeliveryMode(prev => prev || "");
     }
   }, [cartItems]);
 
@@ -92,89 +77,16 @@ const CheckoutPage = () => {
   // ================= CALCULATE DELIVERY FEE =================
   useEffect(() => {
     if (deliveryMode === "DELIVERY" && selectedAddr) {
-      let fee = shippingService === "GRAB"
-        ? Math.round(25 + distance * 7)
-        : Math.round(20 + distance * 6);
-
+      const fee = Math.round(25 + distance * 7);
       setDeliveryFee(fee);
     } else {
       setDeliveryFee(0);
     }
-  }, [deliveryMode, selectedAddr, shippingService, distance]);
-
-  // ================= RECEIVE ADDRESS =================
-  useEffect(() => {
-    if (addresses.length > 0) {
-
-      if (location.state?.selectedAddressId) {
-        const updated = addresses.find(
-          addr => addr._id === location.state.selectedAddressId
-        );
-        if (updated) {
-          setSelectedAddr(updated);
-          return;
-        }
-      }
-
-      const defaultAddr =
-        addresses.find(a => a.isDefault) || addresses[0];
-
-      setSelectedAddr(defaultAddr);
-    }
-  }, [addresses, location.state]);
-
-  // ================= COUPONS =================
-  const fetchCoupons = async () => {
-    try {
-      const res = await api.get("/api/coupons/my");
-      setAvailableCoupons(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const openCouponModal = () => {
-    fetchCoupons();
-    setShowCouponModal(true);
-  };
-
-  const applyCouponCode = async (code) => {
-    try {
-      const res = await api.post("/api/coupons/check", {
-        code,
-        subTotal
-      });
-
-      setDiscount(res.data.discount);
-      setCouponCode(code);
-      setAppliedCoupon(res.data.coupon);
-      setShowCouponModal(false);
-
-    } catch (err) {
-      alert(err.response?.data?.message || "ใช้คูปองไม่ได้");
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setDiscount(0);
-    setCouponCode("");
-    setAppliedCoupon(null);
-  };
-
-  const evaluateCoupon = (coupon) => {
-    if (!coupon) return { usable: false, reason: "" };
-
-    if (coupon.isAlreadyUsed) return { usable: false, reason: "ใช้แล้ว" };
-    if (coupon.isFull) return { usable: false, reason: "โควตาเต็ม" };
-    if (subTotal < coupon.minSpend)
-      return { usable: false, reason: `ขั้นต่ำ ฿${coupon.minSpend}` };
-
-    return { usable: true, reason: "ใช้ได้" };
-  };
+  }, [deliveryMode, selectedAddr, distance]);
 
   // ================= TOTAL =================
   const subTotal = cartItems.reduce(
-    (sum, i) => sum + (i.price * i.qty),
+    (sum, i) => sum + i.price * i.qty,
     0
   );
 
@@ -184,36 +96,31 @@ const CheckoutPage = () => {
     setDiscount(0);
   }, [subTotal]);
 
-  if (loading) return <div className="loading">กำลังเตรียมคำสั่งซื้อ...</div>;
+  if (loading)
+    return <div className="loading">กำลังเตรียมคำสั่งซื้อ...</div>;
 
   // ================= PLACE ORDER =================
   const handlePlaceOrder = async () => {
     try {
-
-      const type = cartItems[0]?.deliveryType?.toLowerCase();
-
-      if (type === "both" && !deliveryMode)
-        return alert("กรุณาเลือกรูปแบบการรับสินค้า");
-
       if (deliveryMode === "DELIVERY" && !selectedAddr)
         return alert("กรุณาเลือกที่อยู่จัดส่ง");
 
-      if (deliveryMode === "PICKUP" && paymentMethod === "COD")
-        return alert("นัดรับสินค้าไม่สามารถเก็บเงินปลายทางได้");
-
       const orderData = {
-        items: cartItems.map(item => ({
+        items: cartItems.map((item) => ({
           product: item.product?._id || item._id,
           quantity: item.quantity || item.qty,
           price: item.price
         })),
-        shippingAddress: deliveryMode === "PICKUP" ? null : {
-          dormName: selectedAddr.dormName,
-          room: selectedAddr.room,
-          note: selectedAddr.note
-        },
+        shippingAddress:
+          deliveryMode === "PICKUP"
+            ? null
+            : {
+                dormName: selectedAddr.dormName,
+                room: selectedAddr.room,
+                note: selectedAddr.note
+              },
         deliveryMode,
-        paymentMethod,
+        paymentMethod: "PROMPTPAY",
         subTotal,
         deliveryFee,
         totalPrice: total,
@@ -224,23 +131,35 @@ const CheckoutPage = () => {
 
       if (res.data.success) {
         alert("สั่งซื้อสำเร็จ!");
-
-        if (paymentMethod === "PROMPTPAY") {
-          navigate(`/payment/${res.data.order._id}`);
-        } else {
-          navigate("/profile");
-        }
+        navigate(`/payment/${res.data.order._id}`);
       }
-
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
     }
   };
 
+  // ================= UI =================
   return (
     <div className="shopee-checkout">
-      {/* UI เหมือนเดิมทั้งหมด */}
+      <h2>ยืนยันคำสั่งซื้อ</h2>
+
+      {cartItems.map((item) => (
+        <div key={item._id} className="checkout-item">
+          <p>{item.title}</p>
+          <p>฿{item.price}</p>
+        </div>
+      ))}
+
+      <hr />
+
+      <p>ค่าสินค้า: ฿{subTotal}</p>
+      <p>ค่าส่ง: ฿{deliveryFee}</p>
+      <h3>รวมทั้งหมด: ฿{total}</h3>
+
+      <button className="btn-main" onClick={handlePlaceOrder}>
+        ยืนยันสั่งซื้อ
+      </button>
     </div>
   );
 };
