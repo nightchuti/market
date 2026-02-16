@@ -117,8 +117,8 @@ function ProductDetail() {
           product.deliveryType === "meetup"
             ? "PICKUP"
             : product.deliveryType === "delivery"
-            ? "DELIVERY"
-            : ""
+              ? "DELIVERY"
+              : ""
       }
     });
   };
@@ -129,7 +129,7 @@ function ProductDetail() {
   const isOwnProduct =
     currentUser &&
     String(product.user?._id || product.user) ===
-      String(currentUser._id);
+    String(currentUser._id);
 
   return (
     <div className="product-detail">
@@ -156,10 +156,11 @@ function ProductDetail() {
                 <img
                   key={i}
                   src={getImageUrl(img)}
-                  alt={`thumb-${i}`}
+                  alt=""
                   className={selectedImage === img ? "active" : ""}
                   onClick={() => setSelectedImage(img)}
                 />
+
               ))}
             </div>
           </div>
@@ -219,39 +220,39 @@ function ProductDetail() {
 
           {(product.tradeOption === "trade_allowed" ||
             product.tradeOption === "negotiable") && (
-            <div className="wanted-card">
-              <div className="wanted-img-container">
-                <img
-                  src={
-                    product.wantedImages?.[0]
-                      ? getImageUrl(product.wantedImages[0])
-                      : "/images/noimage.png"
-                  }
-                  alt="wanted-item"
-                />
-              </div>
+              <div className="wanted-card">
+                <div className="wanted-img-container">
+                  <img
+                    src={
+                      product.wantedImages?.[0]
+                        ? getImageUrl(product.wantedImages[0])
+                        : "/images/noimage.png"
+                    }
+                    alt="wanted-item"
+                  />
+                </div>
 
-              <div className="wanted-text-info">
-                <span className="wanted-label-top">ต้องการแลกกับ:</span>
+                <div className="wanted-text-info">
+                  <span className="wanted-label-top">ต้องการแลกกับ:</span>
 
-                <h4 className="wanted-category-name">
-                  หมวดหมู่: {product.wantedCategory || "ไม่ระบุ"}
-                </h4>
+                  <h4 className="wanted-category-name">
+                    หมวดหมู่: {product.wantedCategory || "ไม่ระบุ"}
+                  </h4>
 
-                <div className="wanted-tags">
-                  {product.wantedKeywords?.length > 0 ? (
-                    product.wantedKeywords.map((k, i) => (
-                      <span key={i} className="tag-blue">
-                        #{k}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="tag-blue">#รับแลกทุกอย่าง</span>
-                  )}
+                  <div className="wanted-tags">
+                    {product.wantedKeywords?.length > 0 ? (
+                      product.wantedKeywords.map((k, i) => (
+                        <span key={i} className="tag-blue">
+                          #{k}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="tag-blue">#รับแลกทุกอย่าง</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           <div className="button-group">
 

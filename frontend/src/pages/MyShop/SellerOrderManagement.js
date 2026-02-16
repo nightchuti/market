@@ -42,7 +42,7 @@ function SellerOrderManagement({ setOrderCount }) {
 
   useEffect(() => {
   fetchOrders();
-}, [fetchOrders]);
+}, []);
 
 
   // ================= PREPARE ORDER =================
