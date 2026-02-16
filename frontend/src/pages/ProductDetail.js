@@ -3,8 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import "./ProductDetail.css";
 
-
-
+// ================= HELPER =================
+const getImageUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return `${api.defaults.baseURL}${path.startsWith("/") ? path : "/" + path}`;
+};
+// ==========================================
 
 function ProductDetail() {
   const { id } = useParams();
@@ -17,24 +22,29 @@ function ProductDetail() {
   const token = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
 
+  // ================= FETCH PRODUCT =================
   useEffect(() => {
     api
       .get(`/api/products/${id}`)
       .then((res) => {
-        console.log("Product Data:", res.data); // ลองเปิด Console ดูชื่อ Field ที่นี่
         setProduct(res.data);
-        if (res.data.images?.length) setSelectedImage(res.data.images[0]);
+        if (res.data.images?.length) {
+          setSelectedImage(res.data.images[0]);
+        }
       })
       .catch(() => setProduct(null));
   }, [id]);
-  // ===== ห้ามแก้ =====
+
+  // ================= CHAT =================
   const handleChat = async () => {
     if (!token) return alert("กรุณาเข้าสู่ระบบก่อนแชท");
     if (!product) return;
 
     const sellerId = product.user?._id || product.user;
-    if (String(sellerId) === String(currentUser._id))
+
+    if (String(sellerId) === String(currentUser?._id)) {
       return alert("ไม่สามารถแชทกับตัวเองได้");
+    }
 
     if (chatLoading) return;
     setChatLoading(true);
@@ -45,6 +55,7 @@ function ProductDetail() {
         { productId: product._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       navigate(`/chat/${res.data._id}`);
     } catch {
       alert("ไม่สามารถเปิดแชทได้");
@@ -53,13 +64,16 @@ function ProductDetail() {
     }
   };
 
+  // ================= ADD TO CART =================
   const handleAddToCart = async () => {
     if (!token) return alert("กรุณาเข้าสู่ระบบก่อน");
     if (!product) return;
 
     const sellerId = product.user?._id || product.user;
-    if (String(sellerId) === String(currentUser._id))
+
+    if (String(sellerId) === String(currentUser?._id)) {
       return alert("ไม่สามารถเพิ่มสินค้าของตัวเองลงตะกร้าได้");
+    }
 
     try {
       await api.post(
@@ -67,46 +81,49 @@ function ProductDetail() {
         { productId: product._id, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       alert("เพิ่มลงตะกร้าเรียบร้อยแล้ว");
     } catch {
       alert("เพิ่มสินค้าไม่สำเร็จ");
     }
   };
 
+  // ================= BUY NOW =================
   const handleBuyNow = () => {
-  if (!token) return alert("กรุณาเข้าสู่ระบบก่อนซื้อสินค้า");
-  if (!product) return;
+    if (!token) return alert("กรุณาเข้าสู่ระบบก่อนซื้อสินค้า");
+    if (!product) return;
 
-  const sellerId = product.user?._id || product.user;
-  if (String(sellerId) === String(currentUser._id))
-    return alert("ไม่สามารถซื้อสินค้าของตัวเองได้");
+    const sellerId = product.user?._id || product.user;
 
-  const itemToBuy = {
-    _id: product._id,
-    product: { _id: product._id },
-    title: product.title,
-    price: product.price,
-    images: product.images,
-    qty: 1,
-    quantity: 1,                // ✅ เพิ่ม
-    deliveryType: product.deliveryType
+    if (String(sellerId) === String(currentUser?._id)) {
+      return alert("ไม่สามารถซื้อสินค้าของตัวเองได้");
+    }
+
+    const itemToBuy = {
+      _id: product._id,
+      product: { _id: product._id },
+      title: product.title,
+      price: product.price,
+      images: product.images,
+      qty: 1,
+      quantity: 1,
+      deliveryType: product.deliveryType
+    };
+
+    navigate("/checkout", {
+      state: {
+        items: [itemToBuy],
+        deliveryMode:
+          product.deliveryType === "meetup"
+            ? "PICKUP"
+            : product.deliveryType === "delivery"
+            ? "DELIVERY"
+            : ""
+      }
+    });
   };
 
-  navigate("/checkout", {
-    state: {
-      items: [itemToBuy],
-      deliveryMode:
-        product.deliveryType === "meetup"
-          ? "PICKUP"
-          : product.deliveryType === "delivery"
-            ? "DELIVERY"
-            : ""       // both
-    }
-  });
-};
-
-  // ==================
-
+  // ================= RENDER =================
   if (!product) return <p>กำลังโหลด...</p>;
 
   const isOwnProduct =
@@ -115,7 +132,7 @@ function ProductDetail() {
 
   return (
     <div className="product-detail">
-      {/* ส่วนปุ่มย้อนกลับที่ปรับใหม่ */}
+
       <div className="back-button-wrapper">
         <button className="btn-back-global" onClick={() => navigate(-1)}>
           ← กลับ
@@ -126,15 +143,10 @@ function ProductDetail() {
 
         {/* LEFT */}
         <div>
-
           <div className="image-box">
             <img
               className="main-image"
-              src={
-                selectedImage.startsWith("http")
-                  ? selectedImage
-                  : `${API_URL}${selectedImage}`
-              }
+              src={getImageUrl(selectedImage)}
               alt=""
             />
 
@@ -142,7 +154,7 @@ function ProductDetail() {
               {product.images?.map((img, i) => (
                 <img
                   key={i}
-                  src={img.startsWith("http") ? img : `${API_URL}${img}`}
+                  src={getImageUrl(img)}
                   className={selectedImage === img ? "active" : ""}
                   onClick={() => setSelectedImage(img)}
                 />
@@ -150,31 +162,31 @@ function ProductDetail() {
             </div>
           </div>
 
-          {/* Seller */}
-          {/* ส่วนข้อมูลผู้ขาย (Seller) */}
-
+          {/* SELLER MINI */}
           <div
             className="seller-mini"
-            onClick={() => product.user?._id && navigate(`/profile/${product.user._id}`)}
-            style={{ cursor: 'pointer' }}
+            onClick={() =>
+              product.user?._id &&
+              navigate(`/profile/${product.user._id}`)
+            }
+            style={{ cursor: "pointer" }}
           >
             <img
               src={
                 product.user?.profileImage
-                  ? (product.user.profileImage.startsWith("http")
-                    ? product.user.profileImage
-                    : `${API_URL}${product.user.profileImage.startsWith('/') ? '' : '/'}${product.user.profileImage}`)
+                  ? getImageUrl(product.user.profileImage)
                   : "/images/default-avatar.png"
               }
               alt="seller"
-              onError={(e) => e.target.src = "/images/default-avatar.png"}
+              onError={(e) => {
+                e.target.src = "/images/default-avatar.png";
+              }}
             />
             <div>
               <b>{product.user?.username || "ผู้ขาย"}</b>
               <p>ดูหน้าร้านค้าออนไลน์ →</p>
             </div>
           </div>
-
         </div>
 
         {/* RIGHT */}
@@ -183,7 +195,6 @@ function ProductDetail() {
           <h2>{product.title}</h2>
           <div className="price">฿{product.price}</div>
 
-          {/* badges */}
           <div className="badge-row">
             {product.deliveryType === "meetup" && <span>นัดรับ</span>}
             {product.deliveryType === "delivery" && <span>จัดส่ง</span>}
@@ -194,47 +205,43 @@ function ProductDetail() {
             {product.tradeOption === "negotiable" && <span>ซื้อ/แลก</span>}
           </div>
 
-          {/* location */}
           <div className="location-box">
             <p>สถานที่ : {product.locationName || "-"}</p>
             <p>จุดนัดรับ : {product.meetupAddress || "-"}</p>
           </div>
 
-          {/* description */}
           <div className="desc-box">
             <h4>รายละเอียดสินค้า</h4>
             <p>{product.description || "ไม่มีรายละเอียดสินค้า"}</p>
           </div>
 
-
-          {/* ส่วนที่แก้ไข: ข้อมูลการเทรด (Trade Wanted) */}
-          {(product.tradeOption === "trade_allowed" || product.tradeOption === "negotiable") && (
+          {(product.tradeOption === "trade_allowed" ||
+            product.tradeOption === "negotiable") && (
             <div className="wanted-card">
               <div className="wanted-img-container">
                 <img
                   src={
                     product.wantedImages?.[0]
-                      ? (product.wantedImages[0].startsWith("http")
-                        ? product.wantedImages[0]
-                        : `${API_URL}${product.wantedImages[0]}`)
+                      ? getImageUrl(product.wantedImages[0])
                       : "/images/noimage.png"
                   }
                   alt="wanted"
-                  onError={(e) => e.target.src = "/images/noimage.png"}
                 />
               </div>
 
               <div className="wanted-text-info">
                 <span className="wanted-label-top">ต้องการแลกกับ:</span>
-                {/* ดึงหมวดหมู่ที่ส่งมาจาก Backend */}
+
                 <h4 className="wanted-category-name">
                   หมวดหมู่: {product.wantedCategory || "ไม่ระบุ"}
                 </h4>
 
                 <div className="wanted-tags">
-                  {product.wantedKeywords && product.wantedKeywords.length > 0 ? (
+                  {product.wantedKeywords?.length > 0 ? (
                     product.wantedKeywords.map((k, i) => (
-                      <span key={i} className="tag-blue">#{k}</span>
+                      <span key={i} className="tag-blue">
+                        #{k}
+                      </span>
                     ))
                   ) : (
                     <span className="tag-blue">#รับแลกทุกอย่าง</span>
@@ -244,7 +251,6 @@ function ProductDetail() {
             </div>
           )}
 
-          {/* buttons */}
           <div className="button-group">
 
             <button
@@ -265,14 +271,15 @@ function ProductDetail() {
               </button>
             )}
 
-            <button className="btn-buy"
+            <button
+              className="btn-buy"
               onClick={handleBuyNow}
-              disabled={isOwnProduct}>
+              disabled={isOwnProduct}
+            >
               ⚡ ซื้อทันที
             </button>
 
           </div>
-
         </div>
       </div>
     </div>

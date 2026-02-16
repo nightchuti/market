@@ -3,7 +3,7 @@ import './AdCard.css';
 
 const AdCard = ({ ad }) => {
   // ตรวจสอบว่ารูปภาพเป็น URL เต็มหรือเป็น Path
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = process.env.REACT_APP_API_URL;
 
 const imageUrl = ad.imageUrl?.startsWith("http")
   ? ad.imageUrl

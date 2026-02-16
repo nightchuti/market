@@ -1,7 +1,9 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: "https://testt-zu9t.onrender.com",
+  // ถ้าทดสอบ local:
+  // baseURL: "http://localhost:5000",
 });
 
 api.interceptors.request.use((config) => {

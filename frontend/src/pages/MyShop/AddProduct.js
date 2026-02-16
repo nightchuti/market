@@ -122,7 +122,7 @@ export default function AddProduct() {
       async ({ coords: { latitude, longitude } }) => {
         try {
           const res = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/location/reverse?lat=${latitude}&lon=${longitude}`
+            `${process.env.REACT_APP_API_URL}/api/location/reverse?lat=${latitude}&lon=${longitude}`
           );
           const data = await res.json();
           setForm(prev => ({
