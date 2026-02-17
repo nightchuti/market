@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios"; // เพิ่ม axios
 import "./Navbar.css";
+
+import { api } from "../api";
 
 export default function Navbar({ onLogin, onRegister }) {
   const navigate = useNavigate();
@@ -21,12 +22,12 @@ export default function Navbar({ onLogin, onRegister }) {
       }
       try {
         // ดึงข้อมูลใหม่ล่าสุดจาก Backend เพื่อเอารูปและชื่อ
-        const res = await axios.get(`${API_URL}/api/auth/profile`, {
+        const res = await api.get("/api/auth/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(res.data);
 
-        const orderRes = await axios.get(`${API_URL}/api/orders/seller/all`, {
+        const orderRes = await api.get("/api/orders/seller/all", {
           headers: { Authorization: `Bearer ${token}` }
         });
         const pendingOrders = orderRes.data.filter(o => o.status === "Paid");

@@ -145,6 +145,7 @@ useEffect(() => {
                 <img
                   key={i}
                   src={img.startsWith("http") ? img : `${SERVER_URL}${img}`}
+                  alt={`thumbnail-${i}`}
                   className={selectedImage === img ? "active" : ""}
                   onClick={() => setSelectedImage(img)}
                 />

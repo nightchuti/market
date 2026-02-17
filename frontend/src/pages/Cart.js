@@ -40,8 +40,6 @@ function Cart() {
       return;
     }
 
-    const token = localStorage.getItem("token");
-
     await api.put(`/api/cart/update/${itemId}`, {
       quantity: newQty
     });
@@ -57,7 +55,6 @@ function Cart() {
     if (!confirmDelete) return;
 
     try {
-      const token = localStorage.getItem("token");
 
       await api.delete(`/api/cart/remove/${itemId}`);
 
@@ -71,7 +68,6 @@ function Cart() {
 
   // ================= SELECT ITEM =================
   const toggleSelect = async (itemId) => {
-    const token = localStorage.getItem("token");
 
     await api.put(`/api/cart/select/${itemId}`);
 
@@ -80,7 +76,6 @@ function Cart() {
 
   // ================= SELECT ALL =================
   const selectAll = async (value) => {
-    const token = localStorage.getItem("token");
 
     await api.put("/api/cart/select-all", {
       selected: value
@@ -92,7 +87,6 @@ function Cart() {
 
   // ================= REMOVE SELECTED =================
   const removeSelected = async () => {
-    const token = localStorage.getItem("token");
 
     const selectedItems = cart.items.filter(i => i.selected === true);
 

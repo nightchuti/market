@@ -16,7 +16,6 @@ const AdminAdsManager = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
       await api.post("/api/ads/create-direct", formData);
       alert("ยิงโฆษณาขึ้นระบบสำเร็จ!");
     } catch (err) {
