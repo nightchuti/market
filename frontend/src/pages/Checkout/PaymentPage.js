@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import generatePayload from "promptpay-qr";
 
-import { api } from "../api";
+import {api} from "../../api";
 
 const PaymentPage = () => {
     const { orderId } = useParams();

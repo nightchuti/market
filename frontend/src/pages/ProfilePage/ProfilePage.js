@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ProfilePage.css";
 
-import { api } from "../api";
+import {api} from "../../api";
 
 const DEFAULT_AVATAR = "/images/default-avatar.png";
 

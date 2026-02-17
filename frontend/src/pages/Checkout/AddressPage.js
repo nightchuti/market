@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./AddressPage.css";
 import { useLocation } from "react-router-dom";
-import { api } from "../api";
+import {api} from "../../api";
 
 const AddressPage = () => {
     const navigate = useNavigate();

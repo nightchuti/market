@@ -1,7 +1,7 @@
 import React from 'react';
 import './Inventory.css';
 
-import { api } from "../api";
+import {api} from "../../api";
 
 function Inventory({ products, openId, setOpenId, handleDelete, navigate, publishProduct, userQuota, refreshProducts }) {
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./ShopProfile.css";
 
-import { api } from "../api";
+import {api} from "../../api";
 
 const DEFAULT_AVATAR = "/images/default-avatar.png";
 const NO_IMAGE = "/images/noimage.png";

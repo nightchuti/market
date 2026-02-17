@@ -5,7 +5,7 @@ import Inventory from "./Inventory";
 import SalesHistory from "./SalesHistory";
 import SellerOrderManagement from "./SellerOrderManagement"; // ✅ นำเข้า Component ใหม่
 
-import { api } from "../api";
+import {api} from "../../api";
 
 function MyShop() {
   const [products, setProducts] = useState([]);

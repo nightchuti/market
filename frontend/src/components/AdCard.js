@@ -1,6 +1,6 @@
 import React from 'react';
 import './AdCard.css';
-import { api } from "../api";
+import {api} from "../api";
 
 const AdCard = ({ ad }) => {
   // ตรวจสอบว่ารูปภาพเป็น URL เต็มหรือเป็น Path

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./EditProduct.css";
 
-import { api } from "../api";
+import {api} from "../../api";
 
 function EditProduct() {
     const { id } = useParams();

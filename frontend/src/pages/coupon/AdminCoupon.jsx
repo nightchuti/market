@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { api } from "../api";
+import {api} from "../../api";
 import './AdminCoupon.css'; // อย่าลืมสร้างไฟล์ CSS นะครับ
 
 const AdminCoupon = () => {
