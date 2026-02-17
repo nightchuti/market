@@ -3,8 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import "./ProductDetail.css";
 import { api } from "../api";
 
-const API_URL = process.env.REACT_APP_API_URL;
-
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -16,16 +14,19 @@ function ProductDetail() {
   const token = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
 
-  useEffect(() => {
-    axios
-      .get(`${API_URL}/api/products/${id}`)
-      .then((res) => {
-        console.log("Product Data:", res.data); // ลองเปิด Console ดูชื่อ Field ที่นี่
-        setProduct(res.data);
-        if (res.data.images?.length) setSelectedImage(res.data.images[0]);
-      })
-      .catch(() => setProduct(null));
-  }, [id]);
+useEffect(() => {
+  api
+    .get(`/api/products/${id}`)
+    .then((res) => {
+      console.log("Product Data:", res.data);
+      setProduct(res.data);
+      if (res.data.images?.length) {
+        setSelectedImage(res.data.images[0]);
+      }
+    })
+    .catch(() => setProduct(null));
+}, [id]);
+
   // ===== ห้ามแก้ =====
   const handleChat = async () => {
     if (!token) return alert("กรุณาเข้าสู่ระบบก่อนแชท");
@@ -39,8 +40,8 @@ function ProductDetail() {
     setChatLoading(true);
 
     try {
-      const res = await axios.post(
-        `${API_URL}/api/chat/normal`,
+      const res = await api.post(
+        `/api/chat/normal`,
         { productId: product._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -61,8 +62,8 @@ function ProductDetail() {
       return alert("ไม่สามารถเพิ่มสินค้าของตัวเองลงตะกร้าได้");
 
     try {
-      await axios.post(
-        `${API_URL}/api/cart/add`,
+      await api.post(
+        `/api/cart/add`,
         { productId: product._id, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./CheckoutPage.css";
-import {api} from "../../api";
+import { api } from "../../api";
 
 
 const CheckoutPage = () => {
@@ -24,9 +24,8 @@ const CheckoutPage = () => {
     const [distance, setDistance] = useState(0);
 
     const [loading, setLoading] = useState(true);
-
-    const [paymentMethod, setPaymentMethod] = useState("PROMPTPAY");
     const [couponCode, setCouponCode] = useState("");
+    const [paymentMethod, setPaymentMethod] = useState("PROMPTPAY");
     const [discount, setDiscount] = useState(0);
 
     const [showCouponModal, setShowCouponModal] = useState(false);
@@ -154,7 +153,7 @@ const CheckoutPage = () => {
             const token = localStorage.getItem("token");
 
             const res = await api.post("/api/coupons/check", {
-                code,
+                code: couponCode,
                 subTotal
             });
 
@@ -172,9 +171,10 @@ const CheckoutPage = () => {
 
     const applyCouponCode = async (code) => {
         try {
-            const token = localStorage.getItem("token");
-
-            const res = await api.post("/api/orders/checkout", orderData);
+            const res = await api.post("/api/coupons/check", {
+                code: code,
+                subTotal
+            });
 
             setDiscount(res.data.discount);
             setCouponCode(code);
@@ -185,6 +185,7 @@ const CheckoutPage = () => {
             alert(err.response?.data?.message || "ใช้คูปองไม่ได้");
         }
     };
+
 
     const handleRemoveCoupon = () => {
         setDiscount(0);
