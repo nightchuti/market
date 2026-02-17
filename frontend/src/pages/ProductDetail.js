@@ -14,6 +14,8 @@ function ProductDetail() {
   const token = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
 
+  const SERVER_URL = api.defaults.baseURL;
+
 useEffect(() => {
   api
     .get(`/api/products/${id}`)
@@ -133,7 +135,7 @@ useEffect(() => {
               src={
                 selectedImage.startsWith("http")
                   ? selectedImage
-                  : `${API_URL}${selectedImage}`
+                  : `${SERVER_URL}${selectedImage}`
               }
               alt=""
             />
@@ -142,7 +144,7 @@ useEffect(() => {
               {product.images?.map((img, i) => (
                 <img
                   key={i}
-                  src={img.startsWith("http") ? img : `${API_URL}${img}`}
+                  src={img.startsWith("http") ? img : `${SERVER_URL}${img}`}
                   className={selectedImage === img ? "active" : ""}
                   onClick={() => setSelectedImage(img)}
                 />
@@ -163,7 +165,7 @@ useEffect(() => {
                 product.user?.profileImage
                   ? (product.user.profileImage.startsWith("http")
                     ? product.user.profileImage
-                    : `${API_URL}${product.user.profileImage.startsWith('/') ? '' : '/'}${product.user.profileImage}`)
+                    : `${SERVER_URL}${product.user.profileImage.startsWith('/') ? '' : '/'}${product.user.profileImage}`)
                   : "/images/default-avatar.png"
               }
               alt="seller"
@@ -216,7 +218,7 @@ useEffect(() => {
                     product.wantedImages?.[0]
                       ? (product.wantedImages[0].startsWith("http")
                         ? product.wantedImages[0]
-                        : `${API_URL}${product.wantedImages[0]}`)
+                        : `${SERVER_URL}${product.wantedImages[0]}`)
                       : "/images/noimage.png"
                   }
                   alt="wanted"
