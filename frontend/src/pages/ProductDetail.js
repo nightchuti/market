@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import "./ProductDetail.css";
+import { api } from "../api";
 
-const API_URL = "http://localhost:5000";
+const API_URL = process.env.REACT_APP_API_URL;
 
 function ProductDetail() {
   const { id } = useParams();

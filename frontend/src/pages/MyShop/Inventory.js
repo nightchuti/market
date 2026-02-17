@@ -1,11 +1,10 @@
 import React from 'react';
 import './Inventory.css';
-import axios from 'axios'; // อย่าลืมลง axios หรือใช้ตัวส่ง request ที่คุณมี
 
-const API_URL = "http://localhost:5000";
+import { api } from "../api";
 
 function Inventory({ products, openId, setOpenId, handleDelete, navigate, publishProduct, userQuota, refreshProducts }) {
-  
+
   // ✅ ฟังก์ชันเรียก API บูสสินค้า
   const handleBoost = async (productId) => {
     if (userQuota <= 0) {
@@ -16,9 +15,9 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
     if (window.confirm(`ใช้ 1 สิทธิ์บูสสำหรับสินค้าชิ้นนี้? (คงเหลือ ${userQuota} สิทธิ์)`)) {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.post(`${API_URL}/api/products/activate-boost/${productId}`, {}, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.post(
+          `/api/products/activate-boost/${productId}`
+        );
 
         if (res.data.success) {
           alert("บูสสินค้าสำเร็จ! สินค้าจะแสดงในลำดับแรกๆ เป็นเวลา 3 วัน");
@@ -57,22 +56,27 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
         <div className="card-top">
           <div className="product-main-info">
             {p.images && p.images.length > 0 ? (
-              <img 
-                src={`${API_URL}${p.images[0]}`} 
-                alt={p.title} 
-                className="inventory-thumb" 
+              <img
+                src={
+                  p.images[0]?.startsWith("http")
+                    ? p.images[0]
+                    : `${api.defaults.baseURL}${p.images[0]}`
+                }
+                alt={p.title}
+                className="inventory-thumb"
               />
+
             ) : (
               <div className="inventory-thumb-placeholder">ไม่มีรูป</div>
             )}
-            
+
             <div className="title-section">
               <h4>
-                {p.title} 
+                {p.title}
                 {isCurrentlyBoosted && <span className="boost-tag">🚀 Boosted</span>}
               </h4>
               {(p.tradeOption === "sell_only" || p.tradeOption === "negotiable") && (
-                 <span className="price">฿{p.price?.toLocaleString()}</span>
+                <span className="price">฿{p.price?.toLocaleString()}</span>
               )}
             </div>
           </div>
@@ -80,7 +84,7 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
           <div className="card-actions">
             {/* ✅ ปุ่มบูสสินค้า (แสดงเฉพาะถ้าสถานะเป็น available) */}
             {p.status === "available" && (
-              <button 
+              <button
                 className={`boost-action-btn ${isCurrentlyBoosted ? 'active' : ''}`}
                 onClick={() => handleBoost(p._id)}
                 disabled={isCurrentlyBoosted}
@@ -119,7 +123,7 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
                 </p>
               )}
               <p className="description-text"><strong>รายละเอียด:</strong> {p.description || "ไม่มีคำอธิบาย"}</p>
-              
+
               <div className="detail-grid">
                 {(p.tradeOption === "sell_only" || p.tradeOption === "negotiable") && (
                   <div className="detail-item"><strong>ราคา:</strong> ฿{p.price?.toLocaleString()}</div>

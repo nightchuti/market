@@ -1,5 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
+import { api } from "../api";
+
 
 export default function PlaceOrderPage({
     cartItems,
@@ -17,20 +18,14 @@ export default function PlaceOrderPage({
         try {
             setLoading(true);
 
-            const res = await axios.post(
-                "/api/orders",
-                {
-                    items: cartItems,
-                    subTotal,
-                    deliveryFee,
-                    discount,
-                    couponCode,
-                    total: finalTotal
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            const res = await api.post("/api/orders", {
+                items: cartItems,
+                subTotal,
+                deliveryFee,
+                discount,
+                couponCode,
+                total: finalTotal
+            });
 
             alert("สั่งซื้อสำเร็จ 🎉");
             console.log(res.data);

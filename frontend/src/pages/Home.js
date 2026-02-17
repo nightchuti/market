@@ -4,14 +4,23 @@ import "./Home.css";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 
+import { api } from "../api";
+
 function Home() {
   const [products, setProducts] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/products")
-      .then((res) => setProducts(res.data.products || []))
-      .catch((err) => console.log(err));
+    const fetchProducts = async () => {
+      try {
+        const res = await api.get("/api/products");
+        setProducts(res.data.products || []);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   const boostedItems = products.filter(p => p.isBoosted).slice(0, 4);
@@ -53,21 +62,21 @@ function Home() {
       {/* ===== MINIMAL PRODUCT GRID ===== */}
       <section className="featured-home-clean">
         <div className="container">
-          
+
           {/* ✅ ส่วนที่เพิ่ม: ปุ่ม Coupon Center เหนือสินค้าแนะนำ */}
           <div className="coupon-entry-wrapper" onClick={() => navigate("/coupons")}>
-             <div className="coupon-entry-content">
-                <div className="coupon-icon-box">
-                   <span className="coupon-emoji">🎟️</span>
-                </div>
-                <div className="coupon-entry-text">
-                   <span className="entry-title">ศูนย์รวมคูปองส่วนลด</span>
-                   <span className="entry-subtitle">เก็บโค้ดลดเพิ่มสำหรับสมาชิก KU เท่านั้น</span>
-                </div>
-                <div className="coupon-go-btn">
-                   เก็บโค้ดเลย
-                </div>
-             </div>
+            <div className="coupon-entry-content">
+              <div className="coupon-icon-box">
+                <span className="coupon-emoji">🎟️</span>
+              </div>
+              <div className="coupon-entry-text">
+                <span className="entry-title">ศูนย์รวมคูปองส่วนลด</span>
+                <span className="entry-subtitle">เก็บโค้ดลดเพิ่มสำหรับสมาชิก KU เท่านั้น</span>
+              </div>
+              <div className="coupon-go-btn">
+                เก็บโค้ดเลย
+              </div>
+            </div>
           </div>
 
           <div className="header-flex">

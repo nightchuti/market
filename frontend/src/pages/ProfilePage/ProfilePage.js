@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import "./ProfilePage.css";
 
-const API_URL = "http://127.0.0.1:5000";
+import { api } from "../api";
 
 const DEFAULT_AVATAR = "/images/default-avatar.png";
 
@@ -60,9 +59,7 @@ export default function ProfilePage() {
   // --- Fetch Functions ---
   const fetchProfile = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/api/auth/profile");
       const data = res.data;
 
       // 1. อัปเดตข้อมูลสำหรับแสดงผล
@@ -94,9 +91,7 @@ export default function ProfilePage() {
   const fetchOrders = useCallback(async () => {
     setOrdersLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/orders/my`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/api/orders/my");
       const data = res.data?.orders || res.data;
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) { setOrders([]); }
@@ -143,14 +138,13 @@ export default function ProfilePage() {
     }
 
     try {
-      const res = await axios.put(
-        `${API_URL}/api/auth/profile`,
+      const res = await api.put(
+        "/api/auth/profile",
         formData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data"
-          },
+          }
         }
       );
 
@@ -193,9 +187,7 @@ export default function ProfilePage() {
   const handleConfirmReceipt = async (orderId) => {
     if (!window.confirm("คุณได้รับสินค้าเรียบร้อยแล้วใช่หรือไม่?")) return;
     try {
-      await axios.patch(`${API_URL}/api/order/${orderId}/complete`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.patch(`/api/order/${orderId}/complete`);
       fetchOrders();
     } catch (err) { alert("เกิดข้อผิดพลาด"); }
   };
@@ -210,9 +202,10 @@ export default function ProfilePage() {
     ? previewImg
     : removeImage
       ? DEFAULT_AVATAR
-      : profile.profileImage
-        ? `${API_URL}${profile.profileImage}`
-        : DEFAULT_AVATAR;
+      : profile.profileImage?.startsWith("http")
+        ? profile.profileImage
+        : `${api.defaults.baseURL}${profile.profileImage}`
+
 
 
   return (
@@ -455,7 +448,14 @@ export default function ProfilePage() {
                         <div key={i} className="pp-oitem">
                           <img
                             className="pp-oimg"
-                            src={item.product?.images?.length > 0 ? `${API_URL}${item.product.images[0]}` : "/images/default-product.png"}
+                            src={
+                              item.product?.images?.length > 0
+                                ? item.product.images[0].startsWith("http")
+                                  ? item.product.images[0]
+                                  : `${api.defaults.baseURL}${item.product.images[0]}`
+                                : "/images/default-product.png"
+                            }
+
                             alt={item.product?.title}
                           />
                           <div className="pp-ometa">

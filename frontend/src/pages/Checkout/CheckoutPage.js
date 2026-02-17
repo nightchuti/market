@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./CheckoutPage.css";
+import { api } from "../api";
 
-const API_URL = "http://127.0.0.1:5000";
 
 const CheckoutPage = () => {
     const navigate = useNavigate();
@@ -47,7 +46,7 @@ const CheckoutPage = () => {
             const token = localStorage.getItem("token");
             const headers = { Authorization: `Bearer ${token}` };
 
-            const addrRes = await axios.get(`${API_URL}/api/address`, { headers });
+            const addrRes = await api.get("/api/address");
 
             setAddresses(addrRes.data);
         } catch (err) {
@@ -154,10 +153,10 @@ const CheckoutPage = () => {
         try {
             const token = localStorage.getItem("token");
 
-            const res = await axios.get(
-                `${API_URL}/api/coupons/my`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const res = await api.post("/api/coupons/check", {
+                code,
+                subTotal
+            });
 
             setAvailableCoupons(res.data);
 
@@ -175,16 +174,7 @@ const CheckoutPage = () => {
         try {
             const token = localStorage.getItem("token");
 
-            const res = await axios.post(
-                `${API_URL}/api/coupons/check`,
-                {
-                    code,
-                    subTotal
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            const res = await api.post("/api/orders/checkout", orderData);
 
             setDiscount(res.data.discount);
             setCouponCode(code);
@@ -243,16 +233,10 @@ const CheckoutPage = () => {
         try {
             const token = localStorage.getItem("token");
 
-            const res = await axios.post(
-                `${API_URL}/api/coupons/check`,
-                {
-                    code: couponCode,
-                    subTotal
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            const res = await api.post("/api/coupons/check", {
+                code: couponCode,
+                subTotal
+            });
 
             setDiscount(res.data.discount);
 
@@ -306,9 +290,7 @@ const CheckoutPage = () => {
                 couponCode: appliedCoupon ? appliedCoupon.code : null
             };
 
-            const res = await axios.post(`${API_URL}/api/orders/checkout`, orderData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.post("/api/orders/checkout", orderData);
 
             if (res.data.success) {
                 alert("สั่งซื้อสำเร็จ!");
@@ -373,7 +355,12 @@ const CheckoutPage = () => {
                 {cartItems.map((item) => (
                     <div key={item._id} className="sh-item">
                         <img
-                            src={item.images?.[0] ? `${API_URL}${item.images[0]}` : ""}
+                            src={
+                                item.images?.[0]
+                                    ? `${api.defaults.baseURL}${item.images[0]}`
+                                    : ""
+                            }
+
                             alt="product"
                         />
                         <div className="item-detail">

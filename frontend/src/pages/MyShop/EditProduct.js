@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import "./EditProduct.css";
 
-const API_URL = "http://localhost:5000";
+import { api } from "../api";
 
 function EditProduct() {
     const { id } = useParams();
@@ -35,7 +34,7 @@ function EditProduct() {
 
     const fetchProduct = async () => {
         try {
-            const res = await axios.get(`${API_URL}/api/products/${id}`);
+            const res = await api.get(`/api/products/${id}`);
             const data = res.data;
 
             setForm({
@@ -113,12 +112,11 @@ function EditProduct() {
             });
 
             const token = localStorage.getItem("token");
-            await axios.put(
-                `${API_URL}/api/products/${id}`,
+            await api.put(
+                `/api/products/${id}`,
                 formData,
                 {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
                         "Content-Type": "multipart/form-data"
                     }
                 }
@@ -154,7 +152,7 @@ function EditProduct() {
                     <div className="image-preview">
                         {existingImages.map((img, index) => (
                             <div key={index} className="image-card">
-                                <img src={`${API_URL}${img}`} alt="old" />
+                                <img src={`${api.defaults.baseURL}${img}`} alt="old" />
                                 <button type="button" onClick={() => removeOldImage(index)}>✕</button>
                             </div>
                         ))}

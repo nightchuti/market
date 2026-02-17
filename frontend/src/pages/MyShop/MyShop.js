@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import "./MyShop.css";
 import { useNavigate } from "react-router-dom";
 import Inventory from "./Inventory";
 import SalesHistory from "./SalesHistory";
 import SellerOrderManagement from "./SellerOrderManagement"; // ✅ นำเข้า Component ใหม่
 
-const API_URL = "http://localhost:5000";
+import { api } from "../api";
 
 function MyShop() {
   const [products, setProducts] = useState([]);
-  const [user, setUser] = useState(null); 
+  const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("inventory");
   const [openId, setOpenId] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -27,15 +26,13 @@ function MyShop() {
     } else {
       setIsLoggedIn(true);
       fetchMyProducts();
-      fetchUserProfile(); 
+      fetchUserProfile();
     }
   }, []);
 
   const fetchUserProfile = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/profile`, { 
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
+      const res = await api.get("/api/auth/profile");
       setUser(res.data);
     } catch (err) {
       console.error("โหลดโปรไฟล์ไม่สำเร็จ", err);
@@ -44,9 +41,7 @@ function MyShop() {
 
   const fetchMyProducts = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/products/my`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
+      const res = await api.get("/api/products/my");
       setProducts(res.data);
     } catch (err) {
       if (err.response?.status === 401) {
@@ -64,9 +59,7 @@ function MyShop() {
     const confirmDelete = window.confirm("ต้องการลบสินค้านี้หรือไม่?");
     if (!confirmDelete) return;
     try {
-      await axios.delete(`${API_URL}/api/products/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
+      await api.delete(`/api/products/${id}`);
       setProducts(prev => prev.filter(p => p._id !== id));
     } catch (err) {
       alert("ลบสินค้าไม่สำเร็จ");
@@ -75,9 +68,7 @@ function MyShop() {
 
   const publishProduct = async (id) => {
     try {
-      await axios.put(`${API_URL}/api/products/${id}/publish`, {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
+      await api.put(`/api/products/${id}/publish`);
       setProducts(prev => prev.map(p => (p._id === id ? { ...p, status: "available" } : p)));
     } catch (err) {
       alert("เกิดข้อผิดพลาดในการลงขาย");

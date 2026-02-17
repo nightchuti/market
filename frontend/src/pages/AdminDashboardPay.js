@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+
+import { api } from "../api"; 
 
 const AdminDashboardPay = () => {
     const [orders, setOrders] = useState([]);
@@ -8,15 +9,10 @@ const AdminDashboardPay = () => {
     const [confirmId, setConfirmId] = useState(null); // เก็บ ID ออเดอร์ที่กำลังจะกดยืนยัน
     const [isUpdating, setIsUpdating] = useState(false);
 
-    const SERVER_URL = "http://127.0.0.1:5000";
-
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("token");
-            const res = await axios.get(`${SERVER_URL}/api/orders/admin/all-payments`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.get("/api/orders/admin/all-payments");
             setOrders(res.data);
         } catch (err) {
             console.error("Error:", err);
@@ -30,10 +26,7 @@ const AdminDashboardPay = () => {
     const handleConfirmFinal = async (orderId) => {
         setIsUpdating(true);
         try {
-            const token = localStorage.getItem("token");
-            await axios.patch(`${SERVER_URL}/api/orders/${orderId}/admin-confirm`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await api.patch(`/api/orders/${orderId}/admin-confirm`);
             setConfirmId(null);
             fetchOrders();
         } catch (err) {

@@ -3,9 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./AddressPage.css";
 import { useLocation } from "react-router-dom";
-
-
-const API_URL = "http://127.0.0.1:5000";
+import { api } from "../api";
 
 const AddressPage = () => {
     const navigate = useNavigate();
@@ -27,7 +25,7 @@ const AddressPage = () => {
     useEffect(() => {
         const fetchAddress = async () => {
             const token = localStorage.getItem("token");
-            const res = await axios.get(`${API_URL}/api/address`, {
+            const res = await api.get("/api/address", {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -86,8 +84,9 @@ const AddressPage = () => {
 
             if (editingId) {
                 // แก้ไข
-                res = await axios.put(
-                    `${API_URL}/api/address/${editingId}`,
+
+                res = await api.put(
+                    `/api/address/${editingId}`,
                     cleanData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -98,8 +97,8 @@ const AddressPage = () => {
 
             } else {
                 // เพิ่มใหม่
-                res = await axios.post(
-                    `${API_URL}/api/address`,
+                res = await api.post(
+                    "/api/address",
                     cleanData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -126,7 +125,7 @@ const AddressPage = () => {
         try {
             const token = localStorage.getItem("token");
 
-            await axios.delete(`${API_URL}/api/address/${id}`, {
+            await api.delete(`/api/address/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

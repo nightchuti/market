@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import { api } from "../api";
 import { useNavigate } from "react-router-dom";
 import "./AddProduct.css";
 
@@ -92,12 +92,11 @@ export default function AddProduct() {
         formData.append("wantedImages", file);
       });
 
-      const res = await axios.post(
-        "http://localhost:5000/api/products",
+      const res = await api.post(
+        "/api/products",
         formData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
         }
@@ -121,10 +120,12 @@ export default function AddProduct() {
     navigator.geolocation.getCurrentPosition(
       async ({ coords: { latitude, longitude } }) => {
         try {
-          const res = await fetch(
-            `http://localhost:5000/api/location/reverse?lat=${latitude}&lon=${longitude}`
+          const res = await api.get(
+            `/api/location/reverse?lat=${latitude}&lon=${longitude}`
           );
-          const data = await res.json();
+
+          const data = res.data;
+
           setForm(prev => ({
             ...prev,
             lat: String(latitude),

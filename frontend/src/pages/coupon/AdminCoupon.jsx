@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { api } from "../api";
 import './AdminCoupon.css'; // อย่าลืมสร้างไฟล์ CSS นะครับ
 
 const AdminCoupon = () => {
@@ -11,9 +11,8 @@ const AdminCoupon = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/coupons', form, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.post("/api/coupons", form);
+
       alert("🎉 สร้างคูปองสำเร็จ!");
     } catch (err) { alert(err.response?.data?.message || "เกิดข้อผิดพลาด"); }
   };

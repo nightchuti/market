@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+
+import { api } from "../api";
 
 const AdminAdsManager = () => {
   const [formData, setFormData] = useState({
@@ -16,9 +17,7 @@ const AdminAdsManager = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/ads/create-direct", formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.post("/api/ads/create-direct", formData);
       alert("ยิงโฆษณาขึ้นระบบสำเร็จ!");
     } catch (err) {
       alert("ผิดพลาด: " + err.response?.data?.message);

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import "./AllProducts.css";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
+
+import { api } from "../api";
 
 function AllProducts() {
   const [products, setProducts] = useState([]);
@@ -40,10 +41,7 @@ function AllProducts() {
 
   const fetchProducts = async (params = {}) => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/products",
-        { params }
-      );
+      const res = await api.get("/api/products", { params });
 
       setProducts(res.data.products);
       setPagination(res.data.pagination);

@@ -1,11 +1,12 @@
 import React from 'react';
 import './AdCard.css';
+import { api } from "../api";
 
 const AdCard = ({ ad }) => {
   // ตรวจสอบว่ารูปภาพเป็น URL เต็มหรือเป็น Path
   const imageUrl = ad.imageUrl?.startsWith('http') 
     ? ad.imageUrl 
-    : `http://localhost:5000${ad.imageUrl}`;
+    : `${api.defaults.baseURL}${ad.imageUrl}`;
 
   return (
     <a href={ad.link} target="_blank" rel="noopener noreferrer" className="ad-card-link">

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { QRCodeCanvas } from "qrcode.react";
 import generatePayload from "promptpay-qr";
 
-const API_URL = "http://127.0.0.1:5000";
+import { api } from "../api";
 
 const PaymentPage = () => {
     const { orderId } = useParams();
@@ -19,13 +18,12 @@ const PaymentPage = () => {
         const fetchOrder = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const res = await axios.get(`${API_URL}/api/orders/${orderId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await api.get(`/api/orders/${orderId}`);
+
                 setOrder(res.data);
-                
+
                 // ❗ เปลี่ยนเป็นเบอร์ PromptPay กลางของคุณ
-                const adminPromptPay = "0930682308"; 
+                const adminPromptPay = "0930682308";
                 setQrValue(generatePayload(adminPromptPay, { amount: res.data.totalPrice }));
             } catch (err) {
                 console.error(err);
@@ -52,12 +50,16 @@ const PaymentPage = () => {
 
         try {
             const token = localStorage.getItem("token");
-            await axios.patch(`${API_URL}/api/orders/${orderId}/upload-slip`, formData, {
-                headers: { 
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "multipart/form-data" 
+            await api.patch(
+                `/api/orders/${orderId}/upload-slip`,
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data"
+                    }
                 }
-            });
+            );
+
             alert("ส่งหลักฐานสำเร็จ ระบบจะตรวจสอบยอดเงินโดยเร็วที่สุด");
             navigate("/profile");
         } catch (err) {
@@ -72,10 +74,10 @@ const PaymentPage = () => {
             <div style={styles.container}>
                 {/* Header Section */}
                 <div style={styles.headerCard}>
-                    <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/c/c5/PromptPay-logo.png" 
-                        alt="PromptPay" 
-                        style={styles.ppLogo} 
+                    <img
+                        src="https://upload.wikimedia.org/wikipedia/commons/c/c5/PromptPay-logo.png"
+                        alt="PromptPay"
+                        style={styles.ppLogo}
                     />
                     <div style={styles.statusBadge}>รอการชำระเงิน</div>
                 </div>
@@ -97,16 +99,16 @@ const PaymentPage = () => {
                 <div style={styles.uploadCard}>
                     <h4 style={styles.sectionTitle}>อัปโหลดสลิปการโอนเงิน</h4>
                     <p style={styles.sectionSubTitle}>กรุณาตรวจสอบชื่อบัญชีและยอดเงินให้ถูกต้องก่อนส่ง</p>
-                    
+
                     <div style={styles.fileInputWrapper}>
                         <label htmlFor="slip-upload" style={styles.customFileInput}>
                             {file ? "เปลี่ยนรูปภาพ" : "เลือกรูปภาพจากคลัง"}
                         </label>
-                        <input 
+                        <input
                             id="slip-upload"
-                            type="file" 
-                            accept="image/*" 
-                            onChange={onFileChange} 
+                            type="file"
+                            accept="image/*"
+                            onChange={onFileChange}
                             style={{ display: "none" }}
                         />
                     </div>
@@ -118,14 +120,14 @@ const PaymentPage = () => {
                         </div>
                     )}
 
-                    <button 
-                        onClick={handleUpload} 
-                        style={{...styles.submitBtn, opacity: file ? 1 : 0.6}}
+                    <button
+                        onClick={handleUpload}
+                        style={{ ...styles.submitBtn, opacity: file ? 1 : 0.6 }}
                         disabled={!file}
                     >
                         ยืนยันการแจ้งโอนเงิน
                     </button>
-                    
+
                     <button onClick={() => navigate(-1)} style={styles.backBtn}>กลับไปหน้าออเดอร์</button>
                 </div>
             </div>

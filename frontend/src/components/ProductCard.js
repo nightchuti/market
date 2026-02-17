@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./ProductCard.css";
+import { api } from "../api";
 
 function ProductCard({ product }) {
     const navigate = useNavigate();
@@ -18,12 +19,11 @@ function ProductCard({ product }) {
     } = product;
 
     // ✅ ปรับ Logic การดึง URL รูปภาพ
-    const API_URL = "http://localhost:5000";
     const imageUrl =
         images && images.length > 0
             ? images[0].startsWith("http")
                 ? images[0]
-                : `${API_URL}/uploads/${images[0].replace(/^\/?uploads\/?/, "")}`
+                : `${api.defaults.baseURL}/uploads/${images[0].replace(/^\/?uploads\/?/, "")}`
             : "/no-image.png"; // 👈 เปลี่ยนจาก placeholder เป็นรูปในเครื่องเรา (เก็บไว้ใน public folder)
 
     // ✅ ฟังก์ชันดักจับถ้ารูปภาพจาก Server โหลดไม่ได้

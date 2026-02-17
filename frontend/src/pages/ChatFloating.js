@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
-import axios from "axios";
 import "./ChatFloating.css";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:5000";
+import { api } from "../api";
+
+const API_URL = process.env.REACT_APP_API_URL;
 
 export default function ChatFloating() {
   const navigate = useNavigate();
@@ -24,9 +25,7 @@ export default function ChatFloating() {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/chat`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/api/chat");
       const data = Array.isArray(res.data) ? res.data : [];
       setRooms(data);
       const u = data.filter((r) =>
