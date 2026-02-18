@@ -30,6 +30,20 @@ function AllProducts() {
     setTradeOption(tradeQuery);
     setDeliveryType(deliveryQuery);
 
+
+    const fetchProducts = async (params = {}) => {
+      try {
+        console.log(api);
+        const res = await api.get("/api/products", { params });
+
+        setProducts(res.data.products);
+        setPagination(res.data.pagination);
+      } catch (err) {
+        console.log(err);
+        setProducts([]);
+      }
+    };
+
     fetchProducts({
       page,
       search: searchQuery,
@@ -38,19 +52,6 @@ function AllProducts() {
       deliveryType: deliveryQuery
     });
   }, [searchParams]);
-
-  const fetchProducts = async (params = {}) => {
-    try {
-      console.log(api);
-      const res = await api.get("/api/products", { params });
-
-      setProducts(res.data.products);
-      setPagination(res.data.pagination);
-    } catch (err) {
-      console.log(err);
-      setProducts([]);
-    }
-  };
 
   // ✅ กดค้นหา = เปลี่ยน URL
   const handleSearch = () => {
