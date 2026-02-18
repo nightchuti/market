@@ -7,13 +7,13 @@ export default function Navbar({ onLogin, onRegister }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const token = localStorage.getItem("token");
-
   const [user, setUser] = useState(null);
   const [orderCount, setOrderCount] = useState(0);
 
   useEffect(() => {
     const fetchUserData = async () => {
+      const token = localStorage.getItem("token");
+      
       if (!token) {
         setUser(null);
         setOrderCount(0);
