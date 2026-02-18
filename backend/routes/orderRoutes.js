@@ -110,7 +110,16 @@ router.post("/checkout", protect, async (req, res) => {
   session.startTransaction();
 
   try {
-    const { items, /* ... field อื่นๆ ... */ } = req.body;
+    const {
+      items,
+      deliveryMode,
+      paymentMethod,
+      shippingAddress,
+      deliveryFee,
+      totalPrice,
+      couponCode
+    } = req.body;
+
     const buyerId = req.user.id; // ID ของคนซื้อที่ล็อกอินอยู่
 
     let subTotal = 0;
@@ -118,42 +127,42 @@ router.post("/checkout", protect, async (req, res) => {
 
     for (const item of items) {
 
-  const productData = await Product.findById(item.product).session(session);
+      const productData = await Product.findById(item.product).session(session);
 
-  if (!productData) {
-    throw new Error("ไม่พบสินค้า");
-  }
+      if (!productData) {
+        throw new Error("ไม่พบสินค้า");
+      }
 
-  // ✅ กันเจ้าของซื้อสินค้าตัวเอง (ชั้น Backend)
-  if (productData.user.toString() === req.user.id.toString()) {
-    throw new Error(
-      `ไม่สามารถสั่งซื้อสินค้า "${productData.title}" ของตนเองได้`
-    );
-  }
+      // ✅ กันเจ้าของซื้อสินค้าตัวเอง (ชั้น Backend)
+      if (productData.user.toString() === req.user.id.toString()) {
+        throw new Error(
+          `ไม่สามารถสั่งซื้อสินค้า "${productData.title}" ของตนเองได้`
+        );
+      }
 
-  const updatedProduct = await Product.findOneAndUpdate(
-    {
-      _id: item.product,
-      quantity: { $gte: item.quantity }
-    },
-    {
-      $inc: { quantity: -item.quantity }
-    },
-    { new: true, session }
-  );
+      const updatedProduct = await Product.findOneAndUpdate(
+        {
+          _id: item.product,
+          quantity: { $gte: item.quantity }
+        },
+        {
+          $inc: { quantity: -item.quantity }
+        },
+        { new: true, session }
+      );
 
-  if (!updatedProduct) {
-    throw new Error(`สินค้า ${productData.title} หมดหรือจำนวนไม่พอ`);
-  }
+      if (!updatedProduct) {
+        throw new Error(`สินค้า ${productData.title} หมดหรือจำนวนไม่พอ`);
+      }
 
-  subTotal += updatedProduct.price * item.quantity;
+      subTotal += updatedProduct.price * item.quantity;
 
-  orderItems.push({
-    product: updatedProduct._id,
-    quantity: item.quantity,
-    price: updatedProduct.price
-  });
-}
+      orderItems.push({
+        product: updatedProduct._id,
+        quantity: item.quantity,
+        price: updatedProduct.price
+      });
+    }
 
     // ... (ส่วนคำนวณค่าส่ง/คูปอง เหมือนเดิม) ...
 
