@@ -63,6 +63,7 @@ function RegisterModal({ close }) {
         role: form.role,
       });
 
+      console.log("REGISTER RESPONSE:", res.data);
       // ✅ สมัครเสร็จ → login อัตโนมัติ
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
