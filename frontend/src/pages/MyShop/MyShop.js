@@ -11,7 +11,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 function MyShop() {
   const [products, setProducts] = useState([]);
-  const [user, setUser] = useState(null); 
+  const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("inventory");
   const [openId, setOpenId] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -21,20 +21,31 @@ function MyShop() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setIsLoggedIn(false);
-      setLoading(false);
-    } else {
-      setIsLoggedIn(true);
-      fetchMyProducts();
-      fetchUserProfile(); 
-    }
-  }, []);
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setIsLoggedIn(false);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoggedIn(true);
+        await fetchUserProfile();
+        await fetchMyProducts();
+      } catch (err) {
+        setIsLoggedIn(false);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);  // หรือใส่ location.pathname ก็ได้
+
 
   const fetchUserProfile = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/profile`, { 
+      const res = await axios.get(`${API_URL}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setUser(res.data);
