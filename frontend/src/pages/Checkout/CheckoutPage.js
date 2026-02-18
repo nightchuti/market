@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import api from "../../api";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./CheckoutPage.css";
-
-const API_URL = process.env.REACT_APP_API_URL;
+import api from "../../api";
 
 const CheckoutPage = () => {
     const navigate = useNavigate();
@@ -25,9 +23,8 @@ const CheckoutPage = () => {
     const [distance, setDistance] = useState(0);
 
     const [loading, setLoading] = useState(true);
-
-    const [paymentMethod, setPaymentMethod] = useState("PROMPTPAY");
     const [couponCode, setCouponCode] = useState("");
+    const [paymentMethod, setPaymentMethod] = useState("PROMPTPAY");
     const [discount, setDiscount] = useState(0);
 
     const [showCouponModal, setShowCouponModal] = useState(false);
@@ -47,7 +44,7 @@ const CheckoutPage = () => {
             const token = localStorage.getItem("token");
             const headers = { Authorization: `Bearer ${token}` };
 
-            const addrRes = await api.get(`${API_URL}/api/address`, { headers });
+            const addrRes = await api.get("/api/address", { headers });
 
             setAddresses(addrRes.data);
         } catch (err) {
@@ -154,10 +151,10 @@ const CheckoutPage = () => {
         try {
             const token = localStorage.getItem("token");
 
-            const res = await api.get(
-                `${API_URL}/api/coupons/my`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const res = await api.post("/api/coupons/check", {
+                code: couponCode,
+                subTotal
+            });
 
             setAvailableCoupons(res.data);
 
@@ -173,18 +170,10 @@ const CheckoutPage = () => {
 
     const applyCouponCode = async (code) => {
         try {
-            const token = localStorage.getItem("token");
-
-            const res = await api.post(
-                `${API_URL}/api/coupons/check`,
-                {
-                    code,
-                    subTotal
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            const res = await api.post("/api/coupons/check", {
+                code: code,
+                subTotal
+            });
 
             setDiscount(res.data.discount);
             setCouponCode(code);
@@ -195,6 +184,7 @@ const CheckoutPage = () => {
             alert(err.response?.data?.message || "ใช้คูปองไม่ได้");
         }
     };
+
 
     const handleRemoveCoupon = () => {
         setDiscount(0);
@@ -243,16 +233,10 @@ const CheckoutPage = () => {
         try {
             const token = localStorage.getItem("token");
 
-            const res = await api.post(
-                `${API_URL}/api/coupons/check`,
-                {
-                    code: couponCode,
-                    subTotal
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            const res = await api.post("/api/coupons/check", {
+                code: couponCode,
+                subTotal
+            });
 
             setDiscount(res.data.discount);
 
@@ -284,42 +268,42 @@ const CheckoutPage = () => {
                 return alert("นัดรับสินค้าไม่สามารถเก็บเงินปลายทางได้");
 
             const orderData = {
-                items: cartItems.map(i => ({
-                    product: i._id,
-                    quantity: i.qty
+                // Backend ใช้โครงสร้าง { product, quantity, price }
+                items: cartItems.map(item => ({
+                    product: item.product?._id || item._id, // ดึงเฉพาะ ID ของสินค้า
+                    quantity: item.quantity || item.qty,
+                    price: item.price
                 })),
-
-                shippingAddress:
-                    deliveryMode === "DELIVERY"
-                        ? {
-                            dormName: selectedAddr.dormName,
-                            room: selectedAddr.room,
-                            note: selectedAddr.note,
-                            lat: selectedAddr.lat,
-                            lng: selectedAddr.lng
-                        }
-                        : null,
-
-                deliveryMode,
-                shippingService:
-                    deliveryMode === "DELIVERY" ? shippingService : null,
-                couponCode,
-                paymentMethod
+                // ถ้านัดรับ (PICKUP) ให้ส่งเป็น null หรือไม่ส่ง (ตาม Logic Backend)
+                shippingAddress: deliveryMode === "PICKUP" ? null : {
+                    dormName: selectedAddr.dormName,
+                    room: selectedAddr.room,
+                    note: selectedAddr.note,
+                    lat: selectedAddr.lat,
+                    lng: selectedAddr.lng
+                },
+                deliveryMode: deliveryMode,     // "DELIVERY" หรือ "PICKUP"
+                paymentMethod: paymentMethod,   // "PROMPTPAY" หรือ "COD"
+                subTotal: subTotal,
+                deliveryFee: deliveryFee,
+                totalPrice: total,
+                couponCode: appliedCoupon ? appliedCoupon.code : null
             };
 
-            const orderRes = await api.post(
-                `${API_URL}/api/orders/checkout`,
-                orderData,
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            const res = await api.post("/api/orders/checkout", orderData);
 
-            alert("สั่งซื้อสำเร็จ!");
-            navigate("/profile");
+            if (res.data.success) {
+                alert("สั่งซื้อสำเร็จ!");
+                // ถ้าโอนเงิน ให้ไปหน้า Payment ถ้า COD ให้ไปหน้า Profile
+                if (paymentMethod === "PROMPTPAY") {
+                    navigate(`/payment/${res.data.order._id}`);
+                } else {
+                    navigate("/profile");
+                }
+            }
 
         } catch (err) {
-            console.error(err);
+            console.error("Backend Error Message:", err.response?.data?.message);
             alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
         }
     };
@@ -371,7 +355,12 @@ const CheckoutPage = () => {
                 {cartItems.map((item) => (
                     <div key={item._id} className="sh-item">
                         <img
-                            src={item.images?.[0] ? `${API_URL}${item.images[0]}` : ""}
+                            src={
+                                item.images?.[0]
+                                    ? `${api.defaults.baseURL}${item.images[0]}`
+                                    : ""
+                            }
+
                             alt="product"
                         />
                         <div className="item-detail">
@@ -468,6 +457,45 @@ const CheckoutPage = () => {
                         </div>
                     )}
 
+                </div>
+            </div>
+
+            {/* payment-method-section */}
+            <div className="sh-card payment-method-section">
+                <h3>ช่องทางการชำระเงิน</h3>
+                <div className="payment-options">
+
+                    {/* ตัวเลือก PromptPay */}
+                    <label className={`payment-card ${paymentMethod === "PROMPTPAY" ? "active" : ""}`}>
+                        <input
+                            type="radio"
+                            name="payment"
+                            value="PROMPTPAY"
+                            checked={paymentMethod === "PROMPTPAY"}
+                            onChange={(e) => setPaymentMethod(e.target.value)}
+                        />
+                        <div className="payment-info">
+                            <span className="payment-name">Thai QR Payment / โอนเงินผ่านธนาคาร</span>
+                            <span className="payment-subtext">ตรวจสอบยอดเงินทันทีผ่านสลิป</span>
+                        </div>
+                    </label>
+
+                    {/* ตัวเลือก COD (แสดงเมื่อไม่ใช่ Pickup) */}
+                    {deliveryMode !== "PICKUP" && (
+                        <label className={`payment-card ${paymentMethod === "COD" ? "active" : ""}`}>
+                            <input
+                                type="radio"
+                                name="payment"
+                                value="COD"
+                                checked={paymentMethod === "COD"}
+                                onChange={(e) => setPaymentMethod(e.target.value)}
+                            />
+                            <div className="payment-info">
+                                <span className="payment-name">ชำระเงินปลายทาง (COD)</span>
+                                <span className="payment-subtext">จ่ายเงินเมื่อได้รับสินค้าเท่านั้น</span>
+                            </div>
+                        </label>
+                    )}
                 </div>
             </div>
 
