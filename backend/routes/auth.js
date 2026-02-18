@@ -122,25 +122,46 @@ router.put("/profile", protect, upload.single("profileImage"), async (req, res) 
 router.post("/register", async (req, res) => {
   try {
     const { username, email, phonenumber, password, role } = req.body;
-    if (!username || !email || !password) return res.status(400).json({ message: "กรุณากรอกข้อมูลให้ครบ" });
+
+    if (!username || !email || !password)
+      return res.status(400).json({ message: "กรุณากรอกข้อมูลให้ครบ" });
 
     const userExist = await User.findOne({ email });
-    if (userExist) return res.status(400).json({ message: "Email already exists" });
+    if (userExist)
+      return res.status(400).json({ message: "Email already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await User.create({
-      username, email, phonenumber,
+      username,
+      email,
+      phonenumber,
       password: hashedPassword,
       role: role || "nisit"
     });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    res.status(201).json({ message: "Register success", user: { id: user._id, username: user.username, email: user.email } });
+    res.status(201).json({
+      message: "Register success",
+      token,   // ✅ เพิ่มอันนี้
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      }
+    });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 router.post("/login", async (req, res) => {
   try {
