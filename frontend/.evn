@@ -1,1 +1,2 @@
-VITE_API_URL=https://testt-zu9t.onrender.com
+<!-- VITE_API_URL=https://testt-zu9t.onrender.com -->
+REACT_APP_API_URL=https://testt-zu9t.onrender.com
