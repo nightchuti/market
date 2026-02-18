@@ -1,8 +1,11 @@
 import { useState } from "react";
 import "./AuthModal.css";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
 
 function RegisterModal({ close }) {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -72,7 +75,7 @@ function RegisterModal({ close }) {
       }
 
       close();
-
+      window.location.reload();
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Register failed");
