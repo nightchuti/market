@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
+import api from "../api";
 import "./AllProducts.css";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
-
-import { api } from "../api";
 
 function AllProducts() {
   const [products, setProducts] = useState([]);
@@ -13,10 +12,9 @@ function AllProducts() {
   const [tradeOption, setTradeOption] = useState("");
   const [deliveryType, setDeliveryType] = useState("");
 
-  const navigate = useNavigate();
+
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ✅ โหลดข้อมูลทุกครั้งที่ URL เปลี่ยน
   useEffect(() => {
     const page = parseInt(searchParams.get("page")) || 1;
     const searchQuery = searchParams.get("search") || "";
@@ -24,25 +22,10 @@ function AllProducts() {
     const tradeQuery = searchParams.get("tradeOption") || "";
     const deliveryQuery = searchParams.get("deliveryType") || "";
 
-    // sync state กับ URL
     setSearch(searchQuery);
     setCategory(categoryQuery);
     setTradeOption(tradeQuery);
     setDeliveryType(deliveryQuery);
-
-
-    const fetchProducts = async (params = {}) => {
-      try {
-        console.log(api);
-        const res = await api.get("/api/products", { params });
-
-        setProducts(res.data.products);
-        setPagination(res.data.pagination);
-      } catch (err) {
-        console.log(err);
-        setProducts([]);
-      }
-    };
 
     fetchProducts({
       page,
@@ -53,7 +36,16 @@ function AllProducts() {
     });
   }, [searchParams]);
 
-  // ✅ กดค้นหา = เปลี่ยน URL
+  const fetchProducts = async (params = {}) => {
+    try {
+      const res = await api.get("/api/products", { params });
+      setProducts(res.data.products);
+      setPagination(res.data.pagination);
+    } catch {
+      setProducts([]);
+    }
+  };
+
   const handleSearch = () => {
     setSearchParams({
       page: 1,
@@ -63,6 +55,7 @@ function AllProducts() {
       deliveryType
     });
   };
+
 
   return (
     <div className="all-products">
@@ -114,9 +107,7 @@ function AllProducts() {
         ))}
       </div>
 
-      {products.length === 0 && (
-        <p className="empty">ไม่พบสินค้า</p>
-      )}
+      {products.length === 0 && <p>ไม่พบสินค้า</p>}
 
       {/* ===== PAGINATION ===== */}
       {pagination && (
