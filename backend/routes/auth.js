@@ -134,6 +134,8 @@ router.post("/register", async (req, res) => {
       role: role || "nisit"
     });
 
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
     res.status(201).json({ message: "Register success", user: { id: user._id, username: user.username, email: user.email } });
   } catch (err) {
     res.status(500).json({ message: err.message });
