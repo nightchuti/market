@@ -75,7 +75,7 @@ function RegisterModal({ close }) {
       }
 
       close();
-      window.location.reload();
+      
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Register failed");
