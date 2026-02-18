@@ -172,7 +172,13 @@ router.post("/checkout", protect, async (req, res) => {
         {
           user: buyerId,
           items: orderItems,
-          // ... field อื่นๆ ...
+          deliveryMode,
+          paymentMethod,
+          shippingAddress,
+          deliveryFee,
+          subTotal,
+          totalPrice,
+          couponCode,
           status: req.body.deliveryMode === "PICKUP" ? "WaitingMeetup" : "PendingPayment"
         }
       ],
