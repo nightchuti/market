@@ -1,10 +1,8 @@
 import { useState } from "react";
 import "./AuthModal.css";
-import { useNavigate } from "react-router-dom";
 import api from "../api";
 
 function RegisterModal({ close }) {
-  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     username: "",
@@ -66,16 +64,12 @@ function RegisterModal({ close }) {
       });
 
       // ✅ สมัครเสร็จ → login อัตโนมัติ
-      if (res.data.token) {
-        localStorage.setItem("token", res.data.token);
-      }
-
-      if (res.data.user) {
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-      }
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
       close();
-      
+      window.location.reload();
+
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || "Register failed");
