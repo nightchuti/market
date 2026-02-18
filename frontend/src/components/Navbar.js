@@ -7,13 +7,17 @@ export default function Navbar({ onLogin, onRegister }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [token, setToken] = useState(localStorage.getItem("token"));
+
   const [user, setUser] = useState(null);
   const [orderCount, setOrderCount] = useState(0);
 
   useEffect(() => {
+    setToken(localStorage.getItem("token"));
+  }, [location.pathname]);
+
+  useEffect(() => {
     const fetchUserData = async () => {
-      const token = localStorage.getItem("token");
-      
       if (!token) {
         setUser(null);
         setOrderCount(0);
@@ -83,9 +87,8 @@ export default function Navbar({ onLogin, onRegister }) {
 
         <Link
           to="/my-shop"
-          className={`nav-link shop-link-container ${
-            location.pathname === "/my-shop" ? "active" : ""
-          }`}
+          className={`nav-link shop-link-container ${location.pathname === "/my-shop" ? "active" : ""
+            }`}
         >
           ร้านค้าของฉัน
           {orderCount > 0 && (
@@ -105,9 +108,8 @@ export default function Navbar({ onLogin, onRegister }) {
             </button>
 
             <div
-              className={`user-mini ${
-                location.pathname === "/profile" ? "active" : ""
-              }`}
+              className={`user-mini ${location.pathname === "/profile" ? "active" : ""
+                }`}
               onClick={() => navigate("/profile")}
             >
               <img
