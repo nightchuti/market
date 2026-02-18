@@ -60,7 +60,7 @@ export default function ProfilePage() {
   // --- Fetch Functions ---
   const fetchProfile = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/profile`, {
+      const res = await api.get(`/api/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = res.data;
@@ -94,7 +94,7 @@ export default function ProfilePage() {
   const fetchOrders = useCallback(async () => {
     setOrdersLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/orders/my`, {
+      const res = await api.get(`/api/orders/my`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = res.data?.orders || res.data;
@@ -143,8 +143,8 @@ export default function ProfilePage() {
     }
 
     try {
-      const res = await axios.put(
-        `${API_URL}/api/auth/profile`,
+      const res = await api.put(
+        `/api/auth/profile`,
         formData,
         {
           headers: {
@@ -193,7 +193,7 @@ export default function ProfilePage() {
   const handleConfirmReceipt = async (orderId) => {
     if (!window.confirm("คุณได้รับสินค้าเรียบร้อยแล้วใช่หรือไม่?")) return;
     try {
-      await axios.patch(`${API_URL}/api/order/${orderId}/complete`, {}, {
+      await api.patch(`/api/order/${orderId}/complete`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchOrders();
@@ -211,7 +211,7 @@ export default function ProfilePage() {
     : removeImage
       ? DEFAULT_AVATAR
       : profile.profileImage
-        ? `${API_URL}${profile.profileImage}`
+        ? `${profile.profileImage}`
         : DEFAULT_AVATAR;
 
 
@@ -455,7 +455,7 @@ export default function ProfilePage() {
                         <div key={i} className="pp-oitem">
                           <img
                             className="pp-oimg"
-                            src={item.product?.images?.length > 0 ? `${API_URL}${item.product.images[0]}` : "/images/default-product.png"}
+                            src={item.product?.images?.length > 0 ? `${item.product.images[0]}` : "/images/default-product.png"}
                             alt={item.product?.title}
                           />
                           <div className="pp-ometa">

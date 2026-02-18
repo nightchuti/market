@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+
 import "./Cart.css";
 import { useNavigate } from "react-router-dom";
 
@@ -25,7 +25,7 @@ function Cart() {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.get(`${API_URL}/api/cart`, {
+      const res = await api.get(`/api/cart`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -48,8 +48,8 @@ function Cart() {
 
     const token = localStorage.getItem("token");
 
-    await axios.put(
-      `${API_URL}/api/cart/update/${itemId}`,
+    await api.put(
+      `/api/cart/update/${itemId}`,
       { quantity: newQty },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -66,8 +66,8 @@ function Cart() {
     try {
       const token = localStorage.getItem("token");
 
-      await axios.delete(
-        `${API_URL}/api/cart/remove/${itemId}`,
+      await api.delete(
+        `/api/cart/remove/${itemId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -85,8 +85,8 @@ function Cart() {
   const toggleSelect = async (itemId) => {
     const token = localStorage.getItem("token");
 
-    await axios.put(
-      `${API_URL}/api/cart/select/${itemId}`,
+    await api.put(
+      `/api/cart/select/${itemId}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -98,8 +98,8 @@ function Cart() {
   const selectAll = async (value) => {
     const token = localStorage.getItem("token");
 
-    await axios.put(
-      `${API_URL}/api/cart/select-all`,
+    await api.put(
+      `/api/cart/select-all`,
       { selected: value },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -128,7 +128,7 @@ function Cart() {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${API_URL}/api/cart/remove-selected`, {
+      await api.delete(`/api/cart/remove-selected`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -213,7 +213,7 @@ function Cart() {
             {cart.items.map(item => {
               // ตรวจสอบว่า item.product มีค่าหรือไม่ก่อนที่จะเข้าถึง properties ต่าง ๆ
               const product = item.product || {}; // หาก product เป็น null/undefined ให้ fallback เป็น empty object
-              const img = product.images?.[0] ? `${API_URL}${product.images[0]}` : "/images/default-avatar.png";
+              const img = product.images?.[0] ? ` ${product.images[0]}` : "/images/default-avatar.png";
 
               const isOutOfStock = product.quantity === 0;
 

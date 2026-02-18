@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+
 import "./EditProduct.css";
 
 const API_URL = process.env.REACT_APP_API_URL;
@@ -32,7 +32,7 @@ function EditProduct() {
   // ================= FETCH PRODUCT =================
   const fetchProduct = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/products/${id}`);
+      const res = await api.get(`/api/products/${id}`);
       const data = res.data;
 
       setForm({
@@ -113,8 +113,8 @@ function EditProduct() {
         formData.append("images", img);
       });
 
-      await axios.put(
-        `${API_URL}/api/products/${id}`,
+      await api.put(
+        `/api/products/${id}`,
         formData,
         {
           headers: {
@@ -161,7 +161,7 @@ function EditProduct() {
           <div className="image-preview">
             {existingImages.map((img, index) => (
               <div key={index} className="image-card">
-                <img src={`${API_URL}${img}`} alt="product" />
+                <img src={`${img}`} alt="product" />
                 <button type="button" onClick={() => removeOldImage(index)}>✕</button>
               </div>
             ))}

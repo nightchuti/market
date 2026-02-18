@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";   // ✅ ต้องมีบรรทัดนี้
 import "./MyShop.css";
 import Inventory from "./Inventory";
 import SalesHistory from "./SalesHistory";
@@ -34,7 +33,7 @@ function MyShop() {
 
   const fetchUserProfile = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/profile`, { 
+      const res = await api.get(`/api/auth/profile`, { 
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setUser(res.data);
@@ -45,7 +44,7 @@ function MyShop() {
 
   const fetchMyProducts = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/products/my`, {
+      const res = await api.get(`/api/products/my`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setProducts(res.data);
@@ -65,7 +64,7 @@ function MyShop() {
     const confirmDelete = window.confirm("ต้องการลบสินค้านี้หรือไม่?");
     if (!confirmDelete) return;
     try {
-      await axios.delete(`${API_URL}/api/products/${id}`, {
+      await api.delete(`/api/products/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setProducts(prev => prev.filter(p => p._id !== id));
@@ -76,7 +75,7 @@ function MyShop() {
 
   const publishProduct = async (id) => {
     try {
-      await axios.put(`${API_URL}/api/products/${id}/publish`, {}, {
+      await api.put(`/api/products/${id}/publish`, {}, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
       setProducts(prev => prev.map(p => (p._id === id ? { ...p, status: "available" } : p)));

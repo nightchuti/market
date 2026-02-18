@@ -58,7 +58,7 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
           <div className="product-main-info">
             {p.images && p.images.length > 0 ? (
               <img 
-                src={`${API_URL}${p.images[0]}`} 
+                src={`${p.images[0]}`} 
                 alt={p.title} 
                 className="inventory-thumb" 
               />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -12,8 +12,8 @@ function SellerOrderManagement({ setOrderCount }) {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await axios.get(
-        `${API_URL}/api/orders/seller/all`,
+      const res = await api.get(
+        `/api/orders/seller/all`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -52,8 +52,8 @@ function SellerOrderManagement({ setOrderCount }) {
     try {
       const token = localStorage.getItem("token");
 
-      await axios.patch(
-        `${API_URL}/api/orders/${orderId}/prepare`,
+      await api.patch(
+        `/api/orders/${orderId}/prepare`,
         {},
         {
           headers: {
@@ -142,7 +142,7 @@ function SellerOrderManagement({ setOrderCount }) {
             {order.paymentSlip && (
               <div style={{ marginTop: "10px" }}>
                 <a
-                  href={`${API_URL}${order.paymentSlip}`}
+                  href={`${order.paymentSlip}`}
                   target="_blank"
                   rel="noreferrer"
                 >

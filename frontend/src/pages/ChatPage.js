@@ -13,14 +13,14 @@ const getAvatar = (user) => {
   if (user.profileImage) {
     return user.profileImage.startsWith("http")
       ? user.profileImage
-      : `${API_URL}${user.profileImage}`;
+      : `{user.profileImage}`;
   }
   return DEFAULT_AVATAR;
 };
 
 const getImgUrl = (path) => {
   if (!path) return "/images/placeholder.png";
-  return path.startsWith("http") ? path : `${API_URL}${path}`;
+  return path.startsWith("http") ? path : `{path}`;
 };
 
 // ── Trade Status Config ──────────────────────────────────
@@ -233,8 +233,8 @@ export default function ChatPage() {
       setCurrentUser(fresh);
 
       const [roomRes, msgRes] = await Promise.all([
-        axios.get(`${API_URL}/api/chat/${roomId}`, { headers }),
-        axios.get(`${API_URL}/api/chat/${roomId}/messages`, { headers }),
+        api.get(`/api/chat/${roomId}`, { headers }),
+        api.get(`/api/chat/${roomId}/messages`, { headers }),
       ]);
       setRoom(roomRes.data);
       setMessages(Array.isArray(msgRes.data) ? msgRes.data : []);
@@ -358,7 +358,7 @@ export default function ChatPage() {
   const tradeAction = async (action) => {
     const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.put(`${API_URL}/api/chat/${roomId}/${action}`, {}, { headers });
+      await api.put(`/api/chat/${roomId}/${action}`, {}, { headers });
 
       const newStatus = action === "accept" ? "accepted"
                       : action === "reject" ? "rejected"
@@ -386,7 +386,7 @@ export default function ChatPage() {
     const headers = { Authorization: `Bearer ${token}` };
     try {
       // เรียก confirmSwap API (ถ้ามี) หรือ cancelTrade → ใช้ tradeController.confirmSwap
-      await axios.put(`${API_URL}/api/trades/${room.tradeId || roomId}/confirm`, {}, { headers });
+      await api.put(`/api/trades/${room.tradeId || roomId}/confirm`, {}, { headers });
 
       socketRef.current?.emit("send_trade_message", {
         roomId,

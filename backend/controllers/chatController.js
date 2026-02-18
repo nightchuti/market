@@ -19,7 +19,7 @@ const toAvatarUrl = (user) => {
   if (user.profileImage) {
     return user.profileImage.startsWith("http")
       ? user.profileImage
-      : `${API_URL}${user.profileImage}`;
+      : `${user.profileImage}`;
   }
 
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(

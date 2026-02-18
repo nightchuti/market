@@ -19,7 +19,7 @@ const PaymentPage = () => {
         const fetchOrder = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const res = await axios.get(`${API_URL}/api/orders/${orderId}`, {
+                const res = await api.get(`/api/orders/${orderId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setOrder(res.data);
@@ -52,7 +52,7 @@ const PaymentPage = () => {
 
         try {
             const token = localStorage.getItem("token");
-            await axios.patch(`${API_URL}/api/orders/${orderId}/upload-slip`, formData, {
+            await api.patch(`/api/orders/${orderId}/upload-slip`, formData, {
                 headers: { 
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data" 

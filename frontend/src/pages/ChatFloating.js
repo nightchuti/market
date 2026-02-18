@@ -24,7 +24,7 @@ export default function ChatFloating() {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/chat`, {
+      const res = await api.get(`/api/chat`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = Array.isArray(res.data) ? res.data : [];
@@ -115,7 +115,7 @@ export default function ChatFloating() {
                         other?.avatarUrl || // ✅ ใช้ตัวแปรใหม่จาก Backend
                         (other?.profileImage?.startsWith("http")
                           ? other.profileImage
-                          : `${API_URL}${other?.profileImage}`) ||
+                          : `{other?.profileImage}`) ||
                         `https://ui-avatars.com/api/?name=${encodeURIComponent(other?.username || "U")}`
                       }
                       alt="avatar"
@@ -127,7 +127,7 @@ export default function ChatFloating() {
                         src={
                           productImg.startsWith("http")
                             ? productImg
-                            : `${API_URL}${productImg}`
+                            : `{productImg}`
                         }
                         alt=""
                       />

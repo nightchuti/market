@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -14,8 +14,8 @@ const AdminDashboardPay = () => {
   const fetchOrders = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(
-        `${API_URL}/api/orders/admin/all-payments`,
+      const res = await api.get(
+        `/api/orders/admin/all-payments`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setOrders(res.data);
@@ -34,8 +34,8 @@ const AdminDashboardPay = () => {
     try {
       setIsUpdating(true);
       const token = localStorage.getItem("token");
-      await axios.patch(
-        `${API_URL}/api/orders/${id}/admin-confirm`,
+      await api.patch(
+        `/api/orders/${id}/admin-confirm`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -25,7 +25,7 @@ const imageUrl =
   images && images.length > 0
     ? images[0].startsWith("http")
       ? images[0]
-      : `${API_URL}${images[0]}`
+      : `${images[0]}`
     : "/no-image.png";
 
 
