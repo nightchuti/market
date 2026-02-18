@@ -41,6 +41,7 @@ function AllProducts() {
 
   const fetchProducts = async (params = {}) => {
     try {
+      console.log(api);
       const res = await api.get("/api/products", { params });
 
       setProducts(res.data.products);
