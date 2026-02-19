@@ -69,14 +69,14 @@ router.get("/seller/all", protect, async (req, res) => {
       .populate({
         path: "items.product",
         model: "Product",
-        select: "title price seller", // ดึงข้อมูล seller มาด้วยเพื่อกรอง
+        select: "title price user",  // ดึงข้อมูล seller มาด้วยเพื่อกรอง
       })
       .sort({ createdAt: -1 });
 
     // 2. กรองเฉพาะออเดอร์ที่มีสินค้าที่เป็นของเรา (req.user._id)
     const myOrders = orders.filter(order =>
       order.items.some(item =>
-        item.product && item.product.seller && item.product.seller.toString() === req.user._id.toString()
+        item.product && item.product.user && item.product.user.toString() === req.user._id.toString()
       )
     );
 
