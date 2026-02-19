@@ -17,11 +17,15 @@ function MyShop() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [orderCount, setOrderCount] = useState(0); // เก็บจำนวนออเดอร์ใหม่
+  const [completedOrders, setCompletedOrders] = useState([]);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuth = async () => {
+
+      await fetchCompletedOrders();
+
       const token = localStorage.getItem("token");
 
       if (!token) {
@@ -108,6 +112,27 @@ function MyShop() {
     }
   };
 
+  const fetchCompletedOrders = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.get(
+        `${API_URL}/api/orders/seller/all`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      const completed = res.data.filter(
+        order => order.status === "Completed"
+      );
+
+      setCompletedOrders(completed);
+
+    } catch (err) {
+      console.error("โหลดประวัติการขายไม่สำเร็จ", err);
+    }
+  };
 
   const publishProduct = async (id) => {
     try {
@@ -133,9 +158,12 @@ function MyShop() {
 
   const pendingProducts = products.filter(p => p.status === "pending");
   const availableProducts = products.filter(p => p.status === "available");
-  const soldProducts = products.filter(p => p.status === "sold");
+  const soldCount = completedOrders.length;
   const inventoryProducts = [...availableProducts, ...pendingProducts];
-  const totalIncome = soldProducts.reduce((sum, p) => sum + (Number(p.price) || 0), 0);
+  const totalIncome = completedOrders.reduce(
+    (sum, order) => sum + (Number(order.totalPrice) || 0),
+    0
+  );
 
   return (
     <div className="shop-wrapper">
@@ -176,7 +204,7 @@ function MyShop() {
           <span>รอลงขาย</span>
         </div>
         <div className="summary-card">
-          <h3>{soldProducts.length}</h3>
+          <h3>{soldCount}</h3>
           <span>ขายแล้ว</span>
         </div>
         <div className="summary-card">
@@ -190,7 +218,7 @@ function MyShop() {
           คลังสินค้า ({inventoryProducts.length})
         </button>
         <button className={activeTab === "orders" ? "active" : ""} onClick={() => setActiveTab("orders")}>
-          คำสั่งซื้อใหม่ ({orderCount})
+          คำสั่งซื้อ ({orderCount})
         </button>
         <button className={activeTab === "sales" ? "active" : ""} onClick={() => setActiveTab("sales")}>
           สำเร็จแล้ว ({soldProducts.length})
@@ -219,7 +247,10 @@ function MyShop() {
           <SellerOrderManagement setOrderCount={setOrderCount} />
         )}
 
-        {activeTab === "sales" && <SalesHistory products={soldProducts} />}
+        {activeTab === "sales" && (
+          <SalesHistory orders={completedOrders} />
+        )}
+
       </div>
     </div>
   );
