@@ -1,0 +1,145 @@
+.seller-orders-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.page-title {
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.order-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+  transition: 0.2s ease;
+}
+
+.order-card:hover {
+  transform: translateY(-2px);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.order-id {
+  font-weight: 600;
+}
+
+.order-date {
+  font-size: 13px;
+  color: #777;
+}
+
+.status-badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.paid {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.preparing {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-badge.shipping {
+  background: #d4edda;
+  color: #155724;
+}
+
+.buyer-info {
+  margin-bottom: 10px;
+}
+
+.product-list {
+  margin: 15px 0;
+}
+
+.product-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.product-title {
+  font-weight: 500;
+}
+
+.product-qty {
+  color: #28a745;
+}
+
+.shipping-box {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ee4d2d;
+}
+
+.btn-prepare {
+  background: #10bd4a;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.btn-prepare:hover {
+  background: #0ea341;
+}
+
+.slip-link {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.slip-link a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.slip-link a:hover {
+  text-decoration: underline;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-box {
+  background: #f8f9fa;
+  padding: 30px;
+  text-align: center;
+  border-radius: 12px;
+  color: #777;
+}

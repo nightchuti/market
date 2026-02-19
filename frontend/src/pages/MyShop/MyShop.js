@@ -34,6 +34,7 @@ function MyShop() {
         setIsLoggedIn(true);
         await fetchUserProfile();
         await fetchMyProducts();
+        await fetchOrderCount();
       } catch (err) {
         setIsLoggedIn(false);
       }
@@ -84,6 +85,29 @@ function MyShop() {
       alert("ลบสินค้าไม่สำเร็จ");
     }
   };
+
+  const fetchOrderCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.get(
+        `${API_URL}/api/orders/seller/all`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      const paidOrders = res.data.filter(
+        (order) => order.status === "Paid"
+      );
+
+      setOrderCount(paidOrders.length);
+
+    } catch (err) {
+      console.error("โหลดจำนวนออเดอร์ไม่สำเร็จ", err);
+    }
+  };
+
 
   const publishProduct = async (id) => {
     try {

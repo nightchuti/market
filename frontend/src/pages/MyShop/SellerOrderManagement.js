@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import "./SellerOrderManagement.css";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -7,7 +8,6 @@ function SellerOrderManagement({ setOrderCount }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ================= FETCH ORDERS =================
   const fetchOrders = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
@@ -15,22 +15,19 @@ function SellerOrderManagement({ setOrderCount }) {
       const res = await axios.get(
         `${API_URL}/api/orders/seller/all`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
 
-      // เอาเฉพาะออเดอร์ที่จ่ายแล้ว
-      const newOrders = res.data.filter(
-        (order) => order.status === "Paid"
+      const activeOrders = res.data.filter(order =>
+        ["Paid", "Preparing", "Shipping"].includes(order.status)
       );
 
-      setOrders(newOrders);
+      setOrders(activeOrders);
 
-      // ส่งจำนวนไปอัปเดต badge (ถ้ามี)
       if (setOrderCount) {
-        setOrderCount(newOrders.length);
+        const paidCount = activeOrders.filter(o => o.status === "Paid").length;
+        setOrderCount(paidCount);
       }
 
     } catch (err) {
@@ -41,13 +38,11 @@ function SellerOrderManagement({ setOrderCount }) {
   }, [setOrderCount]);
 
   useEffect(() => {
-  fetchOrders();
-}, []);
+    fetchOrders();
+  }, [fetchOrders]);
 
-
-  // ================= PREPARE ORDER =================
   const handlePrepare = async (orderId) => {
-    if (!window.confirm("ยืนยันการรับออเดอร์และเริ่มจัดเตรียมสินค้า?")) return;
+    if (!window.confirm("ยืนยันเริ่มเตรียมสินค้า?")) return;
 
     try {
       const token = localStorage.getItem("token");
@@ -55,92 +50,92 @@ function SellerOrderManagement({ setOrderCount }) {
       await axios.patch(
         `${API_URL}/api/orders/${orderId}/prepare`,
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert("เริ่มเตรียมสินค้าเรียบร้อย!");
       fetchOrders();
-
     } catch (err) {
-      alert(
-        "เกิดข้อผิดพลาด: " +
-        (err.response?.data?.message || err.message)
-      );
+      alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
     }
   };
 
-  if (loading) return <p>กำลังโหลดข้อมูล...</p>;
+  if (loading) return <p className="loading">กำลังโหลดคำสั่งซื้อ...</p>;
 
-  // ================= UI =================
   return (
-    <div className="order-management-list">
+    <div className="seller-orders-wrapper">
 
-      <h3 style={{ marginBottom: "20px" }}>
-        คำสั่งซื้อใหม่ ({orders.length})
-      </h3>
+      <h2 className="page-title">
+        คำสั่งซื้อร้านค้า ({orders.length})
+      </h2>
 
       {orders.length === 0 ? (
-        <div className="empty-state">
-          <p>ไม่มีคำสั่งซื้อใหม่ในขณะนี้</p>
+        <div className="empty-box">
+          ยังไม่มีคำสั่งซื้อใหม่
         </div>
       ) : (
-        orders.map((order) => (
-          <div
-            key={order._id}
-            className="shop-card"
-            style={{
-              borderLeft: "5px solid #10bd4a",
-              marginBottom: "15px"
-            }}
-          >
-            <div className="card-top">
+        orders.map(order => (
+          <div key={order._id} className="order-card">
 
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: "12px", color: "#666" }}>
-                  เลขที่ออเดอร์: #{order._id.slice(-8).toUpperCase()}
-                </p>
-
-                <p style={{ fontSize: "14px", fontWeight: 600 }}>
-                  ผู้ซื้อ: {order.user?.username || "ไม่ระบุชื่อ"}
-                </p>
-
-                <div style={{ margin: "10px 0" }}>
-                  {order.items.map((item, idx) => (
-                    <div key={idx} style={{ fontSize: "14px" }}>
-                      • {item.product?.title}{" "}
-                      <span style={{ color: "#10bd4a" }}>
-                        x {item.quantity}
-                      </span>
-                    </div>
-                  ))}
+            <div className="order-header">
+              <div>
+                <div className="order-id">
+                  ORDER #{order._id.slice(-8).toUpperCase()}
                 </div>
-
-                <p style={{ fontWeight: "bold" }}>
-                  ยอดรวม: ฿{order.totalPrice?.toLocaleString()}
-                </p>
+                <div className="order-date">
+                  {new Date(order.createdAt).toLocaleString()}
+                </div>
               </div>
 
-              <div className="card-actions">
+              <div className={`status-badge ${order.status.toLowerCase()}`}>
+                {order.status}
+              </div>
+            </div>
+
+            <div className="buyer-info">
+              ผู้ซื้อ: <strong>{order.user?.username || "ไม่ระบุ"}</strong>
+            </div>
+
+            <div className="product-list">
+              {order.items.map((item, idx) => (
+                <div key={idx} className="product-row">
+                  <div className="product-title">
+                    {item.product?.title}
+                  </div>
+                  <div className="product-qty">
+                    x {item.quantity}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {order.shippingAddress && (
+              <div className="shipping-box">
+                <strong>ที่อยู่จัดส่ง:</strong>
+                <div>
+                  {order.shippingAddress.fullName} <br />
+                  {order.shippingAddress.addressLine} <br />
+                  {order.shippingAddress.phone}
+                </div>
+              </div>
+            )}
+
+            <div className="order-footer">
+              <div className="total-price">
+                ฿{order.totalPrice?.toLocaleString()}
+              </div>
+
+              {order.status === "Paid" && (
                 <button
-                  className="btn-main"
-                  style={{
-                    padding: "10px 20px",
-                    backgroundColor: "#10bd4a"
-                  }}
+                  className="btn-prepare"
                   onClick={() => handlePrepare(order._id)}
                 >
-                  จัดเตรียมสินค้า
+                  เริ่มเตรียมสินค้า
                 </button>
-              </div>
-
+              )}
             </div>
 
             {order.paymentSlip && (
-              <div style={{ marginTop: "10px" }}>
+              <div className="slip-link">
                 <a
                   href={`${API_URL}${order.paymentSlip}`}
                   target="_blank"
@@ -154,7 +149,6 @@ function SellerOrderManagement({ setOrderCount }) {
           </div>
         ))
       )}
-
     </div>
   );
 }
