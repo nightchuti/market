@@ -332,6 +332,20 @@ router.patch("/:id/complete", protect, async (req, res) => {
   }
 });
 
+// ==========================================
+// 🔥 [SELLER] รับออเดอร์ (Accept)
+// ==========================================
+router.patch("/:id/accept", protect, acceptOrder);
+
+// ==========================================
+// 🚚 [SELLER] กรอกข้อมูลไรเดอร์ + ส่งสินค้า
+// ==========================================
+router.patch("/:id/ship", protect, shipOrder);
+
+// ==========================================
+// ✅ [BUYER] ยืนยันได้รับสินค้า
+// ==========================================
+router.post("/:id/confirm-delivery", protect, confirmDelivery);
 
 // ==========================================
 // 9. รายละเอียดออเดอร์เดียว & ยกเลิกออเดอร์
@@ -414,19 +428,5 @@ router.patch("/:id/admin-confirm", protect, async (req, res) => {
   res.json({ message: "Updated" });
 });
 
-// ==========================================
-// 🔥 [SELLER] รับออเดอร์ (Accept)
-// ==========================================
-router.patch("/:id/accept", protect, acceptOrder);
-
-// ==========================================
-// 🚚 [SELLER] กรอกข้อมูลไรเดอร์ + ส่งสินค้า
-// ==========================================
-router.patch("/:id/ship", protect, shipOrder);
-
-// ==========================================
-// ✅ [BUYER] ยืนยันได้รับสินค้า
-// ==========================================
-router.post("/:id/confirm-delivery", protect, confirmDelivery);
 
 module.exports = router;
