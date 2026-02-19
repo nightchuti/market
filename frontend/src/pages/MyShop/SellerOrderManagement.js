@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import "./SellerOrderManagement.css";
+import "./SellerOrders.css";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
 function SellerOrderManagement({ setOrderCount }) {
   const [orders, setOrders] = useState([]);
+  const [openId, setOpenId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = useCallback(async () => {
@@ -31,7 +32,7 @@ function SellerOrderManagement({ setOrderCount }) {
       }
 
     } catch (err) {
-      console.error("Fetch orders error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -59,98 +60,102 @@ function SellerOrderManagement({ setOrderCount }) {
     }
   };
 
-  if (loading) return <p className="loading">กำลังโหลดคำสั่งซื้อ...</p>;
+  if (loading) return <div style={{ padding: 40 }}>กำลังโหลด...</div>;
+  if (orders.length === 0)
+    return <div style={{ padding: 40, textAlign: "center" }}>ไม่มีคำสั่งซื้อใหม่</div>;
 
-  return (
-    <div className="seller-orders-wrapper">
+  return orders.map(order => (
+    <div key={order._id} className="shop-card">
 
-      <h2 className="page-title">
-        คำสั่งซื้อร้านค้า ({orders.length})
-      </h2>
+      <div className="card-top">
 
-      {orders.length === 0 ? (
-        <div className="empty-box">
-          ยังไม่มีคำสั่งซื้อใหม่
-        </div>
-      ) : (
-        orders.map(order => (
-          <div key={order._id} className="order-card">
+        {/* LEFT SIDE */}
+        <div className="order-main-info">
 
-            <div className="order-header">
-              <div>
-                <div className="order-id">
-                  ORDER #{order._id.slice(-8).toUpperCase()}
-                </div>
-                <div className="order-date">
-                  {new Date(order.createdAt).toLocaleString()}
-                </div>
-              </div>
-
-              <div className={`status-badge ${order.status.toLowerCase()}`}>
-                {order.status}
-              </div>
-            </div>
-
-            <div className="buyer-info">
-              ผู้ซื้อ: <strong>{order.user?.username || "ไม่ระบุ"}</strong>
-            </div>
-
-            <div className="product-list">
-              {order.items.map((item, idx) => (
-                <div key={idx} className="product-row">
-                  <div className="product-title">
-                    {item.product?.title}
-                  </div>
-                  <div className="product-qty">
-                    x {item.quantity}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {order.shippingAddress && (
-              <div className="shipping-box">
-                <strong>ที่อยู่จัดส่ง:</strong>
-                <div>
-                  {order.shippingAddress.fullName} <br />
-                  {order.shippingAddress.addressLine} <br />
-                  {order.shippingAddress.phone}
-                </div>
-              </div>
-            )}
-
-            <div className="order-footer">
-              <div className="total-price">
-                ฿{order.totalPrice?.toLocaleString()}
-              </div>
-
-              {order.status === "Paid" && (
-                <button
-                  className="btn-prepare"
-                  onClick={() => handlePrepare(order._id)}
-                >
-                  เริ่มเตรียมสินค้า
-                </button>
-              )}
-            </div>
-
-            {order.paymentSlip && (
-              <div className="slip-link">
-                <a
-                  href={`${API_URL}${order.paymentSlip}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  ดูหลักฐานการโอนเงิน
-                </a>
-              </div>
-            )}
-
+          <div className="order-id">
+            ORDER #{order._id.slice(-8).toUpperCase()}
           </div>
-        ))
+
+          <div className="order-meta">
+            <span>👤 {order.user?.username || "ไม่ระบุ"}</span>
+            <span>📅 {new Date(order.createdAt).toLocaleString("th-TH")}</span>
+          </div>
+
+          <div className="order-total">
+            ฿{order.totalPrice?.toLocaleString()}
+          </div>
+
+        </div>
+
+        {/* RIGHT ACTIONS */}
+        <div className="card-actions">
+
+          <span className={`status-badge ${order.status.toLowerCase()}`}>
+            {order.status}
+          </span>
+
+          {order.status === "Paid" && (
+            <button
+              className="prepare-btn"
+              onClick={() => handlePrepare(order._id)}
+            >
+              เตรียมสินค้า
+            </button>
+          )}
+
+          <button
+            className={`dropdown-btn ${openId === order._id ? "active" : ""}`}
+            onClick={() =>
+              setOpenId(openId === order._id ? null : order._id)
+            }
+          >
+            {openId === order._id ? "−" : "＋"}
+          </button>
+        </div>
+      </div>
+
+      {/* DROPDOWN DETAIL */}
+      {openId === order._id && (
+        <div className="card-dropdown">
+
+          <div className="product-list">
+            {order.items.map((item, idx) => (
+              <div key={idx} className="product-row">
+                <div>
+                  • {item.product?.title}
+                </div>
+                <div>x {item.quantity}</div>
+              </div>
+            ))}
+          </div>
+
+          {order.shippingAddress && (
+            <div className="shipping-box">
+              <strong>ที่อยู่จัดส่ง</strong>
+              <div>
+                {order.shippingAddress.fullName} <br />
+                {order.shippingAddress.addressLine} <br />
+                {order.shippingAddress.phone}
+              </div>
+            </div>
+          )}
+
+          {order.paymentSlip && (
+            <a
+              href={`${API_URL}${order.paymentSlip}`}
+              target="_blank"
+              rel="noreferrer"
+              className="slip-link"
+            >
+              ดูหลักฐานการโอนเงิน
+            </a>
+          )}
+
+        </div>
       )}
+
     </div>
-  );
+  ));
 }
 
 export default SellerOrderManagement;
