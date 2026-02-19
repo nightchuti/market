@@ -88,3 +88,28 @@
 .slip-link:hover {
   text-decoration: underline;
 }
+
+.seller-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 20px;
+  background: #f3f4f6;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.tab:hover {
+  background: #e5e7eb;
+}
+
+.tab.active {
+  background: #111827;
+  color: white;
+}

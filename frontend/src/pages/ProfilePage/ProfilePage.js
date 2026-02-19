@@ -14,14 +14,50 @@ const ORDER_TABS = [
   { key: "Completed", label: "สำเร็จแล้ว", icon: "✅" },
 ];
 
+
 const STATUS_MAP = {
-  Paid: { label: "ชำระเงินแล้ว", color: "#059669", bg: "#d1fae5" },
-  Preparing: { label: "กำลังเตรียมของ", color: "#7c3aed", bg: "#ede9fe" },
-  ReadyToShip: { label: "รอขนส่งรับของ", color: "#4f46e5", bg: "#e0e7ff" },
-  Shipping: { label: "กำลังจัดส่ง", color: "#0284c7", bg: "#e0f2fe" },
-  Completed: { label: "สำเร็จ", color: "#059669", bg: "#d1fae5" },
-  Cancelled: { label: "ยกเลิก", color: "#dc2626", bg: "#fee2e2" },
+  PendingPayment: {
+    label: "รอชำระเงิน",
+    color: "#ea580c",
+    bg: "#ffedd5"
+  },
+  WaitingConfirm: {
+    label: "รอตรวจสอบสลิป",
+    color: "#ca8a04",
+    bg: "#fef9c3"
+  },
+  Paid: {
+    label: "ร้านเตรียมสินค้า",
+    color: "#2563eb",
+    bg: "#dbeafe"
+  },
+  Preparing: {
+    label: "กำลังเตรียมของ",
+    color: "#7c3aed",
+    bg: "#ede9fe"
+  },
+  Shipping: {
+    label: "กำลังจัดส่ง",
+    color: "#0284c7",
+    bg: "#e0f2fe"
+  },
+  WaitingMeetup: {
+    label: "รอนัดรับสินค้า",
+    color: "#9333ea",
+    bg: "#f3e8ff"
+  },
+  Completed: {
+    label: "สำเร็จแล้ว",
+    color: "#059669",
+    bg: "#d1fae5"
+  },
+  Cancelled: {
+    label: "ยกเลิก",
+    color: "#dc2626",
+    bg: "#fee2e2"
+  }
 };
+
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -439,100 +475,106 @@ export default function ProfilePage() {
                   <p>ยังไม่มีสินค้าในคลัง</p>
                 </div>
               ) : (
-                getFilteredOrders().map(order => (
-                  <div key={order._id} className="pp-ocard">
+                getFilteredOrders().map(order => {
 
-                    {/* 🔹 Header ร้าน + สถานะ */}
-                    <div className="pp-shop-header">
-                      <div className="pp-shop-left">
-                        {/* ลองใช้ username หรือถ้าคุณมีระบบ Shop แยก ให้ดึงจาก product.user */}
-                        {order.items?.[0]?.product?.user?.username || "ไม่ทราบชื่อร้าน"}
-                      </div>
+                  const statusInfo = STATUS_MAP[order.status] || {
+                    label: order.status,
+                    color: "#374151",
+                    bg: "#f3f4f6"
+                  };
 
-                      <div
-                        className="pp-ostatus"
-                        style={{
-                          background: STATUS_MAP[order.status]?.bg,
-                          color: STATUS_MAP[order.status]?.color
-                        }}
-                      >
-                        {STATUS_MAP[order.status]?.label}
-                      </div>
-                    </div>
+                  return (
+                    <div key={order._id} className="pp-ocard">
 
-                    {/* 🔹 รายการสินค้า */}
-                    <div className="pp-oitems">
-                      {order.items?.map((item, i) => (
-                        <div key={i} className="pp-oitem">
-                          <img
-                            className="pp-oimg"
-                            src={item.product?.images?.length > 0 ? `${API_URL}${item.product.images[0]}` : "/images/default-product.png"}
-                            alt={item.product?.title}
-                          />
-                          <div className="pp-ometa">
-                            <div className="pp-oname">
-                              {item.product?.title || "ไม่พบชื่อสินค้า"}
-                            </div>
-                            <p className="pp-odesc">
-                              {item.product?.description || "ไม่มีรายละเอียด"}
-                            </p>
-                            <span className="pp-oqty">x{item.quantity}</span>
-                          </div>
-
-                          <div className="pp-oprice">
-                            ฿{item.price.toLocaleString()}
-                          </div>
-
+                      {/* 🔹 Header ร้าน + สถานะ */}
+                      <div className="pp-shop-header">
+                        <div className="pp-shop-left">
+                          {/* ลองใช้ username หรือถ้าคุณมีระบบ Shop แยก ให้ดึงจาก product.user */}
+                          {order.items?.[0]?.product?.user?.username || "ไม่ทราบชื่อร้าน"}
                         </div>
-                      ))}
-                    </div>
 
-                    {/* 🔹 Footer ยอดรวม */}
-                    <div className="pp-ofooter">
-
-                      <div className="pp-total">
-                        รวมทั้งหมด:
-                        <span>
-                          ฿{order.totalPrice?.toLocaleString()}
-                        </span>
-                      </div>
-
-                      {/* 🚚 แสดงข้อมูลไรเดอร์ */}
-                      {order.status === "Shipping" && order.deliveryDetails && (
-                        <div className="pp-delivery-info">
-                          🚚 ไรเดอร์: {order.deliveryDetails.riderName}
-                          <br />
-                          📞 {order.deliveryDetails.riderPhone}
-                          {order.deliveryDetails.trackingUrl && (
-                            <>
-                              <br />
-                              🔗 <a
-                                href={order.deliveryDetails.trackingUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                ติดตามพัสดุ
-                              </a>
-                            </>
-                          )}
-                        </div>
-                      )}
-
-                      {order.status === "Shipping" && (
-                        <button
-                          className="pp-obtn confirm"
-                          onClick={() => handleConfirmReceipt(order._id)}
+                        <div
+                          className="pp-ostatus"
+                          style={{
+                            background: statusInfo.bg,
+                            color: statusInfo.color
+                          }}
                         >
-                          ยืนยันการรับสินค้า
-                        </button>
-                      )}
+                          {statusInfo.label}
+                        </div>
+                      </div>
 
+                      {/* 🔹 รายการสินค้า */}
+                      <div className="pp-oitems">
+                        {order.items?.map((item, i) => (
+                          <div key={i} className="pp-oitem">
+                            <img
+                              className="pp-oimg"
+                              src={item.product?.images?.length > 0 ? `${API_URL}${item.product.images[0]}` : "/images/default-product.png"}
+                              alt={item.product?.title}
+                            />
+                            <div className="pp-ometa">
+                              <div className="pp-oname">
+                                {item.product?.title || "ไม่พบชื่อสินค้า"}
+                              </div>
+                              <p className="pp-odesc">
+                                {item.product?.description || "ไม่มีรายละเอียด"}
+                              </p>
+                              <span className="pp-oqty">x{item.quantity}</span>
+                            </div>
+
+                            <div className="pp-oprice">
+                              ฿{item.price.toLocaleString()}
+                            </div>
+
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 🔹 Footer ยอดรวม */}
+                      <div className="pp-ofooter">
+
+                        <div className="pp-total">
+                          รวมทั้งหมด:
+                          <span>
+                            ฿{order.totalPrice?.toLocaleString()}
+                          </span>
+                        </div>
+
+                        {/* 🚚 แสดงข้อมูลไรเดอร์ */}
+                        {order.status === "Shipping" && order.deliveryDetails && (
+                          <div className="pp-delivery-info">
+                            🚚 ไรเดอร์: {order.deliveryDetails.riderName}
+                            <br />
+                            📞 {order.deliveryDetails.riderPhone}
+                            {order.deliveryDetails.trackingUrl && (
+                              <>
+                                <br />
+                                🔗 <a
+                                  href={order.deliveryDetails.trackingUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  ติดตามพัสดุ
+                                </a>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {order.status === "Shipping" && (
+                          <button
+                            className="pp-obtn confirm"
+                            onClick={() => handleConfirmReceipt(order._id)}
+                          >
+                            ยืนยันการรับสินค้า
+                          </button>
+                        )}
+
+                      </div>
                     </div>
-
-
-                  </div>
-                ))
-
+                  );
+                })
               )}
           </div>
         )}
