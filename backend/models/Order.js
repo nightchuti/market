@@ -27,9 +27,9 @@ const orderSchema = new mongoose.Schema({
   ],
 
   // 🔥 แยก delivery method ชัดเจน
-  deliveryMethod: {
+  deliveryMode: {
     type: String,
-    enum: ["MEETUP", "RIDER", "POST"],
+    enum: ["DELIVERY", "PICKUP"],
     required: true
   },
 

@@ -181,7 +181,7 @@ router.post("/checkout", protect, async (req, res) => {
           user: buyerId,
           seller: sellerId, 
           items: orderItems,
-          deliveryMethod: deliveryMode,
+          deliveryMode: deliveryMode,
           paymentMethod,
           shippingAddress,
           deliveryFee,
