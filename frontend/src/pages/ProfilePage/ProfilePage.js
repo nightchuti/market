@@ -192,13 +192,24 @@ export default function ProfilePage() {
 
   const handleConfirmReceipt = async (orderId) => {
     if (!window.confirm("คุณได้รับสินค้าเรียบร้อยแล้วใช่หรือไม่?")) return;
+
     try {
-      await axios.patch(`${API_URL}/api/order/${orderId}/complete`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.post(
+        `${API_URL}/api/orders/${orderId}/confirm-delivery`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      alert("ยืนยันรับสินค้าแล้ว");
       fetchOrders();
-    } catch (err) { alert("เกิดข้อผิดพลาด"); }
+
+    } catch (err) {
+      alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
+    }
   };
+
 
   const getFilteredOrders = () => {
     if (orderTab === "all") return orders;
@@ -478,12 +489,34 @@ export default function ProfilePage() {
 
                     {/* 🔹 Footer ยอดรวม */}
                     <div className="pp-ofooter">
+
                       <div className="pp-total">
                         รวมทั้งหมด:
                         <span>
                           ฿{order.totalPrice?.toLocaleString()}
                         </span>
                       </div>
+
+                      {/* 🚚 แสดงข้อมูลไรเดอร์ */}
+                      {order.status === "Shipping" && order.deliveryDetails && (
+                        <div className="pp-delivery-info">
+                          🚚 ไรเดอร์: {order.deliveryDetails.riderName}
+                          <br />
+                          📞 {order.deliveryDetails.riderPhone}
+                          {order.deliveryDetails.trackingUrl && (
+                            <>
+                              <br />
+                              🔗 <a
+                                href={order.deliveryDetails.trackingUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                ติดตามพัสดุ
+                              </a>
+                            </>
+                          )}
+                        </div>
+                      )}
 
                       {order.status === "Shipping" && (
                         <button
@@ -493,7 +526,9 @@ export default function ProfilePage() {
                           ยืนยันการรับสินค้า
                         </button>
                       )}
+
                     </div>
+
 
                   </div>
                 ))

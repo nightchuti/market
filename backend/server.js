@@ -46,7 +46,19 @@ app.get("/", (req, res) => {
 });
 
 // ===== DATABASE =====
-connectDB();
+// ===== DATABASE + CRON START =====
+const startServer = async () => {
+  await connectDB();
+
+  // 🔥 เรียก Cron หลัง DB connect
+  require("./cron/autoRelease");
+
+  server.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+};
+
+startServer();
 
 // ===== ROUTES =====
 app.use("/api/auth", authRoutes);
@@ -62,10 +74,4 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/trades", tradeRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/messages", messageRoutes);
-
-// ===== START SERVER =====
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
 

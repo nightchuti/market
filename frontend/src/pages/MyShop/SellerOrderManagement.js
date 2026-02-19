@@ -42,6 +42,27 @@ function SellerOrderManagement({ setOrderCount }) {
     fetchOrders();
   }, [fetchOrders]);
 
+  const handleAccept = async (orderId) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.patch(
+        `${API_URL}/api/orders/${orderId}/accept`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      alert("รับออเดอร์แล้ว");
+      fetchOrders();
+
+    } catch (err) {
+      alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
+    }
+  };
+
+
   const handlePrepare = async (orderId) => {
     if (!window.confirm("ยืนยันเริ่มเตรียมสินค้า?")) return;
 
@@ -59,6 +80,36 @@ function SellerOrderManagement({ setOrderCount }) {
       alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
     }
   };
+
+  const handleShip = async (orderId) => {
+    const riderName = prompt("ชื่อไรเดอร์:");
+    const riderPhone = prompt("เบอร์โทรไรเดอร์:");
+    const trackingUrl = prompt("ลิงก์ติดตาม (ถ้ามี):");
+
+    if (!riderName || !riderPhone) {
+      alert("กรุณากรอกข้อมูลให้ครบ");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.patch(
+        `${API_URL}/api/orders/${orderId}/ship`,
+        { riderName, riderPhone, trackingUrl },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      alert("จัดส่งแล้ว");
+      fetchOrders();
+
+    } catch (err) {
+      alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
+    }
+  };
+
 
   if (loading) return <div style={{ padding: 40 }}>กำลังโหลด...</div>;
   if (orders.length === 0)
@@ -90,28 +141,34 @@ function SellerOrderManagement({ setOrderCount }) {
         {/* RIGHT ACTIONS */}
         <div className="card-actions">
 
-          <span className={`status-badge ${order.status.toLowerCase()}`}>
-            {order.status}
-          </span>
-
           {order.status === "Paid" && (
             <button
-              className="prepare-btn"
-              onClick={() => handlePrepare(order._id)}
+              className="btn-main"
+              onClick={() => handleAccept(order._id)}
             >
-              เตรียมสินค้า
+              รับออเดอร์
             </button>
           )}
 
-          <button
-            className={`dropdown-btn ${openId === order._id ? "active" : ""}`}
-            onClick={() =>
-              setOpenId(openId === order._id ? null : order._id)
-            }
-          >
-            {openId === order._id ? "−" : "＋"}
-          </button>
+          {order.status === "Preparing" && (
+            <button
+              className="btn-main"
+              onClick={() => handleShip(order._id)}
+            >
+              เรียกไรเดอร์
+            </button>
+          )}
+
+          {order.status === "Shipping" && (
+            <div style={{ fontSize: "13px" }}>
+              🚚 กำลังจัดส่ง
+              <br />
+              ไรเดอร์: {order.deliveryDetails?.riderName}
+            </div>
+          )}
+
         </div>
+
       </div>
 
       {/* DROPDOWN DETAIL */}

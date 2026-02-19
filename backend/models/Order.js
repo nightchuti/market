@@ -8,6 +8,12 @@ const orderSchema = new mongoose.Schema({
     required: true
   },
 
+  seller: {   // 🔥 สำคัญมาก (ไม่ต้อง query ผ่าน product)
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
+  },
+
   items: [
     {
       product: {
@@ -20,6 +26,13 @@ const orderSchema = new mongoose.Schema({
     }
   ],
 
+  // 🔥 แยก delivery method ชัดเจน
+  deliveryMethod: {
+    type: String,
+    enum: ["MEETUP", "RIDER", "POST"],
+    required: true
+  },
+
   shippingAddress: {
     dormName: String,
     room: String,
@@ -27,6 +40,30 @@ const orderSchema = new mongoose.Schema({
     lat: Number,
     lng: Number
   },
+
+  deliveryDetails: {
+    riderName: String,
+    riderPhone: String,
+    trackingUrl: String,
+    deliveryId: String,
+    proofImage: String // รูปตอนส่งให้ไรเดอร์
+  },
+
+  // 🔥 Meetup Security
+  meetupOTP: String,
+  meetupVerified: {
+    type: Boolean,
+    default: false
+  },
+
+  // 🔥 Escrow Control
+  escrowStatus: {
+    type: String,
+    enum: ["Holding", "Released", "Refunded"],
+    default: "Holding"
+  },
+
+  autoReleaseAt: Date,
 
   couponCode: String,
 
@@ -48,11 +85,11 @@ const orderSchema = new mongoose.Schema({
     enum: [
       "PendingPayment",
       "WaitingConfirm",
-      "WaitingMeetup",
       "Paid",
       "Preparing",
       "ReadyToShip",
       "Shipping",
+      "WaitingMeetup",
       "Completed",
       "Cancelled",
       "Disputed"
@@ -60,17 +97,8 @@ const orderSchema = new mongoose.Schema({
     default: "PendingPayment"
   },
 
-  deliveryDetails: {
-    riderName: String,
-    riderPhone: String,
-    trackingUrl: String,
-    deliveryId: String
-  },
-
   paidAt: Date,
   completedAt: Date,
-
-  
 
 }, { timestamps: true });
 

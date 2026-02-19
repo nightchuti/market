@@ -20,6 +20,7 @@
     "mongodb": "^7.1.0",
     "mongoose": "^9.1.6",
     "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
     "promptpay-qr": "^0.5.0",
     "qrcode.react": "^4.2.0",
     "react-easy-crop": "^5.5.6",

@@ -16,6 +16,12 @@ const { protect } = require("../middleware/authMiddleware");
 const calculateDistance = require("../utils/distance");
 const calculateDeliveryFee = require("../utils/deliveryFee");
 
+const {
+  acceptOrder,
+  shipOrder,
+  confirmDelivery
+} = require("../controllers/orderController");
+
 // ===== ตั้งค่า MULTER สำหรับอัปโหลดสลิป =====
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -162,6 +168,8 @@ router.post("/checkout", protect, async (req, res) => {
         quantity: item.quantity,
         price: updatedProduct.price
       });
+
+      var sellerId = updatedProduct.user; 
     }
 
     // ... (ส่วนคำนวณค่าส่ง/คูปอง เหมือนเดิม) ...
@@ -172,7 +180,7 @@ router.post("/checkout", protect, async (req, res) => {
         {
           user: buyerId,
           items: orderItems,
-          deliveryMode,
+          deliveryMethod: deliveryMode,
           paymentMethod,
           shippingAddress,
           deliveryFee,
@@ -253,36 +261,77 @@ router.patch("/:id/prepare", protect, async (req, res) => {
 // ==========================================
 router.patch("/:id/call-delivery", protect, async (req, res) => {
   try {
-    const order = await Order.findOne({ _id: req.params.id, seller: req.user.id });
-    if (order.status !== "Preparing") return res.status(400).json({ message: "กรุณากดเตรียมสินค้าก่อนเรียกไรเดอร์" });
+    const { riderName, riderPhone, trackingUrl } = req.body;
 
-    // จำลองการเรียก API ขนส่ง
+    const order = await Order.findOne({
+      _id: req.params.id,
+      seller: req.user.id
+    });
+
+    if (!order)
+      return res.status(404).json({ message: "ไม่พบออเดอร์" });
+
+    if (order.status !== "Preparing")
+      return res.status(400).json({ message: "ต้องเตรียมสินค้าก่อน" });
+
     order.status = "Shipping";
-    order.deliveryDetails = { riderName: "สมชาย ขยันส่ง", riderPhone: "081-234-5678", trackingUrl: "https://track.grab.com/mock" };
+
+    order.deliveryDetails = {
+      riderName,
+      riderPhone,
+      trackingUrl
+    };
+
+    // 🔥 ตั้ง auto release 24 ชม.
+    order.autoReleaseAt = new Date(
+      Date.now() + 24 * 60 * 60 * 1000
+    );
 
     await order.save();
-    res.json({ success: true, message: "เรียกไรเดอร์สำเร็จ!", order });
+
+    res.json({
+      success: true,
+      message: "บันทึกข้อมูลไรเดอร์และเริ่มจัดส่งแล้ว",
+      order
+    });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 // ==========================================
 // 8. [BUYER] ยืนยันได้รับสินค้า (Completed)
 // ==========================================
 router.patch("/:id/complete", protect, async (req, res) => {
   try {
-    const order = await Order.findOneAndUpdate(
-      { _id: req.params.id, user: req.user.id, status: "Shipping" },
-      { status: "Completed" },
-      { new: true }
-    );
-    if (!order) return res.status(400).json({ message: "ไม่สามารถยืนยันได้" });
-    res.json({ success: true, message: "การซื้อขายเสร็จสมบูรณ์ ระบบจะโอนเงินให้ผู้ขายต่อไป", order });
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user.id,
+      status: "Shipping"
+    });
+
+    if (!order)
+      return res.status(400).json({ message: "ไม่สามารถยืนยันได้" });
+
+    order.status = "Completed";
+    order.escrowStatus = "Released";
+    order.completedAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: "ยืนยันรับสินค้า เงินถูกปล่อยแล้ว",
+      order
+    });
+
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 });
+
 
 // ==========================================
 // 9. รายละเอียดออเดอร์เดียว & ยกเลิกออเดอร์
@@ -364,5 +413,20 @@ router.patch("/:id/admin-confirm", protect, async (req, res) => {
   await order.save();
   res.json({ message: "Updated" });
 });
+
+// ==========================================
+// 🔥 [SELLER] รับออเดอร์ (Accept)
+// ==========================================
+router.patch("/:id/accept", protect, acceptOrder);
+
+// ==========================================
+// 🚚 [SELLER] กรอกข้อมูลไรเดอร์ + ส่งสินค้า
+// ==========================================
+router.patch("/:id/ship", protect, shipOrder);
+
+// ==========================================
+// ✅ [BUYER] ยืนยันได้รับสินค้า
+// ==========================================
+router.post("/:id/confirm-delivery", protect, confirmDelivery);
 
 module.exports = router;

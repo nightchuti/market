@@ -532,3 +532,22 @@
 .pp-obtn.confirm:hover {
   opacity: 0.9;
 }
+
+.pp-delivery-info {
+  margin-top: 10px;
+  font-size: 13px;
+  background: #f1f5f9;
+  padding: 10px;
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+.pp-delivery-info a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.pp-delivery-info a:hover {
+  text-decoration: underline;
+}
