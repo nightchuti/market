@@ -221,7 +221,7 @@ function MyShop() {
           คำสั่งซื้อ ({orderCount})
         </button>
         <button className={activeTab === "sales" ? "active" : ""} onClick={() => setActiveTab("sales")}>
-          สำเร็จแล้ว ({soldProducts.length})
+          สำเร็จแล้ว ({soldCount})
         </button>
       </div>
 
