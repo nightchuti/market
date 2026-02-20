@@ -37,7 +37,7 @@ function ProductDetail() {
 
   // ================= CHAT =================
   const handleChat = async () => {
-    if (!token) return alert("กรุณาเข้าสู่ระบบก่อนแชท");
+    if (!token) return alert("กรุณาเข้าสู่ระบบก่อน");
     if (!product) return;
 
     const sellerId = product.user?._id || product.user;
@@ -50,20 +50,34 @@ function ProductDetail() {
     setChatLoading(true);
 
     try {
+      // 🔥 ถ้าเป็น sell_only → normal chat
+      if (product.tradeOption === "sell_only") {
+        const res = await api.post(
+          "/api/chat/create-normal",
+          { productId: product._id },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        return navigate(`/chat/${res.data._id}`);
+      }
+
+      // 🔥 ถ้าเป็น trade_allowed หรือ negotiable → trade chat
       const res = await api.post(
-  "/api/chat/create-normal",
-  { productId: product._id },
-  { headers: { Authorization: `Bearer ${token}` } }
-);
+        "/api/chat/create-trade",
+        {
+          productId: product._id,
+          offeredProductId: null // เดี๋ยวให้ผู้ใช้เลือกในหน้า trade
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       navigate(`/chat/${res.data._id}`);
+
     } catch (err) {
-      alert("ไม่สามารถเปิดแชทได้");
+      alert(err.response?.data?.error || "ไม่สามารถเปิดแชทได้");
     } finally {
       setChatLoading(false);
     }
   };
-
   // ================= ADD TO CART =================
   const handleAddToCart = async () => {
     if (!token) return alert("กรุณาเข้าสู่ระบบก่อน");
@@ -89,7 +103,7 @@ function ProductDetail() {
   };
 
   // ================= BUY NOW =================
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!token) return alert("กรุณาเข้าสู่ระบบก่อนซื้อสินค้า");
     if (!product) return;
 
@@ -99,6 +113,12 @@ function ProductDetail() {
       return alert("ไม่สามารถซื้อสินค้าของตัวเองได้");
     }
 
+    // 🔥 ถ้า trade_only → บังคับเข้า trade chat
+    if (product.tradeOption === "trade_allowed") {
+      return handleChat();
+    }
+
+    // 🔥 sell_only หรือ negotiable → ซื้อได้
     const itemToBuy = {
       _id: product._id,
       product: { _id: product._id },
@@ -259,7 +279,7 @@ function ProductDetail() {
             <button
               className="btn-cart"
               onClick={handleAddToCart}
-              disabled={isOwnProduct}
+              disabled={isOwnProduct || product.tradeOption === "trade_allowed"}
             >
               🛒 เพิ่มลงตะกร้า
             </button>
@@ -277,7 +297,9 @@ function ProductDetail() {
             <button
               className="btn-buy"
               onClick={handleBuyNow}
-              disabled={isOwnProduct}
+              disabled={
+                isOwnProduct || product.tradeOption === "trade_allowed"
+              }
             >
               ⚡ ซื้อทันที
             </button>
