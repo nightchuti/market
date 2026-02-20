@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
     cb(null, `slip-${Date.now()}${path.extname(file.originalname)}`);
   }
 });
-const upload = require("../middleware/uploadSlip");
+const upload = require("../middleware/upload");
 
 // ==========================================
 // 1. [BUYER] ดึงประวัติคำสั่งซื้อของตัวเอง
