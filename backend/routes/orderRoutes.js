@@ -75,7 +75,7 @@ router.get("/seller/all", protect, async (req, res) => {
       .populate({
         path: "items.product",
         model: "Product",
-        select: "title price user",  // ดึงข้อมูล seller มาด้วยเพื่อกรอง
+        select: "title price user images",  // ดึงข้อมูล seller มาด้วยเพื่อกรอง
       })
       .sort({ createdAt: -1 });
 
