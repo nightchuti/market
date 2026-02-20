@@ -150,7 +150,11 @@ function SellerOrderManagement({ setOrderCount }) {
 
                 {order.items?.[0]?.product?.images?.[0] ? (
                   <img
-                    src={`${API_URL}${order.items[0].product.images[0]}`}
+                    src={
+                      order.items[0].product.images[0].startsWith("http")
+                        ? order.items[0].product.images[0]
+                        : `${API_URL}${order.items[0].product.images[0]}`
+                    }
                     alt="product"
                     className="inventory-thumb"
                   />
