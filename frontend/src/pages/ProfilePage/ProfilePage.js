@@ -253,6 +253,10 @@ export default function ProfilePage() {
     }
   };
 
+  const handleGoToPayment = (orderId) => {
+    navigate(`/payment/${orderId}`);
+  };
+
   const getFilteredOrders = () => {
     if (orderTab === "all") return orders;
 
@@ -480,7 +484,7 @@ export default function ProfilePage() {
           <div className="pp-fade">
             <div className="pp-order-tabs">
               {ORDER_TABS.map(t => (
-                <button key={t.key} className={`pp-otab ${orderTab === t.key ? "on" : ""}`} onClick={() => setOrderTab(t.key)}>{t.icon} {t.label}</button>
+                <button key={t.key} className={`pp-otab ${orderTab === t.key ? "on" : ""}`} onClick={() => setOrderTab(t.key)}>{t.label}</button>
               ))}
             </div>
 
@@ -576,6 +580,16 @@ export default function ProfilePage() {
                               </>
                             )}
                           </div>
+                        )}
+
+                        {/* ปุ่มไปชำระเงิน */}
+                        {order.status === "PendingPayment" && (
+                          <button
+                            className="pp-obtn pay"
+                            onClick={() => handleGoToPayment(order._id)}
+                          >
+                            ไปชำระเงิน
+                          </button>
                         )}
 
                         {order.status === "Shipping" && (
