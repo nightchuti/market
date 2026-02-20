@@ -503,7 +503,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+}
+
+.pp-action-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .pp-total {
@@ -537,12 +543,12 @@
 }
 
 .pp-delivery-info {
-  margin-top: 10px;
-  font-size: 13px;
-  background: #f1f5f9;
-  padding: 10px;
-  border-radius: 8px;
-  line-height: 1.6;
+  background: #f3f4f6;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .pp-delivery-info a {

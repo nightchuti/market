@@ -556,31 +556,29 @@ export default function ProfilePage() {
 
                         <div className="pp-total">
                           รวมทั้งหมด:
-                          <span>
-                            ฿{order.totalPrice?.toLocaleString()}
-                          </span>
+                          <span>฿{order.totalPrice?.toLocaleString()}</span>
                         </div>
 
-                        {/* 🚚 แสดงข้อมูลไรเดอร์ */}
-                        {order.status === "Shipping" && order.deliveryDetails && (
-                          <div className="pp-delivery-info">
-                            🚚 ไรเดอร์: {order.deliveryDetails.riderName}
-                            <br />
-                            📞 {order.deliveryDetails.riderPhone}
-                            {order.deliveryDetails.trackingUrl && (
-                              <>
-                                <br />
-                                🔗 <a
-                                  href={order.deliveryDetails.trackingUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                >
-                                  ติดตามพัสดุ
-                                </a>
-                              </>
-                            )}
-                          </div>
-                        )}
+                        <div className="pp-action-right">
+
+                          {order.status === "Shipping" && order.deliveryDetails && (
+                            <div className="pp-delivery-info">
+                              🚚 ไรเดอร์: {order.deliveryDetails.riderName}
+                              <br />
+                              📞 {order.deliveryDetails.riderPhone}
+                            </div>
+                          )}
+
+                          {order.status === "Shipping" && (
+                            <button
+                              className="pp-obtn confirm"
+                              onClick={() => handleConfirmReceipt(order._id)}
+                            >
+                              ยืนยันการรับสินค้า
+                            </button>
+                          )}
+                          
+                        </div>
 
                         {/* ปุ่มไปชำระเงิน */}
                         {order.status === "PendingPayment" && (
@@ -591,16 +589,6 @@ export default function ProfilePage() {
                             ไปชำระเงิน
                           </button>
                         )}
-
-                        {order.status === "Shipping" && (
-                          <button
-                            className="pp-obtn confirm"
-                            onClick={() => handleConfirmReceipt(order._id)}
-                          >
-                            ยืนยันการรับสินค้า
-                          </button>
-                        )}
-
                       </div>
                     </div>
                   );
