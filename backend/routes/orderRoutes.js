@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
     cb(null, `slip-${Date.now()}${path.extname(file.originalname)}`);
   }
 });
-const upload = multer({ storage });
+const upload = require("../middleware/upload");
 
 // ==========================================
 // 1. [BUYER] ดึงประวัติคำสั่งซื้อของตัวเอง
@@ -75,7 +75,7 @@ router.get("/seller/all", protect, async (req, res) => {
       .populate({
         path: "items.product",
         model: "Product",
-        select: "title price user",  // ดึงข้อมูล seller มาด้วยเพื่อกรอง
+        select: "title price user images",  // ดึงข้อมูล seller มาด้วยเพื่อกรอง
       })
       .sort({ createdAt: -1 });
 
@@ -211,18 +211,35 @@ router.post("/checkout", protect, async (req, res) => {
 // ==========================================
 router.patch("/:id/upload-slip", protect, upload.single("slip"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ message: "กรุณาแนบไฟล์สลิป" });
+    if (!req.file) {
+      return res.status(400).json({ message: "กรุณาแนบไฟล์สลิป" });
+    }
+
     const order = await Order.findOneAndUpdate(
-      { _id: req.params.id, user: req.user.id, status: "PendingPayment" },
+      { 
+        _id: req.params.id, 
+        user: req.user.id, 
+        status: "PendingPayment" 
+      },
       {
-        paymentSlip: `/uploads/slips/${req.file.filename}`,
+        // ✅ ใช้ URL จาก Cloudinary แทน
+        paymentSlip: req.file.path,
         status: "WaitingConfirm",
         paidAt: new Date(),
       },
       { new: true }
     );
-    if (!order) return res.status(404).json({ message: "ไม่พบออเดอร์หรือสถานะไม่ถูกต้อง" });
-    res.json({ success: true, message: "อัปโหลดสลิปสำเร็จ รอแอดมินตรวจสอบ", order });
+
+    if (!order) {
+      return res.status(404).json({ message: "ไม่พบออเดอร์หรือสถานะไม่ถูกต้อง" });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "อัปโหลดสลิปสำเร็จ รอแอดมินตรวจสอบ", 
+      order 
+    });
+
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

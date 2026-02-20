@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./SellerOrderManagement.css";
+import DetailSection from "../../components/DetailSection";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -8,7 +9,6 @@ function SellerOrderManagement({ setOrderCount }) {
   const [orders, setOrders] = useState([]);
   const [openId, setOpenId] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const [statusTab, setStatusTab] = useState("all");
 
   const fetchOrders = useCallback(async () => {
@@ -40,24 +40,17 @@ function SellerOrderManagement({ setOrderCount }) {
     }
   }, [setOrderCount]);
 
-  const getFilteredOrders = () => {
-    if (statusTab === "all") return orders;
-
-    if (statusTab === "paid")
-      return orders.filter(o => o.status === "Paid");
-
-    if (statusTab === "preparing")
-      return orders.filter(o => o.status === "Preparing");
-
-    if (statusTab === "shipping")
-      return orders.filter(o => o.status === "Shipping");
-
-    return orders;
-  };
-
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  const getFilteredOrders = () => {
+    if (statusTab === "all") return orders;
+    if (statusTab === "paid") return orders.filter(o => o.status === "Paid");
+    if (statusTab === "preparing") return orders.filter(o => o.status === "Preparing");
+    if (statusTab === "shipping") return orders.filter(o => o.status === "Shipping");
+    return orders;
+  };
 
   const handleAccept = async (orderId) => {
     try {
@@ -66,32 +59,10 @@ function SellerOrderManagement({ setOrderCount }) {
       await axios.patch(
         `${API_URL}/api/orders/${orderId}/accept`,
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      alert("รับออเดอร์แล้ว");
-      fetchOrders();
-
-    } catch (err) {
-      alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
-    }
-  };
-
-
-  const handlePrepare = async (orderId) => {
-    if (!window.confirm("ยืนยันเริ่มเตรียมสินค้า?")) return;
-
-    try {
-      const token = localStorage.getItem("token");
-
-      await axios.patch(
-        `${API_URL}/api/orders/${orderId}/prepare`,
-        {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      alert("รับออเดอร์แล้ว");
       fetchOrders();
     } catch (err) {
       alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
@@ -114,28 +85,24 @@ function SellerOrderManagement({ setOrderCount }) {
       await axios.patch(
         `${API_URL}/api/orders/${orderId}/ship`,
         { riderName, riderPhone, trackingUrl },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       alert("จัดส่งแล้ว");
       fetchOrders();
-
     } catch (err) {
       alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
     }
   };
 
-
   if (loading) return <div style={{ padding: 40 }}>กำลังโหลด...</div>;
   if (orders.length === 0)
     return <div style={{ padding: 40, textAlign: "center" }}>ไม่มีคำสั่งซื้อใหม่</div>;
 
-  return(
+  return (
     <div style={{ padding: 20 }}>
 
-      {/* 🔥 STATUS TABS */}
+      {/* STATUS TABS */}
       <div className="seller-tabs">
         <button
           className={statusTab === "all" ? "tab active" : "tab"}
@@ -143,21 +110,18 @@ function SellerOrderManagement({ setOrderCount }) {
         >
           ทั้งหมด
         </button>
-
         <button
           className={statusTab === "paid" ? "tab active" : "tab"}
           onClick={() => setStatusTab("paid")}
         >
           รอยืนยัน
         </button>
-
         <button
           className={statusTab === "preparing" ? "tab active" : "tab"}
           onClick={() => setStatusTab("preparing")}
         >
           รอส่ง
         </button>
-
         <button
           className={statusTab === "shipping" ? "tab active" : "tab"}
           onClick={() => setStatusTab("shipping")}
@@ -174,33 +138,60 @@ function SellerOrderManagement({ setOrderCount }) {
         getFilteredOrders().map(order => (
           <div key={order._id} className="shop-card">
 
-            <div className="card-top">
+            {/* ===== TOP BAR ===== */}
+            <div
+              className="card-top"
+              onClick={() =>
+                setOpenId(openId === order._id ? null : order._id)
+              }
+            >
 
-              {/* LEFT SIDE */}
-              <div className="order-main-info">
+              {/* LEFT : รูป + ชื่อ */}
+              <div className="product-main-info">
+                {order.items?.[0]?.product?.images?.[0] ? (
+                  <img
+                    src={`${API_URL}/${order.items?.[0]?.product?.images?.[0]}`}
+                    alt="product"
+                    className="inventory-thumb"
+                  />
+                ) : (
+                  <div className="inventory-thumb-placeholder">
+                    ไม่มีรูป
+                  </div>
+                )}
 
-                <div className="order-id">
-                  ORDER #{order._id.slice(-8).toUpperCase()}
-                </div>
+                <div className="title-section">
+                  <h4>
+                    {order.items?.[0]?.product?.title || "สินค้า"}
+                  </h4>
 
-                <div className="order-meta">
-                  <span>👤 {order.user?.username || "ไม่ระบุ"}</span>
-                  <span>📅 {new Date(order.createdAt).toLocaleString("th-TH")}</span>
-                </div>
+                  <div className="top-meta">
+                    <span className="order-id">
+                      ORDER #{order._id.slice(-6).toUpperCase()}
+                    </span>
 
-                <div className="order-total">
-                  ฿{order.totalPrice?.toLocaleString()}
+                    <span className="top-price">
+                      ฿{order.totalPrice?.toLocaleString()}
+                    </span>
+                  </div>
                 </div>
 
               </div>
 
-              {/* RIGHT ACTIONS */}
+              {/* RIGHT : ปุ่ม + status */}
               <div className="card-actions">
+
+                <span className={`status-badge ${order.status.toLowerCase()}`}>
+                  {order.status}
+                </span>
 
                 {order.status === "Paid" && (
                   <button
-                    className="btn-main"
-                    onClick={() => handleAccept(order._id)}
+                    className="action-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAccept(order._id);
+                    }}
                   >
                     รับออเดอร์
                   </button>
@@ -208,67 +199,59 @@ function SellerOrderManagement({ setOrderCount }) {
 
                 {order.status === "Preparing" && (
                   <button
-                    className="btn-main"
-                    onClick={() => handleShip(order._id)}
+                    className="action-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShip(order._id);
+                    }}
                   >
                     เรียกไรเดอร์
                   </button>
                 )}
 
-                {order.status === "Shipping" && (
-                  <div style={{ fontSize: "13px" }}>
-                    🚚 กำลังจัดส่ง
-                    <br />
-                    ไรเดอร์: {order.deliveryDetails?.riderName}
-                  </div>
-                )}
+                <button className="dropdown-btn">
+                  {openId === order._id ? "−" : "＋"}
+                </button>
 
               </div>
-
             </div>
 
-            {/* DROPDOWN DETAIL */}
+            {/* ===== DROPDOWN SECTION ===== */}
             {openId === order._id && (
               <div className="card-dropdown">
 
-                <div className="product-list">
-                  {order.items.map((item, idx) => (
-                    <div key={idx} className="product-row">
-                      <div>
-                        • {item.product?.title}
-                      </div>
-                      <div>x {item.quantity}</div>
+                <DetailSection title="ข้อมูลคำสั่งซื้อ">
+                  <div><strong>วันที่สั่ง:</strong> {new Date(order.createdAt).toLocaleString("th-TH")}</div>
+                  <div><strong>ยอดรวม:</strong> ฿{order.totalPrice?.toLocaleString()}</div>
+                  <div><strong>สถานะ:</strong> {order.status}</div>
+                </DetailSection>
+
+                <DetailSection title="ข้อมูลลูกค้า">
+                  <div><strong>ชื่อ:</strong> {order.user?.username}</div>
+                  <div><strong>เบอร์:</strong> {order.shippingAddress?.phone || "-"}</div>
+                </DetailSection>
+
+                <DetailSection title="รายการสินค้า">
+                  {order.items?.map((item, idx) => (
+                    <div key={idx}>
+                      {item.product?.title} x{item.quantity}
                     </div>
                   ))}
-                </div>
+                </DetailSection>
 
                 {order.shippingAddress && (
-                  <div className="shipping-box">
-                    <strong>ที่อยู่จัดส่ง</strong>
-                    <div>
-                      {order.shippingAddress.fullName} <br />
-                      {order.shippingAddress.addressLine} <br />
-                      {order.shippingAddress.phone}
-                    </div>
-                  </div>
-                )}
-
-                {order.paymentSlip && (
-                  <a
-                    href={`${API_URL}${order.paymentSlip}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="slip-link"
-                  >
-                    ดูหลักฐานการโอนเงิน
-                  </a>
+                  <DetailSection title="ที่อยู่จัดส่ง">
+                    <div>{order.shippingAddress.fullName}</div>
+                    <div>{order.shippingAddress.addressLine}</div>
+                    <div>{order.shippingAddress.phone}</div>
+                  </DetailSection>
                 )}
 
               </div>
             )}
-
           </div>
-        )))}
+        ))
+      )}
     </div>
   );
 }

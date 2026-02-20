@@ -551,3 +551,13 @@
 .pp-delivery-info a:hover {
   text-decoration: underline;
 }
+
+.pp-obtn.pay {
+  background: #f97316;
+  color: white;
+  width: 250px;
+}
+
+.pp-obtn.pay:hover {
+  background: #ea580c;
+}

@@ -9,6 +9,7 @@ const AdminDashboardPay = () => {
     const [loading, setLoading] = useState(true);
     const [confirmId, setConfirmId] = useState(null); // เก็บ ID ออเดอร์ที่กำลังจะกดยืนยัน
     const [isUpdating, setIsUpdating] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -74,7 +75,7 @@ const AdminDashboardPay = () => {
                                 <th style={styles.th}>รหัส/ร้านค้า</th>
                                 <th style={styles.th}>รายการสินค้า</th>
                                 <th style={styles.th}>ยอดเงิน</th>
-                                <th style={styles.th}>สลิป</th>
+                                <th style={styles.th}>หลักฐานการชำระเงิน</th>
                                 <th style={styles.th}>วันที่สั่ง</th>
                                 <th style={styles.th}>จัดการ</th>
                             </tr>
@@ -111,9 +112,9 @@ const AdminDashboardPay = () => {
 
                                     <td style={styles.td}>
                                         <img
-                                            src={`${API_URL}${order.paymentSlip}`}
+                                            src={order.paymentSlip}
                                             style={styles.thumbnail}
-                                            onClick={() => window.open(`${API_URL}${order.paymentSlip}`)}
+                                            onClick={() => setSelectedImage(order.paymentSlip)}
                                             alt="slip"
                                         />
                                     </td>
@@ -141,6 +142,13 @@ const AdminDashboardPay = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+            {selectedImage && (
+                <div style={styles.modalOverlay} onClick={() => setSelectedImage(null)}>
+                    <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                        <img src={selectedImage} style={styles.modalImage} alt="slip large" />
+                    </div>
                 </div>
             )}
         </div>
@@ -175,7 +183,38 @@ const styles = {
         backgroundColor: "#6c757d", color: "#fff", border: "none",
         padding: "8px 12px", borderRadius: "6px", cursor: "pointer"
     },
-    statusPaid: { color: "#28a745", fontWeight: "600", fontSize: "14px" }
+    statusPaid: {
+        color: "#28a745", fontWeight: "600", fontSize: "14px"
+    },
+    modalOverlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0,0,0,0.6)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 9999,
+        padding: "20px"
+    },
+
+    modalContent: {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    modalImage: {
+        maxWidth: "80vw",
+        maxHeight: "80vh",
+        width: "auto",
+        height: "auto",
+        objectFit: "contain",
+        borderRadius: "10px",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.4)"
+    }
 };
 
 export default AdminDashboardPay;
