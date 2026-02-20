@@ -132,7 +132,7 @@ function SellerOrderManagement({ setOrderCount }) {
   if (orders.length === 0)
     return <div style={{ padding: 40, textAlign: "center" }}>ไม่มีคำสั่งซื้อใหม่</div>;
 
-  return(
+  return (
     <div style={{ padding: 20 }}>
 
       {/* 🔥 STATUS TABS */}
@@ -231,20 +231,44 @@ function SellerOrderManagement({ setOrderCount }) {
             {openId === order._id && (
               <div className="card-dropdown">
 
-                <div className="product-list">
+                <div className="detail-section">
+                  <h4>ข้อมูลคำสั่งซื้อ</h4>
+                  <div><strong>Order ID:</strong> {order._id}</div>
+                  <div><strong>สถานะ:</strong> {order.status}</div>
+                  <div><strong>วันที่สั่ง:</strong> {new Date(order.createdAt).toLocaleString("th-TH")}</div>
+                  {order.paidAt && (
+                    <div><strong>วันที่ชำระ:</strong> {new Date(order.paidAt).toLocaleString("th-TH")}</div>
+                  )}
+                </div>
+
+                <div className="detail-section">
+                  <h4>ข้อมูลลูกค้า</h4>
+                  <div><strong>ชื่อ:</strong> {order.user?.username}</div>
+                  <div><strong>เบอร์:</strong> {order.shippingAddress?.phone}</div>
+                </div>
+
+                <div className="detail-section">
+                  <h4>รายการสินค้า</h4>
                   {order.items.map((item, idx) => (
                     <div key={idx} className="product-row">
                       <div>
                         • {item.product?.title}
+                        {item.product?.price && (
+                          <span> (฿{item.product.price.toLocaleString()})</span>
+                        )}
                       </div>
                       <div>x {item.quantity}</div>
                     </div>
                   ))}
                 </div>
 
+                <div className="detail-section total-box">
+                  <strong>ยอดรวมทั้งหมด:</strong> ฿{order.totalPrice?.toLocaleString()}
+                </div>
+
                 {order.shippingAddress && (
-                  <div className="shipping-box">
-                    <strong>ที่อยู่จัดส่ง</strong>
+                  <div className="detail-section">
+                    <h4>ที่อยู่จัดส่ง</h4>
                     <div>
                       {order.shippingAddress.fullName} <br />
                       {order.shippingAddress.addressLine} <br />
@@ -253,15 +277,37 @@ function SellerOrderManagement({ setOrderCount }) {
                   </div>
                 )}
 
+                {order.deliveryDetails && (
+                  <div className="detail-section">
+                    <h4>ข้อมูลการจัดส่ง</h4>
+                    <div><strong>ไรเดอร์:</strong> {order.deliveryDetails.riderName}</div>
+                    <div><strong>เบอร์:</strong> {order.deliveryDetails.riderPhone}</div>
+                    {order.deliveryDetails.trackingUrl && (
+                      <div>
+                        <a
+                          href={order.deliveryDetails.trackingUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          ลิงก์ติดตามพัสดุ
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {order.paymentSlip && (
-                  <a
-                    href={`${API_URL}${order.paymentSlip}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="slip-link"
-                  >
-                    ดูหลักฐานการโอนเงิน
-                  </a>
+                  <div className="detail-section">
+                    <h4>หลักฐานการโอน</h4>
+                    <a
+                      href={order.paymentSlip}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="slip-link"
+                    >
+                      ดูสลิปการโอนเงิน
+                    </a>
+                  </div>
                 )}
 
               </div>

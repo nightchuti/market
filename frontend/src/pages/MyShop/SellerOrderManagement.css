@@ -113,3 +113,29 @@
   background: #111827;
   color: white;
 }
+
+.detail-section {
+  margin-bottom: 18px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.detail-section h4 {
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: #333;
+}
+
+.total-box {
+  background: #e6f7ff;
+  font-size: 16px;
+}
+
+.slip-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: #0066cc;
+  font-weight: 500;
+}
