@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./SellerOrderManagement.css";
-import DetailSection from "../../components/DetailSection";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -171,7 +170,7 @@ function SellerOrderManagement({ setOrderCount }) {
                     </span>
 
                     <span className="top-price">
-                      ฿{order.totalPrice?.toLocaleString()}
+                        ฿{order.totalPrice?.toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -220,31 +219,54 @@ function SellerOrderManagement({ setOrderCount }) {
             {openId === order._id && (
               <div className="card-dropdown">
 
-                <DetailSection title="ข้อมูลคำสั่งซื้อ">
-                  <div><strong>วันที่สั่ง:</strong> {new Date(order.createdAt).toLocaleString("th-TH")}</div>
-                  <div><strong>ยอดรวม:</strong> ฿{order.totalPrice?.toLocaleString()}</div>
-                  <div><strong>สถานะ:</strong> {order.status}</div>
-                </DetailSection>
+                {/* หมวด 1 */}
+                <div className="detail-section">
+                  <h4>ข้อมูลคำสั่งซื้อ</h4>
+                  <div className="detail-grid">
+                    <div><strong>วันที่สั่ง:</strong> {new Date(order.createdAt).toLocaleString("th-TH")}</div>
+                    {order.paidAt && (
+                      <div><strong>วันที่ชำระ:</strong> {new Date(order.paidAt).toLocaleString("th-TH")}</div>
+                    )}
+                    <div><strong>ยอดรวม:</strong> ฿{order.totalPrice?.toLocaleString()}</div>
+                    <div><strong>สถานะ:</strong> {order.status}</div>
+                  </div>
+                </div>
 
-                <DetailSection title="ข้อมูลลูกค้า">
-                  <div><strong>ชื่อ:</strong> {order.user?.username}</div>
-                  <div><strong>เบอร์:</strong> {order.shippingAddress?.phone || "-"}</div>
-                </DetailSection>
+                {/* หมวด 2 */}
+                <div className="detail-section">
+                  <h4>ข้อมูลลูกค้า</h4>
+                  <div className="detail-grid">
+                    <div><strong>ชื่อ:</strong> {order.user?.username}</div>
+                    <div><strong>เบอร์:</strong> {order.shippingAddress?.phone || "-"}</div>
+                  </div>
+                </div>
 
-                <DetailSection title="รายการสินค้า">
+                {/* หมวด 3 */}
+                <div className="detail-section">
+                  <h4>รายการสินค้า</h4>
                   {order.items?.map((item, idx) => (
-                    <div key={idx}>
-                      {item.product?.title} x{item.quantity}
+                    <div key={idx} className="product-row">
+                      <div>
+                        • {item.product?.title}
+                        {item.product?.price && (
+                          <span> (฿{item.product.price.toLocaleString()})</span>
+                        )}
+                      </div>
+                      <div>x {item.quantity}</div>
                     </div>
                   ))}
-                </DetailSection>
+                </div>
 
+                {/* หมวด 4 */}
                 {order.shippingAddress && (
-                  <DetailSection title="ที่อยู่จัดส่ง">
-                    <div>{order.shippingAddress.fullName}</div>
-                    <div>{order.shippingAddress.addressLine}</div>
-                    <div>{order.shippingAddress.phone}</div>
-                  </DetailSection>
+                  <div className="detail-section">
+                    <h4>ที่อยู่จัดส่ง</h4>
+                    <div>
+                      {order.shippingAddress.fullName}<br />
+                      {order.shippingAddress.addressLine}<br />
+                      {order.shippingAddress.phone}
+                    </div>
+                  </div>
                 )}
 
               </div>

@@ -500,11 +500,16 @@
 
 /* ===== Footer ===== */
 .pp-ofooter {
-  border-top: 1px solid #f1f1f1;
-  padding-top: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+}
+
+.pp-action-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .pp-total {
@@ -519,14 +524,18 @@
 }
 
 /* ===== ปุ่ม ===== */
+.pp-obtn {
+  flex: 0 0 auto;   /* ❗ สำคัญมาก กัน flex ยืด */
+}
+
 .pp-obtn.confirm {
-  background: #ee4d2d;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
+  background: #05b64f;
+  color: #fff;
+  padding: 8px 18px;   /* ปรับขนาดให้พอดี */
+  font-size: 14px;
+  border-radius: 10px;
+  width: auto;         /* กันเต็มแถว */
+  white-space: nowrap; /* กันข้อความขึ้นบรรทัดใหม่ */
 }
 
 .pp-obtn.confirm:hover {
@@ -534,12 +543,12 @@
 }
 
 .pp-delivery-info {
-  margin-top: 10px;
-  font-size: 13px;
-  background: #f1f5f9;
-  padding: 10px;
-  border-radius: 8px;
-  line-height: 1.6;
+  background: #f3f4f6;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .pp-delivery-info a {
@@ -553,9 +562,13 @@
 }
 
 .pp-obtn.pay {
-  background: #f97316;
-  color: white;
-  width: 250px;
+  background: #f98f16;
+  color: #fff;
+  padding: 8px 18px;   /* ปรับขนาดให้พอดี */
+  font-size: 14px;
+  border-radius: 10px;
+  width: auto;         /* กันเต็มแถว */
+  white-space: nowrap; /* กันข้อความขึ้นบรรทัดใหม่ */
 }
 
 .pp-obtn.pay:hover {
