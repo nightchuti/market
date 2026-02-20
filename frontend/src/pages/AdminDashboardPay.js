@@ -9,6 +9,7 @@ const AdminDashboardPay = () => {
     const [loading, setLoading] = useState(true);
     const [confirmId, setConfirmId] = useState(null); // เก็บ ID ออเดอร์ที่กำลังจะกดยืนยัน
     const [isUpdating, setIsUpdating] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -113,7 +114,7 @@ const AdminDashboardPay = () => {
                                         <img
                                             src={order.paymentSlip}
                                             style={styles.thumbnail}
-                                            onClick={() => window.open(order.paymentSlip)}
+                                            onClick={() => setSelectedImage(order.paymentSlip)}
                                             alt="slip"
                                         />
                                     </td>
@@ -141,6 +142,13 @@ const AdminDashboardPay = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+            {selectedImage && (
+                <div style={styles.modalOverlay} onClick={() => setSelectedImage(null)}>
+                    <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                        <img src={selectedImage} style={styles.modalImage} alt="slip large" />
+                    </div>
                 </div>
             )}
         </div>
@@ -175,7 +183,29 @@ const styles = {
         backgroundColor: "#6c757d", color: "#fff", border: "none",
         padding: "8px 12px", borderRadius: "6px", cursor: "pointer"
     },
-    statusPaid: { color: "#28a745", fontWeight: "600", fontSize: "14px" }
+    statusPaid: { color: "#28a745", fontWeight: "600", fontSize: "14px" 
+    },
+    modalOverlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0,0,0,0.7)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 9999
+    },
+    modalContent: {
+        maxWidth: "90%",
+        maxHeight: "90%"
+    },
+    modalImage: {
+        width: "100%",
+        height: "auto",
+        borderRadius: "10px"
+    }
 };
 
 export default AdminDashboardPay;
