@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./SellerOrderManagement.css";
+import DetailSection from "../../components/DetailSection";
 
 const API_URL = process.env.REACT_APP_API_URL;
 

@@ -1,3 +1,5 @@
+import DetailSection from "../../components/DetailSection";
+
 function SalesHistory({ orders }) {
   if (!orders || orders.length === 0) {
     return (
