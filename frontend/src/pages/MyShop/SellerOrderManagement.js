@@ -201,34 +201,48 @@ function SellerOrderManagement({ setOrderCount }) {
               </div>
 
               {/* RIGHT ACTIONS */}
-              <div className="card-actions">
+              <div
+                className="card-top"
+                onClick={() =>
+                  setOpenId(openId === order._id ? null : order._id)
+                }
+              >
+                <div className="product-main-info">
 
-                {order.status === "Paid" && (
-                  <button
-                    className="btn-main"
-                    onClick={() => handleAccept(order._id)}
-                  >
-                    รับออเดอร์
-                  </button>
-                )}
+                  {order.items?.[0]?.product?.images?.[0] ? (
+                    <img
+                      src={`${API_URL}${order.items[0].product.images[0]}`}
+                      alt="product"
+                      className="inventory-thumb"
+                    />
+                  ) : (
+                    <div className="inventory-thumb-placeholder">ไม่มีรูป</div>
+                  )}
 
-                {order.status === "Preparing" && (
-                  <button
-                    className="btn-main"
-                    onClick={() => handleShip(order._id)}
-                  >
-                    เรียกไรเดอร์
-                  </button>
-                )}
-
-                {order.status === "Shipping" && (
-                  <div style={{ fontSize: "13px" }}>
-                    🚚 กำลังจัดส่ง
-                    <br />
-                    ไรเดอร์: {order.deliveryDetails?.riderName}
+                  <div className="title-section">
+                    <h4>
+                      ORDER #{order._id.slice(-6).toUpperCase()}
+                    </h4>
+                    <span className="price">
+                      ฿{order.totalPrice?.toLocaleString()}
+                    </span>
                   </div>
-                )}
 
+                </div>
+
+                <div className="card-actions">
+
+                  <span className={`status-badge ${order.status.toLowerCase()}`}>
+                    {order.status}
+                  </span>
+
+                  <button
+                    className={`dropdown-btn ${openId === order._id ? "active" : ""}`}
+                  >
+                    {openId === order._id ? "−" : "＋"}
+                  </button>
+
+                </div>
               </div>
 
             </div>
