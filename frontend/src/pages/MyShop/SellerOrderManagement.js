@@ -170,7 +170,7 @@ function SellerOrderManagement({ setOrderCount }) {
                     </span>
 
                     <span className="top-price">
-                      ฿{order.totalPrice?.toLocaleString()}
+                        ฿{order.totalPrice?.toLocaleString()}
                     </span>
                   </div>
                 </div>

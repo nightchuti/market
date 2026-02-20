@@ -9,11 +9,18 @@ const DEFAULT_AVATAR = "/images/default-avatar.png";
 
 const ORDER_TABS = [
   { key: "all", label: "ทั้งหมด", icon: "📋" },
-  { key: "Preparing", label: "ที่ต้องจัดส่ง", icon: "📦" },
-  { key: "Shipping", label: "ที่ต้องได้รับ", icon: "🚚" },
-  { key: "Completed", label: "สำเร็จแล้ว", icon: "✅" },
-];
 
+  { key: "PendingPayment", label: "รอชำระเงิน", icon: "💳" },
+  { key: "WaitingConfirm", label: "รอตรวจสอบสลิป", icon: "🧾" },
+
+  // กลุ่มรวมหลายสถานะ
+  { key: "ToShip", label: "ที่ต้องจัดส่ง", icon: "📦" },      // Paid + Preparing
+  { key: "ToReceive", label: "ที่ต้องได้รับ", icon: "🚚" },   // Shipping
+
+  { key: "WaitingMeetup", label: "รอนัดรับสินค้า", icon: "🤝" },
+  { key: "Completed", label: "สำเร็จแล้ว", icon: "✅" },
+  { key: "Cancelled", label: "ยกเลิก", icon: "❌" },
+];
 
 const STATUS_MAP = {
   PendingPayment: {
@@ -246,10 +253,19 @@ export default function ProfilePage() {
     }
   };
 
-
   const getFilteredOrders = () => {
     if (orderTab === "all") return orders;
-    if (orderTab === "Preparing") return orders.filter(o => ["Paid", "Preparing", "ReadyToShip"].includes(o.status));
+
+    if (orderTab === "ToShip") {
+      return orders.filter(o =>
+        ["Paid", "Preparing"].includes(o.status)
+      );
+    }
+
+    if (orderTab === "ToReceive") {
+      return orders.filter(o => o.status === "Shipping");
+    }
+
     return orders.filter(o => o.status === orderTab);
   };
 
