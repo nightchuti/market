@@ -95,11 +95,9 @@ function SellerOrderManagement({ setOrderCount }) {
   };
 
   if (loading) return <div style={{ padding: 40 }}>กำลังโหลด...</div>;
-  if (orders.length === 0)
-    return <div style={{ padding: 40, textAlign: "center" }}>ไม่มีคำสั่งซื้อใหม่</div>;
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className="seller-container">
 
       {/* STATUS TABS */}
       <div className="seller-tabs">
@@ -130,14 +128,14 @@ function SellerOrderManagement({ setOrderCount }) {
       </div>
 
       {getFilteredOrders().length === 0 ? (
-        <div style={{ padding: 40, textAlign: "center" }}>
+        <div className="empty-state">
           ไม่มีคำสั่งซื้อในหมวดนี้
         </div>
       ) : (
         getFilteredOrders().map(order => (
           <div key={order._id} className="shop-card">
 
-            {/* ===== TOP BAR ===== */}
+            {/* TOP */}
             <div
               className="card-top"
               onClick={() =>
@@ -145,8 +143,8 @@ function SellerOrderManagement({ setOrderCount }) {
               }
             >
 
-              {/* LEFT : รูป + ชื่อ */}
-              <div className="product-main-info">
+              {/* LEFT */}
+              <div className="card-left">
                 {order.items?.[0]?.product?.images?.[0] ? (
                   <img
                     src={`${API_URL}/${order.items?.[0]?.product?.images?.[0]}`}
@@ -158,27 +156,26 @@ function SellerOrderManagement({ setOrderCount }) {
                     ไม่มีรูป
                   </div>
                 )}
-
-                <div className="title-section">
-                  <h4>
-                    {order.items?.[0]?.product?.title || "สินค้า"}
-                  </h4>
-
-                  <div className="top-meta">
-                    <span className="order-id">
-                      ORDER #{order._id.slice(-6).toUpperCase()}
-                    </span>
-
-                    <span className="top-price">
-                      ฿{order.totalPrice?.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
               </div>
 
-              {/* RIGHT : ปุ่ม + status */}
-              <div className="card-actions">
+              {/* CENTER */}
+              <div className="card-center">
+                <h4 className="product-title">
+                  {order.items?.[0]?.product?.title || "สินค้า"}
+                </h4>
+
+                <div className="meta-row">
+                  <span className="order-id">
+                    ORDER #{order._id.slice(-6).toUpperCase()}
+                  </span>
+                  <span className="price">
+                    ฿{order.totalPrice?.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* RIGHT */}
+              <div className="card-right">
 
                 <span className={`status-badge ${order.status.toLowerCase()}`}>
                   {order.status}
@@ -186,7 +183,7 @@ function SellerOrderManagement({ setOrderCount }) {
 
                 {order.status === "Paid" && (
                   <button
-                    className="action-btn"
+                    className="action-btn primary"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleAccept(order._id);
@@ -198,7 +195,7 @@ function SellerOrderManagement({ setOrderCount }) {
 
                 {order.status === "Preparing" && (
                   <button
-                    className="action-btn"
+                    className="action-btn warning"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleShip(order._id);
@@ -215,11 +212,10 @@ function SellerOrderManagement({ setOrderCount }) {
               </div>
             </div>
 
-            {/* ===== DROPDOWN SECTION ===== */}
+            {/* DROPDOWN */}
             {openId === order._id && (
               <div className="card-dropdown">
 
-                {/* หมวด 1 */}
                 <div className="detail-section">
                   <h4>ข้อมูลคำสั่งซื้อ</h4>
                   <div className="detail-grid">
@@ -232,7 +228,6 @@ function SellerOrderManagement({ setOrderCount }) {
                   </div>
                 </div>
 
-                {/* หมวด 2 */}
                 <div className="detail-section">
                   <h4>ข้อมูลลูกค้า</h4>
                   <div className="detail-grid">
@@ -241,7 +236,6 @@ function SellerOrderManagement({ setOrderCount }) {
                   </div>
                 </div>
 
-                {/* หมวด 3 */}
                 <div className="detail-section">
                   <h4>รายการสินค้า</h4>
                   {order.items?.map((item, idx) => (
@@ -257,7 +251,6 @@ function SellerOrderManagement({ setOrderCount }) {
                   ))}
                 </div>
 
-                {/* หมวด 4 */}
                 {order.shippingAddress && (
                   <div className="detail-section">
                     <h4>ที่อยู่จัดส่ง</h4>
