@@ -111,9 +111,9 @@ const AdminDashboardPay = () => {
 
                                     <td style={styles.td}>
                                         <img
-                                            src={`${API_URL}${order.paymentSlip}`}
+                                            src={order.paymentSlip}
                                             style={styles.thumbnail}
-                                            onClick={() => window.open(`${API_URL}${order.paymentSlip}`)}
+                                            onClick={() => window.open(order.paymentSlip)}
                                             alt="slip"
                                         />
                                     </td>
