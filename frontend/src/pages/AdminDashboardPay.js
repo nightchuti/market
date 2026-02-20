@@ -4,8 +4,6 @@ import api from "../api";
 const API_URL = process.env.REACT_APP_API_URL;
 
 const AdminDashboardPay = () => {
-    console.log("API_URL =", API_URL);
-    console.log(order.paymentSlip);
     const [orders, setOrders] = useState([]);
     const [activeTab, setActiveTab] = useState("waiting");
     const [loading, setLoading] = useState(true);
@@ -25,6 +23,12 @@ const AdminDashboardPay = () => {
     };
 
     useEffect(() => { fetchOrders(); }, []);
+
+    useEffect(() => {
+        if (orders.length > 0) {
+            console.log("First slip =", orders[0].paymentSlip);
+        }
+    }, [orders]);
 
     const handleConfirmFinal = async (orderId) => {
         setIsUpdating(true);
