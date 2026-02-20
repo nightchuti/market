@@ -1,94 +1,4 @@
-.order-main-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.order-id {
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.order-meta {
-  font-size: 13px;
-  color: #666;
-  display: flex;
-  gap: 15px;
-}
-
-.order-total {
-  font-size: 16px;
-  font-weight: bold;
-  color: #2e7d32;
-}
-
-.prepare-btn {
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  background: #10bd4a;
-  color: white;
-  transition: 0.2s ease;
-}
-
-.prepare-btn:hover {
-  background: #0ea341;
-}
-
-.status-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-}
-
-.status-badge.paid {
-  background: #fff3e0;
-  color: #ef6c00;
-}
-
-.status-badge.preparing {
-  background: #e3f2fd;
-  color: #1565c0;
-}
-
-.status-badge.shipping {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.product-list {
-  margin-bottom: 15px;
-}
-
-.product-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 14px;
-}
-
-.shipping-box {
-  background: #f8f9fa;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-
-.slip-link {
-  font-size: 13px;
-  color: #007bff;
-  text-decoration: none;
-}
-
-.slip-link:hover {
-  text-decoration: underline;
-}
-
+/* ===== Container ===== */
 .seller-tabs {
   display: flex;
   gap: 10px;
@@ -96,61 +6,46 @@
 }
 
 .tab {
-  padding: 8px 14px;
-  border: none;
+  padding: 8px 16px;
   border-radius: 20px;
-  background: #f3f4f6;
+  border: none;
+  background: #f2f2f2;
   cursor: pointer;
-  font-size: 14px;
-  transition: 0.2s;
+  font-size: 13px;
+  transition: 0.2s ease;
 }
 
 .tab:hover {
-  background: #e5e7eb;
+  background: #e0e0e0;
 }
 
 .tab.active {
-  background: #111827;
+  background: #007bff;
   color: white;
 }
 
-.detail-section {
-  margin-bottom: 18px;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 8px;
-  font-size: 14px;
-}
 
-.detail-section h4 {
-  margin-bottom: 8px;
-  font-size: 15px;
-  color: #333;
-}
-
-.total-box {
-  background: #e6f7ff;
-  font-size: 16px;
-}
-
-.slip-link {
-  display: inline-block;
-  margin-top: 8px;
-  color: #0066cc;
-  font-weight: 500;
-}
-
+/* ===== Card ===== */
 .shop-card {
   background: white;
   padding: 18px;
   border-radius: 14px;
   margin-bottom: 15px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
   transition: 0.2s ease;
 }
 
 .shop-card:hover {
   transform: translateY(-2px);
+}
+
+
+/* ===== Top Section ===== */
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
 }
 
 .product-main-info {
@@ -163,31 +58,47 @@
   width: 60px;
   height: 60px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 10px;
+  border: 1px solid #eee;
 }
 
 .inventory-thumb-placeholder {
   width: 60px;
   height: 60px;
   background: #f2f2f2;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
+  color: #999;
 }
 
+
+/* ===== Title & Info ===== */
 .title-section h4 {
   margin: 0;
   font-size: 15px;
+  font-weight: 600;
+  color: #333;
 }
 
 .price {
   color: #2e7d32;
   font-weight: bold;
   font-size: 14px;
+  margin-top: 4px;
+  display: block;
 }
 
+.order-meta {
+  font-size: 12px;
+  color: #777;
+  margin-top: 4px;
+}
+
+
+/* ===== Right Actions ===== */
 .card-actions {
   display: flex;
   align-items: center;
@@ -198,6 +109,21 @@
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
+  font-weight: 500;
+}
+
+/* Status Colors */
+.status-badge.paid {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.status-badge.preparing {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.status-badge.shipping {
   background: #e8f5e9;
   color: #2e7d32;
 }
@@ -205,20 +131,77 @@
 .dropdown-btn {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: none;
   background: #f2f2f2;
   cursor: pointer;
+  font-size: 18px;
+  transition: 0.2s ease;
 }
 
+.dropdown-btn:hover {
+  background: #e0e0e0;
+}
+
+
+/* ===== Dropdown Section ===== */
 .card-dropdown {
-  padding-top: 15px;
   margin-top: 15px;
+  padding-top: 15px;
   border-top: 1px solid #eee;
+  animation: fadeIn 0.2s ease-in-out;
 }
 
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  font-size: 13px;
+}
+
+.product-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.product-row span {
+  color: #2e7d32;
+}
+
+
+/* ===== Buttons ===== */
+.dropdown-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #007bff;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #0056b3;
+}
+
+
+/* ===== Animation ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
