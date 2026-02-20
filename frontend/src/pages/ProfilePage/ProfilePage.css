@@ -500,11 +500,10 @@
 
 /* ===== Footer ===== */
 .pp-ofooter {
-  border-top: 1px solid #f1f1f1;
-  padding-top: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
 .pp-total {
@@ -519,14 +518,18 @@
 }
 
 /* ===== ปุ่ม ===== */
+.pp-obtn {
+  flex: 0 0 auto;   /* ❗ สำคัญมาก กัน flex ยืด */
+}
+
 .pp-obtn.confirm {
-  background: #ee4d2d;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
+  background: #05b64f;
+  color: #fff;
+  padding: 8px 18px;   /* ปรับขนาดให้พอดี */
+  font-size: 14px;
+  border-radius: 10px;
+  width: auto;         /* กันเต็มแถว */
+  white-space: nowrap; /* กันข้อความขึ้นบรรทัดใหม่ */
 }
 
 .pp-obtn.confirm:hover {
@@ -553,15 +556,13 @@
 }
 
 .pp-obtn.pay {
-  background: #f97316;
-  color: white;
-
-  width: auto;              /* ไม่เต็มความกว้าง */
-  padding: 6px 14px;        /* ลด padding ให้เล็กลง */
+  background: #f98f16;
+  color: #fff;
+  padding: 8px 18px;   /* ปรับขนาดให้พอดี */
   font-size: 14px;
-  border-radius: 8px;
-
-  display: inline-block;    /* กัน flex ดึงยืด */
+  border-radius: 10px;
+  width: auto;         /* กันเต็มแถว */
+  white-space: nowrap; /* กันข้อความขึ้นบรรทัดใหม่ */
 }
 
 .pp-obtn.pay:hover {
