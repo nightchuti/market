@@ -69,9 +69,9 @@ const AdminDashboardPay = () => {
                                 <th style={styles.th}>รายการสินค้า</th>
                                 <th style={styles.th}>ยอดเงิน</th>
                                 <th style={styles.th}>สลิป</th>
-                                <th style={styles.th}>จัดการ</th>
                                 <th style={styles.th}>วันที่สั่ง</th>
                                 <th style={styles.th}>เวลาโอน</th>
+                                <th style={styles.th}>จัดการ</th>
                             </tr>
                         </thead>
                         <tbody>
