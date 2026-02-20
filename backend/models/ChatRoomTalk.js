@@ -28,8 +28,8 @@ const chatRoomSchema = new mongoose.Schema({
   tradeStatus: {
     type: String,
     enum: ["pending", "negotiating", "accepted", "rejected", "cancelled", "completed"],
-    //default: "pending"
-    default: null
+    default: "pending"
+    //default: null
   },
   isLocked: { type: Boolean, default: false },
   lockedProductSnapshot: { type: Object, default: null },
@@ -82,16 +82,13 @@ chatRoomSchema.path("participants").validate(function (value) {
 }, "ต้องมีผู้เข้าร่วม 2 คน และต้องไม่ใช่คนเดียวกัน");
 
 
-// 🔥 trade room ต้องมี tradeId
 chatRoomSchema.pre("validate", function (next) {
-  if (this.type === "trade" && !this.tradeId) {
-    return next(new Error("Trade room must have tradeId"));
+  if (this.type === "trade") {
+    if (!this.productId || !this.offeredProductId) {
+      return next(new Error("Trade room must have both productId and offeredProductId"));
+    }
   }
   next();
 });
 
-chatRoomSchema.index(
-  { participants: 1, productId: 1 },
-  { unique: true }
-);
 module.exports = mongoose.model("ChatRoomTalk", chatRoomSchema);

@@ -52,4 +52,21 @@ tradeSchema.pre("save", function (next) {
   }
   next();
 });
+//คนสามารถสร้าง trade โดยเอาของคนอื่นมาเสนอได้ แต่ต้องเป็นของที่ตัวเองเป็นเจ้าของเท่านั้น
+tradeSchema.pre("validate", async function (next) {
+  if (!this.isModified("offeredProduct")) return next();
+
+  const Product = mongoose.model("Product");
+  const product = await Product.findById(this.offeredProduct);
+
+  if (!product) {
+    return next(new Error("Offered product not found"));
+  }
+
+  if (product.user.toString() !== this.owner.toString()) {
+    return next(new Error("You are not the owner of the offered product"));
+  }
+
+  next();
+});
 module.exports = mongoose.model("Trade", tradeSchema);

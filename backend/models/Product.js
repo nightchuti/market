@@ -74,7 +74,7 @@ const productSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["available", "pending", "exchanged", "sold"],
+    enum: ["available", "pending", "trading", "exchanged", "sold"],
     default: "available"
   },
   meetupAddress: {
