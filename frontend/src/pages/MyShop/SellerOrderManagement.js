@@ -137,13 +137,15 @@ function SellerOrderManagement({ setOrderCount }) {
         getFilteredOrders().map(order => (
           <div key={order._id} className="shop-card">
 
-            {/* CARD TOP */}
+            {/* ===== TOP BAR ===== */}
             <div
               className="card-top"
               onClick={() =>
                 setOpenId(openId === order._id ? null : order._id)
               }
             >
+
+              {/* LEFT : รูป + ชื่อ */}
               <div className="product-main-info">
 
                 {order.items?.[0]?.product?.images?.[0] ? (
@@ -160,43 +162,81 @@ function SellerOrderManagement({ setOrderCount }) {
 
                 <div className="title-section">
                   <h4>
-                    ORDER #{order._id.slice(-6).toUpperCase()}
+                    {order.items?.[0]?.product?.title || "สินค้า"}
                   </h4>
-                  <span className="price">
-                    ฿{order.totalPrice?.toLocaleString()}
-                  </span>
-                  <div className="order-meta">
-                    👤 {order.user?.username || "ไม่ระบุ"}
+                  <div className="order-id">
+                    ORDER #{order._id.slice(-6).toUpperCase()}
                   </div>
                 </div>
 
               </div>
 
+              {/* RIGHT : ปุ่ม + status */}
               <div className="card-actions">
+
                 <span className={`status-badge ${order.status.toLowerCase()}`}>
                   {order.status}
                 </span>
 
+                {order.status === "Paid" && (
+                  <button
+                    className="action-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAccept(order._id);
+                    }}
+                  >
+                    รับออเดอร์
+                  </button>
+                )}
+
+                {order.status === "Preparing" && (
+                  <button
+                    className="action-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShip(order._id);
+                    }}
+                  >
+                    เรียกไรเดอร์
+                  </button>
+                )}
+
                 <button className="dropdown-btn">
                   {openId === order._id ? "−" : "＋"}
                 </button>
+
               </div>
             </div>
 
-            {/* DROPDOWN */}
+            {/* ===== DROPDOWN SECTION ===== */}
             {openId === order._id && (
               <div className="card-dropdown">
 
-                <div className="detail-grid">
-                  <div><strong>วันที่สั่ง:</strong> {new Date(order.createdAt).toLocaleString("th-TH")}</div>
-                  {order.paidAt && (
-                    <div><strong>วันที่ชำระ:</strong> {new Date(order.paidAt).toLocaleString("th-TH")}</div>
-                  )}
-                  <div><strong>ลูกค้า:</strong> {order.user?.username}</div>
-                  <div><strong>เบอร์:</strong> {order.shippingAddress?.phone || "-"}</div>
+                {/* หมวด 1 */}
+                <div className="detail-section">
+                  <h4>ข้อมูลคำสั่งซื้อ</h4>
+                  <div className="detail-grid">
+                    <div><strong>วันที่สั่ง:</strong> {new Date(order.createdAt).toLocaleString("th-TH")}</div>
+                    {order.paidAt && (
+                      <div><strong>วันที่ชำระ:</strong> {new Date(order.paidAt).toLocaleString("th-TH")}</div>
+                    )}
+                    <div><strong>ยอดรวม:</strong> ฿{order.totalPrice?.toLocaleString()}</div>
+                    <div><strong>สถานะ:</strong> {order.status}</div>
+                  </div>
                 </div>
 
-                <div style={{ marginTop: 15 }}>
+                {/* หมวด 2 */}
+                <div className="detail-section">
+                  <h4>ข้อมูลลูกค้า</h4>
+                  <div className="detail-grid">
+                    <div><strong>ชื่อ:</strong> {order.user?.username}</div>
+                    <div><strong>เบอร์:</strong> {order.shippingAddress?.phone || "-"}</div>
+                  </div>
+                </div>
+
+                {/* หมวด 3 */}
+                <div className="detail-section">
                   <h4>รายการสินค้า</h4>
                   {order.items?.map((item, idx) => (
                     <div key={idx} className="product-row">
@@ -211,8 +251,9 @@ function SellerOrderManagement({ setOrderCount }) {
                   ))}
                 </div>
 
+                {/* หมวด 4 */}
                 {order.shippingAddress && (
-                  <div style={{ marginTop: 15 }}>
+                  <div className="detail-section">
                     <h4>ที่อยู่จัดส่ง</h4>
                     <div>
                       {order.shippingAddress.fullName}<br />
@@ -222,29 +263,8 @@ function SellerOrderManagement({ setOrderCount }) {
                   </div>
                 )}
 
-                <div className="dropdown-buttons">
-                  {order.status === "Paid" && (
-                    <button
-                      className="action-btn"
-                      onClick={() => handleAccept(order._id)}
-                    >
-                      รับออเดอร์
-                    </button>
-                  )}
-
-                  {order.status === "Preparing" && (
-                    <button
-                      className="action-btn"
-                      onClick={() => handleShip(order._id)}
-                    >
-                      เรียกไรเดอร์
-                    </button>
-                  )}
-                </div>
-
               </div>
             )}
-
           </div>
         ))
       )}

@@ -1,4 +1,4 @@
-/* ===== Container ===== */
+/* ===== Tabs ===== */
 .seller-tabs {
   display: flex;
   gap: 10px;
@@ -75,7 +75,7 @@
 }
 
 
-/* ===== Title & Info ===== */
+/* ===== Title ===== */
 .title-section h4 {
   margin: 0;
   font-size: 15px;
@@ -83,15 +83,7 @@
   color: #333;
 }
 
-.price {
-  color: #2e7d32;
-  font-weight: bold;
-  font-size: 14px;
-  margin-top: 4px;
-  display: block;
-}
-
-.order-meta {
+.order-id {
   font-size: 12px;
   color: #777;
   margin-top: 4px;
@@ -102,7 +94,8 @@
 .card-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .status-badge {
@@ -143,6 +136,21 @@
   background: #e0e0e0;
 }
 
+.action-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #007bff;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #0056b3;
+}
+
 
 /* ===== Dropdown Section ===== */
 .card-dropdown {
@@ -150,6 +158,16 @@
   padding-top: 15px;
   border-top: 1px solid #eee;
   animation: fadeIn 0.2s ease-in-out;
+}
+
+.detail-section {
+  margin-top: 20px;
+}
+
+.detail-section h4 {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #333;
 }
 
 .detail-grid {
@@ -168,29 +186,6 @@
 
 .product-row span {
   color: #2e7d32;
-}
-
-
-/* ===== Buttons ===== */
-.dropdown-buttons {
-  margin-top: 20px;
-  display: flex;
-  gap: 10px;
-}
-
-.action-btn {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: none;
-  background: #007bff;
-  color: white;
-  font-size: 13px;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.action-btn:hover {
-  background: #0056b3;
 }
 
 
