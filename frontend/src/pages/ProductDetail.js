@@ -51,7 +51,7 @@ function ProductDetail() {
 
     try {
       const res = await api.post(
-        "/api/chat/normal",
+        "/api/chat/create-normal",
         { productId: product._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
