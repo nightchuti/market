@@ -1,9 +1,8 @@
 import React from 'react';
 import './Inventory.css';
 import api from "../../api"; // อย่าลืมลง axios หรือใช้ตัวส่ง request ที่คุณมี
-const API_URL = process.env.REACT_APP_API_URL;
 import DetailSection from "../../components/DetailSection"; // สมมติว่าคุณมี Component นี้สำหรับแสดงรายละเอียดใน dropdown
-
+const API_URL = process.env.REACT_APP_API_URL;
 
 function Inventory({ products, openId, setOpenId, handleDelete, navigate, publishProduct, userQuota, refreshProducts }) {
 

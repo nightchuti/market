@@ -8,3 +8,5 @@ function DetailSection({ title, children }) {
     </div>
   );
 }
+
+export default DetailSection;
