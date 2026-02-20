@@ -183,7 +183,8 @@ const styles = {
         backgroundColor: "#6c757d", color: "#fff", border: "none",
         padding: "8px 12px", borderRadius: "6px", cursor: "pointer"
     },
-    statusPaid: { color: "#28a745", fontWeight: "600", fontSize: "14px" 
+    statusPaid: {
+        color: "#28a745", fontWeight: "600", fontSize: "14px"
     },
     modalOverlay: {
         position: "fixed",
@@ -191,20 +192,28 @@ const styles = {
         left: 0,
         width: "100vw",
         height: "100vh",
-        backgroundColor: "rgba(0,0,0,0.7)",
+        backgroundColor: "rgba(0,0,0,0.6)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        zIndex: 9999
+        zIndex: 9999,
+        padding: "20px"
     },
+
     modalContent: {
-        maxWidth: "90%",
-        maxHeight: "90%"
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
     },
+
     modalImage: {
-        width: "100%",
+        maxWidth: "80vw",
+        maxHeight: "80vh",
+        width: "auto",
         height: "auto",
-        borderRadius: "10px"
+        objectFit: "contain",
+        borderRadius: "10px",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.4)"
     }
 };
 
