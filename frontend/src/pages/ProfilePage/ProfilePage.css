@@ -555,7 +555,13 @@
 .pp-obtn.pay {
   background: #f97316;
   color: white;
-  width: 250px;
+
+  width: auto;              /* ไม่เต็มความกว้าง */
+  padding: 6px 14px;        /* ลด padding ให้เล็กลง */
+  font-size: 14px;
+  border-radius: 8px;
+
+  display: inline-block;    /* กัน flex ดึงยืด */
 }
 
 .pp-obtn.pay:hover {
