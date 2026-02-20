@@ -103,12 +103,12 @@ exports.findMatches = async (req, res) => {
 
     // Populate กลับมาเพื่อให้ Frontend แสดงรูปได้
     pipeline.push({
-        $lookup: {
-            from: "products",
-            localField: "offeredProduct",
-            foreignField: "_id",
-            as: "offeredProduct" // ทับ field เดิมให้เป็น Object
-        }
+      $lookup: {
+        from: "products",
+        localField: "offeredProduct",
+        foreignField: "_id",
+        as: "offeredProduct" // ทับ field เดิมให้เป็น Object
+      }
     });
     pipeline.push({ $unwind: "$offeredProduct" });
 
@@ -122,14 +122,19 @@ exports.findMatches = async (req, res) => {
 // 3. Manual Search
 exports.manualSearch = async (req, res) => {
   try {
-    const q = req.query.q || "";
+    // ✅ จำกัดความยาว input (กัน ReDoS)
+    let q = (req.query.q || "").substring(0, 50);
+
+    // ✅ Escape regex characters กัน injection
+    q = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
     const trades = await Trade.find({
       status: "Open",
       $or: [
         { description: { $regex: q, $options: "i" } },
         { wantedCategory: { $regex: q, $options: "i" } }
       ]
-    }).populate("offeredProduct"); // ต้อง Populate เพื่อให้ Frontend เห็นรูป
+    }).populate("offeredProduct");
 
     res.json(trades);
   } catch (err) {
@@ -156,20 +161,20 @@ exports.searchByImage = async (req, res) => {
     const matches = await Trade.aggregate([
       {
         $vectorSearch: {
-            index: "trade_ai",
-            path: "embeddings",
-            queryVector: embed.embedding.values,
-            numCandidates: 50,
-            limit: 10
+          index: "trade_ai",
+          path: "embeddings",
+          queryVector: embed.embedding.values,
+          numCandidates: 50,
+          limit: 10
         }
       },
       {
-          $lookup: {
-              from: "products",
-              localField: "offeredProduct",
-              foreignField: "_id",
-              as: "offeredProduct"
-          }
+        $lookup: {
+          from: "products",
+          localField: "offeredProduct",
+          foreignField: "_id",
+          as: "offeredProduct"
+        }
       },
       { $unwind: "$offeredProduct" }
     ]);
@@ -181,13 +186,35 @@ exports.searchByImage = async (req, res) => {
 };
 
 // 5. Actions (Lock, Verify, Confirm)
+// 🔥 เพิ่มเงื่อนไขก่อน lock
 exports.lockTrade = async (req, res) => {
   try {
-    const trade = await Trade.findByIdAndUpdate(req.params.id, 
-        { status: "Locked", matchedWith: req.body.partnerTradeId }, 
-        { new: true });
-    res.json(trade);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    const { tradeId } = req.body;
+
+    const updated = await Trade.findOneAndUpdate(
+      {
+        _id: tradeId,
+        owner: req.user.id,
+        status: "Matched"
+      },
+      {
+        status: "Locked",
+        verificationCode: Math.floor(100000 + Math.random() * 900000).toString()
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(400).json({
+        error: "Trade not found, not authorized, or not matched"
+      });
+    }
+
+    res.json(updated);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 exports.verifyLocation = async (req, res) => {
@@ -199,11 +226,51 @@ exports.verifyLocation = async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
+// 🔥 แก้ confirmSwap
 exports.confirmSwap = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const trade = await Trade.findByIdAndUpdate(req.params.id, { status: "Completed" }, { new: true });
-    res.json(trade);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    const { tradeId } = req.body;
+
+    const trade = await Trade.findById(tradeId).session(session);
+
+    if (!trade) {
+      throw new Error("Trade not found");
+    }
+
+    if (trade.status === "Completed") {
+      throw new Error("Trade already completed");
+    }
+
+    if (req.body.code !== trade.verificationCode) {
+      throw new Error("Invalid verification code");
+    }
+
+    // ✅ update trade หลัก
+    trade.status = "Completed";
+    await trade.save({ session });
+
+    // ✅ update matchedWith ถ้ามี
+    if (trade.matchedWith) {
+      await Trade.findByIdAndUpdate(
+        trade.matchedWith,
+        { status: "Completed" },
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({ success: true });
+
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(400).json({ error: err.message });
+  }
 };
 
 // 6. Get Lists
