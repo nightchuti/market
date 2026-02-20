@@ -90,4 +90,8 @@ chatRoomSchema.pre("validate", function (next) {
   next();
 });
 
+chatRoomSchema.index(
+  { participants: 1, productId: 1 },
+  { unique: true }
+);
 module.exports = mongoose.model("ChatRoomTalk", chatRoomSchema);
