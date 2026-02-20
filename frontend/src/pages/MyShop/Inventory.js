@@ -5,7 +5,7 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 
 function Inventory({ products, openId, setOpenId, handleDelete, navigate, publishProduct, userQuota, refreshProducts }) {
-  
+
   // ✅ ฟังก์ชันเรียก API บูสสินค้า
   const handleBoost = async (productId) => {
     if (userQuota <= 0) {
@@ -57,22 +57,22 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
         <div className="card-top">
           <div className="product-main-info">
             {p.images && p.images.length > 0 ? (
-              <img 
-                src={`${API_URL}${p.images[0]}`} 
-                alt={p.title} 
-                className="inventory-thumb" 
+              <img
+                src={`${API_URL}${p.images[0]}`}
+                alt={p.title}
+                className="inventory-thumb"
               />
             ) : (
               <div className="inventory-thumb-placeholder">ไม่มีรูป</div>
             )}
-            
+
             <div className="title-section">
               <h4>
-                {p.title} 
+                {p.title}
                 {isCurrentlyBoosted && <span className="boost-tag">🚀 Boosted</span>}
               </h4>
               {(p.tradeOption === "sell_only" || p.tradeOption === "negotiable") && (
-                 <span className="price">฿{p.price?.toLocaleString()}</span>
+                <span className="price">฿{p.price?.toLocaleString()}</span>
               )}
             </div>
           </div>
@@ -80,7 +80,7 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
           <div className="card-actions">
             {/* ✅ ปุ่มบูสสินค้า (แสดงเฉพาะถ้าสถานะเป็น available) */}
             {p.status === "available" && (
-              <button 
+              <button
                 className={`boost-action-btn ${isCurrentlyBoosted ? 'active' : ''}`}
                 onClick={() => handleBoost(p._id)}
                 disabled={isCurrentlyBoosted}
@@ -112,30 +112,23 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
 
         {openId === p._id && (
           <div className="card-dropdown">
-            <div className="inventory-info">
-              {isCurrentlyBoosted && (
-                <p className="boost-expiry-text">
-                  🌟 สินค้านี้จะได้รับการดันขึ้นหน้าแรกจนถึง: {new Date(p.boostExpireAt).toLocaleString('th-TH')}
-                </p>
-              )}
-              <p className="description-text"><strong>รายละเอียด:</strong> {p.description || "ไม่มีคำอธิบาย"}</p>
-              
-              <div className="detail-grid">
-                {(p.tradeOption === "sell_only" || p.tradeOption === "negotiable") && (
-                  <div className="detail-item"><strong>ราคา:</strong> ฿{p.price?.toLocaleString()}</div>
-                )}
-                <div className="detail-item"><strong>จำนวนสินค้า:</strong> {p.quantity} ชิ้น</div>
-                <div className="detail-item"><strong>หมวดหมู่:</strong> {p.category}</div>
-                <div className="detail-item"><strong>รูปแบบการส่ง:</strong> {getDeliveryText(p.deliveryType)}</div>
-                <div className="detail-item"><strong>ตัวเลือกการขาย:</strong> {getTradeText(p.tradeOption)}</div>
-                <div className="detail-item"><strong>ชื่อสถานที่อยู่:</strong> {p.locationName}</div>
-              </div>
-            </div>
 
-            <div className="dropdown-buttons">
-              <button onClick={() => navigate(`/edit-product/${p._id}`)} className="edit-btn">แก้ไข</button>
-              <button onClick={() => handleDelete(p._id)} className="delete-btn">ลบสินค้า</button>
-            </div>
+            <DetailSection title="ข้อมูลสินค้า">
+              <div><strong>รายละเอียด:</strong> {p.description || "-"}</div>
+              <div><strong>จำนวน:</strong> {p.quantity}</div>
+              <div><strong>หมวดหมู่:</strong> {p.category}</div>
+            </DetailSection>
+
+            <DetailSection title="ข้อมูลการขาย">
+              <div><strong>ราคา:</strong> ฿{p.price?.toLocaleString()}</div>
+              <div><strong>รูปแบบการส่ง:</strong> {getDeliveryText(p.deliveryType)}</div>
+              <div><strong>ตัวเลือกการขาย:</strong> {getTradeText(p.tradeOption)}</div>
+            </DetailSection>
+
+            <DetailSection title="ข้อมูลสถานที่">
+              <div><strong>ชื่อสถานที่:</strong> {p.locationName}</div>
+            </DetailSection>
+
           </div>
         )}
       </div>
