@@ -4,6 +4,8 @@ import api from "../api";
 const API_URL = process.env.REACT_APP_API_URL;
 
 const AdminDashboardPay = () => {
+    console.log("API_URL =", API_URL);
+    console.log(order.paymentSlip);
     const [orders, setOrders] = useState([]);
     const [activeTab, setActiveTab] = useState("waiting");
     const [loading, setLoading] = useState(true);
@@ -70,7 +72,6 @@ const AdminDashboardPay = () => {
                                 <th style={styles.th}>ยอดเงิน</th>
                                 <th style={styles.th}>สลิป</th>
                                 <th style={styles.th}>วันที่สั่ง</th>
-                                <th style={styles.th}>เวลาโอน</th>
                                 <th style={styles.th}>จัดการ</th>
                             </tr>
                         </thead>
@@ -93,7 +94,7 @@ const AdminDashboardPay = () => {
                                         {order.items.map((item, index) => (
                                             <div key={index} style={{ fontSize: '13px', color: '#555' }}>
                                                 {/* 🆕 แก้ไข: เปลี่ยนจาก .name เป็น .title ตาม Model Product */}
-                                                • {item.product?.title || "ไม่พบชื่อสินค้า"} (x{item.quantity})
+                                                {item.product?.title || "ไม่พบชื่อสินค้า"} (x{item.quantity})
                                             </div>
                                         ))}
                                     </td>
@@ -115,12 +116,6 @@ const AdminDashboardPay = () => {
 
                                     <td style={styles.td}>
                                         {new Date(order.createdAt).toLocaleString("th-TH")}
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        {order.paidAt
-                                            ? new Date(order.paidAt).toLocaleString("th-TH")
-                                            : "-"}
                                     </td>
 
                                     <td style={styles.td}>
