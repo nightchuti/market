@@ -151,12 +151,11 @@ const CheckoutPage = () => {
         try {
             const token = localStorage.getItem("token");
 
-            const res = await api.post("/api/coupons/check", {
-                code: couponCode,
-                subTotal
+            const res = await api.get("/api/coupons/my", {
+                headers: { Authorization: `Bearer ${token}` }
             });
 
-            setAvailableCoupons(res.data);
+            setAvailableCoupons(res.data); // ✅ ตรงนี้ได้ array แน่นอน
 
         } catch (err) {
             console.error(err);
@@ -169,20 +168,18 @@ const CheckoutPage = () => {
     };
 
     const applyCouponCode = async (code) => {
-        try {
-            const res = await api.post("/api/coupons/check", {
-                code: code,
-                subTotal
-            });
+        const token = localStorage.getItem("token");
 
-            setDiscount(res.data.discount);
-            setCouponCode(code);
-            setAppliedCoupon(res.data.coupon);
-            setShowCouponModal(false);
+        const res = await api.post(
+            "/api/coupons/check",
+            { code, subTotal },
+            {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+        );
 
-        } catch (err) {
-            alert(err.response?.data?.message || "ใช้คูปองไม่ได้");
-        }
+        setDiscount(res.data.discount);
+        setAppliedCoupon(res.data.coupon);
     };
 
 
