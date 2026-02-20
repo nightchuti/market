@@ -70,6 +70,8 @@ const AdminDashboardPay = () => {
                                 <th style={styles.th}>ยอดเงิน</th>
                                 <th style={styles.th}>สลิป</th>
                                 <th style={styles.th}>จัดการ</th>
+                                <th style={styles.th}>วันที่สั่ง</th>
+                                <th style={styles.th}>เวลาโอน</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -104,11 +106,21 @@ const AdminDashboardPay = () => {
 
                                     <td style={styles.td}>
                                         <img
-                                            src={`${API_URL}/${order.paymentSlip}`}
+                                            src={`${API_URL}${order.paymentSlip}`}
                                             style={styles.thumbnail}
-                                            onClick={() => window.open(`${API_URL}/${order.paymentSlip}`)}
+                                            onClick={() => window.open(`${API_URL}${order.paymentSlip}`)}
                                             alt="slip"
                                         />
+                                    </td>
+
+                                    <td style={styles.td}>
+                                        {new Date(order.createdAt).toLocaleString("th-TH")}
+                                    </td>
+
+                                    <td style={styles.td}>
+                                        {order.paidAt
+                                            ? new Date(order.paidAt).toLocaleString("th-TH")
+                                            : "-"}
                                     </td>
 
                                     <td style={styles.td}>

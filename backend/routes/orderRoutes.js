@@ -169,7 +169,7 @@ router.post("/checkout", protect, async (req, res) => {
         price: updatedProduct.price
       });
 
-      var sellerId = updatedProduct.user; 
+      var sellerId = updatedProduct.user;
     }
 
     // ... (ส่วนคำนวณค่าส่ง/คูปอง เหมือนเดิม) ...
@@ -179,7 +179,7 @@ router.post("/checkout", protect, async (req, res) => {
       [
         {
           user: buyerId,
-          seller: sellerId, 
+          seller: sellerId,
           items: orderItems,
           deliveryMode: deliveryMode,
           paymentMethod,
@@ -214,7 +214,11 @@ router.patch("/:id/upload-slip", protect, upload.single("slip"), async (req, res
     if (!req.file) return res.status(400).json({ message: "กรุณาแนบไฟล์สลิป" });
     const order = await Order.findOneAndUpdate(
       { _id: req.params.id, user: req.user.id, status: "PendingPayment" },
-      { paymentSlip: `/uploads/slips/${req.file.filename}`, status: "WaitingConfirm" },
+      {
+        paymentSlip: `/uploads/slips/${req.file.filename}`,
+        status: "WaitingConfirm",
+        paidAt: new Date(),
+      },
       { new: true }
     );
     if (!order) return res.status(404).json({ message: "ไม่พบออเดอร์หรือสถานะไม่ถูกต้อง" });
