@@ -400,4 +400,50 @@ exports.getRoomDetail = async (req, res) => {
     console.error("getRoomDetail:", err);
     res.status(500).json({ error: err.message });
   }
+
+  // Accept Trade
+exports.acceptTrade = async (req, res) => {
+  try {
+    const { roomId, tradeId } = req.body;
+
+    // 1️⃣ อัปเดตสถานะ Trade
+    await Trade.findByIdAndUpdate(tradeId, {
+      status: "Matched"
+    });
+
+    // 2️⃣ สร้างข้อความ
+    const msg = await Message.create({
+      roomId,
+      sender: req.user.id,
+      messageType: "trade_accept",
+      metadata: { tradeId }
+    });
+
+    res.json(msg);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Reject Trade
+exports.rejectTrade = async (req, res) => {
+  try {
+    const { roomId, tradeId } = req.body;
+
+    await Trade.findByIdAndUpdate(tradeId, {
+      status: "Open"
+    });
+
+    const msg = await Message.create({
+      roomId,
+      sender: req.user.id,
+      messageType: "trade_reject",
+      metadata: { tradeId }
+    });
+
+    res.json(msg);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 };
