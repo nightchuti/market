@@ -147,14 +147,11 @@ function SellerOrderManagement({ setOrderCount }) {
 
               {/* LEFT : รูป + ชื่อ */}
               <div className="product-main-info">
-
+console.log(order.items?.[0]?.product?.images?.[0])
                 {order.items?.[0]?.product?.images?.[0] ? (
+                  
                   <img
-                    src={
-                      order.items[0].product.images[0].startsWith("http")
-                        ? order.items[0].product.images[0]
-                        : `${API_URL}${order.items[0].product.images[0]}`
-                    }
+                    src={order.items?.[0]?.product?.images?.[0]}
                     alt="product"
                     className="inventory-thumb"
                   />
