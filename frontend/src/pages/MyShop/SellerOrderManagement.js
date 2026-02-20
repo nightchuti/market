@@ -147,9 +147,7 @@ function SellerOrderManagement({ setOrderCount }) {
 
               {/* LEFT : รูป + ชื่อ */}
               <div className="product-main-info">
-console.log(order.items?.[0]?.product?.images?.[0])
                 {order.items?.[0]?.product?.images?.[0] ? (
-                  
                   <img
                     src={order.items?.[0]?.product?.images?.[0]}
                     alt="product"
@@ -165,8 +163,15 @@ console.log(order.items?.[0]?.product?.images?.[0])
                   <h4>
                     {order.items?.[0]?.product?.title || "สินค้า"}
                   </h4>
-                  <div className="order-id">
-                    ORDER #{order._id.slice(-6).toUpperCase()}
+
+                  <div className="top-meta">
+                    <span className="order-id">
+                      ORDER #{order._id.slice(-6).toUpperCase()}
+                    </span>
+
+                    <span className="top-price">
+                      ฿{order.totalPrice?.toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
