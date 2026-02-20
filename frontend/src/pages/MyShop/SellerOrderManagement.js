@@ -174,7 +174,13 @@ function SellerOrderManagement({ setOrderCount }) {
         getFilteredOrders().map(order => (
           <div key={order._id} className="shop-card">
 
-            <div className="card-top">
+            <div
+              className="card-top"
+              onClick={() =>
+                setOpenId(openId === order._id ? null : order._id)
+              }
+              style={{ cursor: "pointer" }}
+            >
 
               {/* LEFT SIDE */}
               <div className="order-main-info">
