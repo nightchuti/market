@@ -51,13 +51,13 @@ function ProductDetail() {
 
     try {
       const res = await api.post(
-        "/api/chat/create-normal",
-        { productId: product._id },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  "/api/chat/create-normal",
+  { productId: product._id },
+  { headers: { Authorization: `Bearer ${token}` } }
+);
 
       navigate(`/chat/${res.data._id}`);
-    } catch {
+    } catch (err) {
       alert("ไม่สามารถเปิดแชทได้");
     } finally {
       setChatLoading(false);
