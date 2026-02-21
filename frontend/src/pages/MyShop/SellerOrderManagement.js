@@ -95,35 +95,24 @@ function SellerOrderManagement({ setOrderCount }) {
     }
   };
 
-  // ฟังก์ชัน 1: กดแจ้งว่าพร้อมนัดรับ (เพื่อสร้าง OTP)
+  // เพิ่มฟังก์ชันจัดการคลิก
   const handleReadyToMeetup = async (orderId) => {
     try {
-      const token = localStorage.getItem("token");
       await axios.put(`${API_URL}/api/orders/${orderId}/ready-to-meetup`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
-      alert("ส่งสถานะพร้อมนัดรับสำเร็จ! รอกลูกค้าแจ้งรหัส OTP");
-      fetchOrders(); // โหลดข้อมูลใหม่เพื่ออัปเดตสถานะหน้าจอ
-    } catch (err) {
-      alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
-    }
+      fetchOrders(); // รีโหลดข้อมูลใหม่
+    } catch (err) { alert(err.response?.data?.message); }
   };
 
-  // ฟังก์ชัน 2: ส่ง OTP ไปตรวจสอบเพื่อจบงาน
-  const handleVerifyOTP = async (orderId, otp) => {
-    if (!otp || otp.length !== 4) {
-      return alert("กรุณากรอกรหัส OTP 4 หลักให้ครบถ้วน");
-    }
+  const handleVerifyOTP = async (orderId) => {
     try {
-      const token = localStorage.getItem("token");
-      await axios.put(`${API_URL}/api/orders/${orderId}/verify-meetup`, { otp }, {
-        headers: { Authorization: `Bearer ${token}` }
+      await axios.put(`${API_URL}/api/orders/${orderId}/verify-meetup`, { otp: otpInput }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
       });
-      alert("ยืนยันการรับสินค้าสำเร็จ! สถานะออเดอร์คือ: สำเร็จแล้ว");
-      fetchOrders(); // โหลดข้อมูลใหม่
-    } catch (err) {
-      alert(err.response?.data?.message || "รหัส OTP ไม่ถูกต้อง");
-    }
+      setOtpInput("");
+      fetchOrders();
+    } catch (err) { alert("รหัส OTP ไม่ถูกต้อง"); }
   };
 
   if (loading) return <div style={{ padding: 40 }}>กำลังโหลด...</div>;
