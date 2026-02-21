@@ -401,5 +401,20 @@ router.post("/bulk", async (req, res) => {
   res.json(products);
 });
 
+router.get("/my-trade-products", protect, async (req, res) => {
+  try {
+    const products = await Product.find({
+      user: req.user.id,
+      tradeOption: { $in: ["trade_allowed", "negotiable"] },
+      status: "available"
+    }).sort({ createdAt: -1 });
 
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({
+      message: "โหลดสินค้าสำหรับเทรดไม่สำเร็จ",
+      error: err.message
+    });
+  }
+});
 module.exports = router;

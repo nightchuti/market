@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
 import "./ProductDetail.css";
+import SelectTradeProduct from "./SelectTradeProduct";
+
 
 // ================= HELPER =================
 const getImageUrl = (path) => {
@@ -19,6 +21,7 @@ function ProductDetail() {
   const [selectedImage, setSelectedImage] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
 
+  const [showTradeSelector, setShowTradeSelector] = useState(false);
   const token = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -50,27 +53,19 @@ function ProductDetail() {
     setChatLoading(true);
 
     try {
-      // 🔥 ถ้าเป็น sell_only → normal chat
+      // 🔥 1. ถ้าเป็นขายอย่างเดียว → normal chat
       if (product.tradeOption === "sell_only") {
         const res = await api.post(
           "/api/chat/create-normal",
           { productId: product._id },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        return navigate(`/chat/${res.data._id}`);
+
+        navigate(`/chat/${res.data._id}`);
+        return;
       }
 
-      // 🔥 ถ้าเป็น trade_allowed หรือ negotiable → trade chat
-      const res = await api.post(
-        "/api/chat/create-trade",
-        {
-          productId: product._id,
-          offeredProductId: null // เดี๋ยวให้ผู้ใช้เลือกในหน้า trade
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      navigate(`/chat/${res.data._id}`);
+      setShowTradeSelector(true);
 
     } catch (err) {
       alert(err.response?.data?.error || "ไม่สามารถเปิดแชทได้");
@@ -114,7 +109,7 @@ function ProductDetail() {
     }
 
     // 🔥 ถ้า trade_only → บังคับเข้า trade chat
-    if (product.tradeOption === "trade_allowed") {
+    if (product.tradeOption !== "sell_only") {
       return handleChat();
     }
 
@@ -141,6 +136,23 @@ function ProductDetail() {
               : ""
       }
     });
+  };
+
+  const handleCreateTrade = async (offeredProductId) => {
+    try {
+      const res = await api.post(
+        "/api/chat/create-trade",
+        {
+          productId: product._id,
+          offeredProductId
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      navigate(`/chat/${res.data._id}`);
+    } catch (err) {
+      alert("สร้างแชทเทรดไม่สำเร็จ");
+    }
   };
 
   // ================= RENDER =================
@@ -279,7 +291,7 @@ function ProductDetail() {
             <button
               className="btn-cart"
               onClick={handleAddToCart}
-              disabled={isOwnProduct || product.tradeOption === "trade_allowed"}
+              disabled={isOwnProduct || product.tradeOption !== "sell_only"}
             >
               🛒 เพิ่มลงตะกร้า
             </button>
@@ -297,18 +309,27 @@ function ProductDetail() {
             <button
               className="btn-buy"
               onClick={handleBuyNow}
-              disabled={
-                isOwnProduct || product.tradeOption === "trade_allowed"
-              }
+              disabled={isOwnProduct}
             >
               ⚡ ซื้อทันที
             </button>
-
           </div>
 
+
+
         </div>
+
       </div>
+      {showTradeSelector && (
+        <SelectTradeProduct
+          token={token}
+          targetProductId={product._id}
+          onConfirm={handleCreateTrade}
+          onCancel={() => setShowTradeSelector(false)}
+        />
+      )}
     </div>
+
   );
 }
 
