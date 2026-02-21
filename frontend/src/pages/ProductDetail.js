@@ -155,13 +155,21 @@ function ProductDetail() {
     }
   };
 
+
   // ================= RENDER =================
   if (!product) return <p>กำลังโหลด...</p>;
 
-  const isOwnProduct =
-    currentUser &&
-    String(product.user?._id || product.user) ===
-    String(currentUser._id);
+  const ownerId =
+    product?.user && typeof product.user === "object"
+      ? (product.user._id || product.user.id)?.toString()
+      : product?.user?.toString();
+
+  const currentUserId =
+    currentUser?._id?.toString() ||
+    currentUser?.id?.toString() ||
+    null;
+
+  const isOwnProduct = ownerId === currentUserId;
 
   return (
     <div className="product-detail">
@@ -288,31 +296,39 @@ function ProductDetail() {
 
           <div className="button-group">
 
-            <button
-              className="btn-cart"
-              onClick={handleAddToCart}
-              disabled={isOwnProduct || product.tradeOption !== "sell_only"}
-            >
-              🛒 เพิ่มลงตะกร้า
-            </button>
+            {isOwnProduct ? (
+              <div className="own-product-box">
+                <div className="own-product-header">
+                  <span className="own-dot"></span>
+                  <span>สินค้าของคุณ</span>
+                </div>
 
-            {!isOwnProduct && (
-              <button
-                className="btn-chat"
-                onClick={handleChat}
-                disabled={chatLoading}
-              >
-                💬 แชทผู้ขาย
-              </button>
+                <p className="own-product-desc">
+                  คุณไม่สามารถซื้อหรือแชทกับสินค้าของตัวเองได้
+                </p>
+
+                <button
+                  className="btn-edit-product"
+                  onClick={() => navigate(`/edit-product/${product._id}`)}
+                >
+                  ✏️ แก้ไขสินค้า
+                </button>
+              </div>
+            ) : (
+              <>
+                <button className="btn-cart" onClick={handleAddToCart}>
+                  🛒 เพิ่มลงตะกร้า
+                </button>
+
+                <button className="btn-chat" onClick={handleChat}>
+                  💬 แชทผู้ขาย
+                </button>
+
+                <button className="btn-buy" onClick={handleBuyNow}>
+                  ⚡ ซื้อทันที
+                </button>
+              </>
             )}
-
-            <button
-              className="btn-buy"
-              onClick={handleBuyNow}
-              disabled={isOwnProduct}
-            >
-              ⚡ ซื้อทันที
-            </button>
           </div>
 
 

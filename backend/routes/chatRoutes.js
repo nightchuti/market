@@ -33,7 +33,7 @@ router.get("/", protect, async (req, res) => {
       const roomObj = room.toObject();
       roomObj.participants = roomObj.participants.map(p => ({
         ...p,
-        avatarUrl: p.profileImage 
+        avatarUrl: p.profileImage
           ? (p.profileImage.startsWith("http") ? p.profileImage : `${p.profileImage}`)
           : null
       }));
@@ -149,7 +149,6 @@ router.post("/create-normal", protect, async (req, res) => {
     const sellerId = String(product.user);
     const buyerId = String(req.user.id);
 
-    // ห้ามแชทกับตัวเอง
     if (sellerId === buyerId) {
       return res.status(400).json({ error: "ไม่สามารถแชทกับตัวเองได้" });
     }
@@ -206,6 +205,10 @@ router.post("/create-trade", protect, async (req, res) => {
       return res.status(400).json({ error: "กรุณาระบุสินค้าทั้งสองฝ่าย" });
     }
 
+    if (String(productId) === String(offeredProductId)) {
+      return res.status(400).json({ error: "ไม่สามารถใช้สินค้าตัวเดียวกันเทรดได้" });
+    }
+
     const [targetProduct, offeredProduct] = await Promise.all([
       Product.findById(productId),
       Product.findById(offeredProductId)
@@ -226,6 +229,10 @@ router.post("/create-trade", protect, async (req, res) => {
     // เช็คว่าเป็นเจ้าของ offeredProduct หรือไม่
     if (String(offeredProduct.user) !== requesterId) {
       return res.status(403).json({ error: "คุณไม่ใช่เจ้าของสินค้าที่เสนอ" });
+    }
+
+    if (targetProduct.status !== "available" || offeredProduct.status !== "available") {
+      return res.status(400).json({ error: "สินค้าบางรายการไม่พร้อมเทรดแล้ว" });
     }
 
     // เช็คว่ามีห้องอยู่แล้วหรือไม่
@@ -450,10 +457,18 @@ router.put("/:roomId/confirm-swap", protect, async (req, res) => {
     if (!isMember) {
       return res.status(403).json({ error: "คุณไม่มีสิทธิ์" });
     }
-
     // สลับเจ้าของสินค้า
     const product1 = await Product.findById(room.productId._id);
     const product2 = await Product.findById(room.offeredProductId._id);
+    if (room.isLocked) {
+      return res.status(400).json({ error: "การเทรดถูกปิดไปแล้ว" });
+    }
+
+    if (product1.status !== "available" || product2.status !== "available") {
+      return res.status(400).json({ error: "สินค้าบางรายการไม่พร้อมเทรดแล้ว" });
+    }
+
+
 
     const tempUser = product1.user;
     product1.user = product2.user;

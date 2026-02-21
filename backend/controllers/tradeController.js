@@ -391,20 +391,20 @@ exports.cancelTrade = async (req, res) => {
       { session }
     );
     if (trade.matchedWith) {
-  const matchedTrade = await Trade.findById(trade.matchedWith).session(session);
+      const matchedTrade = await Trade.findById(trade.matchedWith).session(session);
 
-  if (matchedTrade) {
-    matchedTrade.status = "Open";
-    matchedTrade.matchedWith = null;
-    await matchedTrade.save({ session });
+      if (matchedTrade) {
+        matchedTrade.status = "Open";
+        matchedTrade.matchedWith = null;
+        await matchedTrade.save({ session });
 
-    await Product.findByIdAndUpdate(
-      matchedTrade.offeredProduct,
-      { status: "available", isLocked: false },
-      { session }
-    );
-  }
-}
+        await Product.findByIdAndUpdate(
+          matchedTrade.offeredProduct,
+          { status: "available", isLocked: false },
+          { session }
+        );
+      }
+    }
 
     await trade.deleteOne({ session });
 
@@ -452,6 +452,10 @@ exports.acceptMatch = async (req, res) => {
       throw new Error("Cannot match same trade");
     }
 
+    if (String(myTrade.owner) === String(targetTrade.owner)) {
+      throw new Error("Cannot trade with yourself");
+    }
+
     // ✅ ต้องยัง Open เท่านั้น
     if (myTrade.status !== "Open" || targetTrade.status !== "Open") {
       throw new Error("Trade not available");
@@ -462,33 +466,33 @@ exports.acceptMatch = async (req, res) => {
       throw new Error("Already matched");
     }
 
-// ✅ ต้องเช็คว่าสินค้ายัง available จริง
-const myProduct = await Product.findById(myTrade.offeredProduct).session(session);
-const targetProduct = await Product.findById(targetTrade.offeredProduct).session(session);
+    // ✅ ต้องเช็คว่าสินค้ายัง available จริง
+    const myProduct = await Product.findById(myTrade.offeredProduct).session(session);
+    const targetProduct = await Product.findById(targetTrade.offeredProduct).session(session);
 
-if (!myProduct || !targetProduct) {
-  throw new Error("Product not found");
-}
+    if (!myProduct || !targetProduct) {
+      throw new Error("Product not found");
+    }
 
-if (myProduct.status !== "available" || targetProduct.status !== "available") {
-  throw new Error("Product not available");
-}
+    if (myProduct.status !== "available" || targetProduct.status !== "available") {
+      throw new Error("Product not available");
+    }
     // 🔒 ล็อกสินค้า 2 ฝั่ง
-const lockMyProduct = await Product.findOneAndUpdate(
-  { _id: myTrade.offeredProduct, status: "available" },
-  { status: "trading", isLocked: true },
-  { session, new: true }
-);
+    const lockMyProduct = await Product.findOneAndUpdate(
+      { _id: myTrade.offeredProduct, status: "available" },
+      { status: "trading", isLocked: true },
+      { session, new: true }
+    );
 
-const lockTargetProduct = await Product.findOneAndUpdate(
-  { _id: targetTrade.offeredProduct, status: "available" },
-  { status: "trading", isLocked: true },
-  { session, new: true }
-);
+    const lockTargetProduct = await Product.findOneAndUpdate(
+      { _id: targetTrade.offeredProduct, status: "available" },
+      { status: "trading", isLocked: true },
+      { session, new: true }
+    );
 
-if (!lockMyProduct || !lockTargetProduct) {
-  throw new Error("Product already locked");
-}
+    if (!lockMyProduct || !lockTargetProduct) {
+      throw new Error("Product already locked");
+    }
 
     // 🔥 update trade ทั้งสองฝั่ง
     myTrade.status = "Matched";
@@ -502,21 +506,21 @@ if (!lockMyProduct || !lockTargetProduct) {
 
     // 🔥 สร้าง chat room
     let room = await ChatRoom.findOne({
-  tradeId: myTrade._id
-}).session(session);
+      tradeId: myTrade._id
+    }).session(session);
 
-if (!room) {
-  room = await ChatRoom.create([{
-    type: "trade",
-    participants: [myTrade.owner, targetTrade.owner],
-    tradeId: myTrade._id,
-    productId: myTrade.offeredProduct,
-    offeredProductId: targetTrade.offeredProduct,
-    tradeStatus: "negotiating",
-    lastMessage: "เริ่มต้นการเทรด",
-    unreadBy: [targetTrade.owner]
-  }], { session });
-}
+    if (!room) {
+      room = await ChatRoom.create([{
+        type: "trade",
+        participants: [myTrade.owner, targetTrade.owner],
+        tradeId: myTrade._id,
+        productId: myTrade.offeredProduct,
+        offeredProductId: targetTrade.offeredProduct,
+        tradeStatus: "negotiating",
+        lastMessage: "เริ่มต้นการเทรด",
+        unreadBy: [targetTrade.owner]
+      }], { session });
+    }
 
     await session.commitTransaction();
     session.endSession();
