@@ -126,3 +126,18 @@ exports.createProduct = async (req, res) => {
     res.status(500).json({ message: "ไม่สามารถบันทึกสินค้าได้" });
   }
 };
+
+// ================= GET MY TRADE PRODUCTS =================
+exports.getMyTradeProducts = async (req, res) => {
+  try {
+    const products = await Product.find({
+      user: req.user.id, // ใช้ id ให้ตรงกับ middleware protect
+      tradeOption: { $ne: "sell_only" },
+      status: "available"
+    }).sort({ createdAt: -1 });
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};

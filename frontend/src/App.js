@@ -19,6 +19,7 @@ import AddressPage from "./pages/Checkout/AddressPage";
 import PaymentPage from "./pages/Checkout/PaymentPage";
 import ShopProfile from "./pages/ShopProfile/ShopProfile";
 import AdminDashboardPay from "./pages/AdminDashboardPay";
+import SelectTradeProduct from "./pages/SelectTradeProduct";
 
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/address" element={<AddressPage />} />
           <Route path="/profile/:id" element={<ShopProfile />} />
+          <Route path="/select-trade-product" element={<SelectTradeProduct />} />
 
           <Route path="/admin/coupons" element={<AdminCoupon />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
