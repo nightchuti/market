@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
     cb(null, `slip-${Date.now()}${path.extname(file.originalname)}`);
   }
 });
-const upload = require("../middleware/upload");
+const { uploadSlip } = require("../middleware/upload");
 
 // 1. [SELLER] กดสุ่มเลข OTP และเปลี่ยนสถานะเป็น WaitingMeetup
 router.put("/:orderId/ready-to-meetup", protect, async (req, res) => {
@@ -242,7 +242,7 @@ router.post("/checkout", protect, async (req, res) => {
 // ==========================================
 // 4. [BUYER] อัปโหลดสลิปแจ้งโอนเงิน
 // ==========================================
-router.patch("/:id/upload-slip", protect, upload.single("slip"), async (req, res) => {
+router.patch("/:id/upload-slip", protect, uploadSlip.single("slip"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "กรุณาแนบไฟล์สลิป" });
