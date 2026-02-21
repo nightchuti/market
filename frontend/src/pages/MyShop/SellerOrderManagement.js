@@ -9,6 +9,7 @@ function SellerOrderManagement({ setOrderCount }) {
   const [openId, setOpenId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [statusTab, setStatusTab] = useState("all");
+  const [otpInput, setOtpInput] = useState(""); // สำหรับเก็บค่าที่ Seller พิมพ์เลข 4 หลัก
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -94,6 +95,37 @@ function SellerOrderManagement({ setOrderCount }) {
     }
   };
 
+  // ฟังก์ชัน 1: กดแจ้งว่าพร้อมนัดรับ (เพื่อสร้าง OTP)
+  const handleReadyToMeetup = async (orderId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API_URL}/api/orders/${orderId}/ready-to-meetup`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert("ส่งสถานะพร้อมนัดรับสำเร็จ! รอกลูกค้าแจ้งรหัส OTP");
+      fetchOrders(); // โหลดข้อมูลใหม่เพื่ออัปเดตสถานะหน้าจอ
+    } catch (err) {
+      alert(err.response?.data?.message || "เกิดข้อผิดพลาด");
+    }
+  };
+
+  // ฟังก์ชัน 2: ส่ง OTP ไปตรวจสอบเพื่อจบงาน
+  const handleVerifyOTP = async (orderId, otp) => {
+    if (!otp || otp.length !== 4) {
+      return alert("กรุณากรอกรหัส OTP 4 หลักให้ครบถ้วน");
+    }
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(`${API_URL}/api/orders/${orderId}/verify-meetup`, { otp }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert("ยืนยันการรับสินค้าสำเร็จ! สถานะออเดอร์คือ: สำเร็จแล้ว");
+      fetchOrders(); // โหลดข้อมูลใหม่
+    } catch (err) {
+      alert(err.response?.data?.message || "รหัส OTP ไม่ถูกต้อง");
+    }
+  };
+
   if (loading) return <div style={{ padding: 40 }}>กำลังโหลด...</div>;
   if (orders.length === 0)
     return <div style={{ padding: 40, textAlign: "center" }}>ไม่มีคำสั่งซื้อใหม่</div>;
@@ -170,7 +202,7 @@ function SellerOrderManagement({ setOrderCount }) {
                     </span>
 
                     <span className="top-price">
-                        ฿{order.totalPrice?.toLocaleString()}
+                      ฿{order.totalPrice?.toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -206,6 +238,32 @@ function SellerOrderManagement({ setOrderCount }) {
                   >
                     เรียกไรเดอร์
                   </button>
+                )}
+
+                {/* กรณีเป็นนัดรับ และ Admin กดยืนยันจ่ายเงินแล้ว (Paid) */}
+                {order.status === "Paid" && order.deliveryMode === "PICKUP" && (
+                  <button
+                    className="btn-ready"
+                    onClick={() => handleReadyToMeetup(order._id)}
+                  >
+                    สินค้าพร้อมนัดรับ
+                  </button>
+                )}
+
+                {/* กรณีรอนัดรับสินค้า (WaitingMeetup) */}
+                {order.status === "WaitingMeetup" && (
+                  <div className="otp-verify-box">
+                    <input
+                      type="text"
+                      maxLength="4"
+                      placeholder="เลข OTP 4 หลัก"
+                      value={otpInput}
+                      onChange={(e) => setOtpInput(e.target.value)}
+                    />
+                    <button onClick={() => handleVerifyOTP(order._id, otpInput)}>
+                      ยืนยันส่งมอบสินค้า
+                    </button>
+                  </div>
                 )}
 
                 <button className="dropdown-btn">

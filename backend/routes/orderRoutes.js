@@ -35,6 +35,54 @@ const storage = multer.diskStorage({
 });
 const upload = require("../middleware/upload");
 
+// [SELLER] แจ้งว่าพร้อมนัดรับ และสร้าง OTP
+router.put("/:orderId/ready-to-meetup", protect, async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.orderId, seller: req.user._id });
+    if (!order) return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ" });
+    
+    // ตรวจสอบว่าต้องจ่ายเงินแล้ว (WaitingConfirm -> Admin Confirm -> Paid) 
+    // หรือกรณีที่ Admin ยืนยันสลิปแล้วสถานะเป็น Paid
+    if (order.status !== "Paid" && order.status !== "Preparing") {
+      return res.status(400).json({ message: "สถานะออเดอร์ไม่ถูกต้อง" });
+    }
+
+    // สร้าง OTP 4 หลัก
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    order.meetupOTP = otp;
+    order.status = "WaitingMeetup"; // เปลี่ยนสถานะเป็นรอนัดรับ
+    await order.save();
+
+    res.json({ message: "พร้อมสำหรับการนัดรับ", otp: otp }); 
+    // หมายเหตุ: ปกติ OTP ฝั่ง Buyer จะเป็นคนถือ แต่ใน Flow นี้ 
+    // Seller เป็นคน Generate แล้วรอ Buyer มาบอกเลขที่ Buyer เห็นในหน้าจอ
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// [SELLER] ยืนยัน OTP เมื่อเจอ Buyer
+router.put("/:orderId/verify-meetup", protect, async (req, res) => {
+  const { otp } = req.body;
+  try {
+    const order = await Order.findOne({ _id: req.params.orderId, seller: req.user._id });
+    
+    if (order.meetupOTP !== otp) {
+      return res.status(400).json({ message: "รหัส OTP ไม่ถูกต้อง" });
+    }
+
+    order.status = "Completed";
+    order.meetupVerified = true;
+    order.escrowStatus = "Released"; // พร้อมให้ Admin โอนเงิน
+    order.completedAt = new Date();
+    await order.save();
+
+    res.json({ message: "ยืนยันการนัดรับสำเร็จ ออเดอร์เสร็จสิ้น" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ==========================================
 // 1. [BUYER] ดึงประวัติคำสั่งซื้อของตัวเอง
 // ==========================================

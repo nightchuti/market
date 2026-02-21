@@ -577,7 +577,7 @@ export default function ProfilePage() {
                               ยืนยันการรับสินค้า
                             </button>
                           )}
-                          
+
                         </div>
 
                         {/* ปุ่มไปชำระเงิน */}
@@ -588,6 +588,15 @@ export default function ProfilePage() {
                           >
                             ไปชำระเงิน
                           </button>
+                        )}
+
+                        {/* ในส่วนการแสดงผล Order Card */}
+                        {order.deliveryMode === "PICKUP" && order.status === "WaitingMeetup" && (
+                          <div className="meetup-otp-box">
+                            <p>รหัสสำหรับยืนยันการรับสินค้า:</p>
+                            <div className="otp-code">{order.meetupOTP}</div>
+                            <small>*บอกรหัสนี้กับผู้ขายเมื่อตรวจสอบสินค้าเรียบร้อยแล้ว</small>
+                          </div>
                         )}
                       </div>
                     </div>
