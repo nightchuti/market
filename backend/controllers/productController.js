@@ -141,3 +141,18 @@ exports.getMyTradeProducts = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// GET /api/products/my-trade-products
+exports.getMyTradeProducts = async (req, res) => {
+  try {
+    const products = await Product.find({
+      user: req.user.id,
+      status: "available",     // ต้องพร้อมเทรด
+      isLocked: false          // ต้องไม่ถูกล็อก
+    });
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

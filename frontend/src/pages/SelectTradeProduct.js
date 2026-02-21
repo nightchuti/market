@@ -2,68 +2,76 @@ import { useEffect, useState } from "react";
 import api from "../api";
 import "./SelectTradeProduct.css";
 
-function SelectTradeProduct({ token, targetProductId, onConfirm, onCancel }) {
-  const [myProducts, setMyProducts] = useState([]);
+function SelectTradeProduct({ token, onConfirm, onCancel }) {
+  const [products, setProducts] = useState([]);
+  const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchMyProducts = async () => {
+    const fetchProducts = async () => {
       try {
         const res = await api.get("/api/products/my-trade-products", {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        // ❗ ตัดสินค้าตัวเดียวกับที่กำลังดูออก
-        const filtered = res.data.filter(
-          (p) => p._id !== targetProductId
-        );
-
-        setMyProducts(filtered);
+        setProducts(res.data);
       } catch (err) {
-        alert("โหลดสินค้าของคุณไม่สำเร็จ");
+        console.error("โหลดสินค้าสำหรับเทรดไม่สำเร็จ", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMyProducts();
-  }, [token, targetProductId]);
-
-  if (loading) return <div className="trade-overlay">กำลังโหลด...</div>;
+    fetchProducts();
+  }, [token]);
 
   return (
-    <div className="trade-overlay">
+    <div className="trade-modal-overlay">
       <div className="trade-modal">
-        <h2>เลือกสินค้าที่จะใช้แลก</h2>
 
-        {myProducts.length === 0 ? (
-          <p>คุณยังไม่มีสินค้าที่เปิดรับแลก</p>
-        ) : (
-          <div className="trade-grid">
-            {myProducts.map((product) => (
-              <div
-                key={product._id}
-                className="trade-card"
-                onClick={() => onConfirm(product._id)}
-              >
-                <img
-                  src={
-                    product.images?.[0]
-                      ? `${api.defaults.baseURL}${product.images[0]}`
-                      : "/images/noimage.png"
-                  }
-                  alt={product.title}
-                />
-                <h4>{product.title}</h4>
-                <p>฿{product.price}</p>
-              </div>
-            ))}
-          </div>
+        <h3>เลือกสินค้าที่จะใช้แลก</h3>
+
+        {loading && <p>กำลังโหลด...</p>}
+
+        {!loading && products.length === 0 && (
+          <p>คุณยังไม่มีสินค้าที่สามารถใช้แลกได้</p>
         )}
 
-        <button className="btn-cancel" onClick={onCancel}>
-          ปิด
-        </button>
+        <div className="trade-product-list">
+          {products.map((p) => (
+            <div
+              key={p._id}
+              className={`trade-item ${selected?._id === p._id ? "active" : ""}`}
+              onClick={() => setSelected(p)}
+            >
+              <img
+                src={
+                  p.images?.[0]
+                    ? `${api.defaults.baseURL}${p.images[0]}`
+                    : "/images/noimage.png"
+                }
+                alt=""
+              />
+              <div>
+                <b>{p.title}</b>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="trade-btn-row">
+          <button onClick={onCancel}>ยกเลิก</button>
+
+          <button
+            disabled={!selected}
+            onClick={() => {
+              onConfirm(selected._id);
+            }}
+          >
+            ยืนยันเลือก
+          </button>
+        </div>
+
       </div>
     </div>
   );
