@@ -38,7 +38,6 @@ socketManager(io);
 // ===== MIDDLEWARE =====
 app.use(cors({ origin: "*" }));
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
 
 // ✅ Health Check
 app.get("/", (req, res) => {

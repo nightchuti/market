@@ -6,8 +6,7 @@ const User = require("../models/User"); // ✅ เพิ่มการ Import U
 
 // ✅ destructure เพราะ authMiddleware export เป็น { protect, admin }
 const { protect } = require("../middleware/authMiddleware");
-const upload = require("../middleware/upload");
-
+const { uploadProduct } = require("../middleware/upload");
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = process.env.GEMINI_API_KEY
@@ -72,10 +71,19 @@ router.post("/activate-boost/:id", protect, async (req, res) => {
 });
 
 // ================= UPLOAD IMAGES =================
-router.post("/upload", upload.array("images", 6), (req, res) => {
-  const images = req.files.map(file => `/uploads/${file.filename}`);
-  res.json({ message: "Upload success", images });
-});
+router.post(
+  "/upload",
+  uploadProduct.array("images", 6),
+  (req, res) => {
+    const images = req.files.map(file => file.path);
+
+    res.json({
+      success: true,
+      message: "Upload success",
+      images
+    });
+  }
+);
 
 // ================= MY PRODUCTS =================
 router.get("/my", protect, async (req, res) => {
@@ -168,7 +176,7 @@ router.get("/", async (req, res) => {
 
 // ================= CREATE PRODUCT =================
 // Route สำหรับเพิ่มสินค้า
-router.post("/", protect, upload.fields([
+router.post("/", protect, uploadProduct.fields([
   { name: "images", maxCount: 5 },
   { name: "wantedImages", maxCount: 5 }
 ]), async (req, res) => {
@@ -180,11 +188,12 @@ router.post("/", protect, upload.fields([
     } = req.body;
 
     // 1. จัดการรูปภาพ (ป้องกันกรณีไม่มีไฟล์)
-    const imagePaths = req.files?.images
-      ? req.files.images.map(f => `/uploads/${f.filename}`)
+    const imageUrls = req.files?.images
+      ? req.files.images.map(f => f.path)
       : [];
-    const wantedImagePaths = req.files?.wantedImages
-      ? req.files.wantedImages.map(f => `/uploads/${f.filename}`)
+
+    const wantedImageUrls = req.files?.wantedImages
+      ? req.files.wantedImages.map(f => f.path)
       : [];
 
     // 2. จัดการ Keywords (ป้องกัน .split of undefined)
@@ -204,8 +213,8 @@ router.post("/", protect, upload.fields([
       price: tradeOption === "trade_allowed" ? 0 : Number(price || 0),
       category,
       quantity: Number(quantity || 1),
-      images: imagePaths,
-      wantedImages: wantedImagePaths,
+      images: imageUrls,
+      wantedImages: wantedImageUrls,
       wantedCategory: wantedCategory || "",
       wantedKeywords: processedKeywords,
       meetupAddress: meetupAddress || "",
@@ -245,7 +254,7 @@ router.post("/", protect, upload.fields([
 });
 
 // ================= UPDATE PRODUCT =================
-router.put("/:id", protect, upload.fields([
+router.put("/:id", protect, uploadProduct.fields([
   { name: "images", maxCount: 6 },
   { name: "wantedImages", maxCount: 6 }
 ]), async (req, res) => {
@@ -259,7 +268,7 @@ router.put("/:id", protect, upload.fields([
       try { finalImages = JSON.parse(req.body.existingImages); } catch { }
     }
     if (req.files?.images?.length > 0)
-      finalImages = [...finalImages, ...req.files.images.map(f => `/uploads/${f.filename}`)];
+      finalImages = [...finalImages, ...req.files.images.map(f => f.path)];
 
 
     product.title = req.body.title || product.title;
@@ -358,7 +367,7 @@ router.get("/:id", async (req, res) => {
 
 
 
-router.put("/:id/add-images", protect, upload.fields([
+router.put("/:id/add-images", protect, uploadProduct.fields([
   { name: "images", maxCount: 6 }
 ]), async (req, res) => {
   try {
@@ -366,7 +375,7 @@ router.put("/:id/add-images", protect, upload.fields([
     if (!product) return res.status(404).json({ message: "ไม่พบสินค้า" });
     if (product.user.toString() !== req.user.id) return res.status(403).json({ message: "คุณไม่มีสิทธิ์แก้ไข" });
     const newImages = req.files?.images
-      ? req.files.images.map(f => `/uploads/${f.filename}`)
+      ? req.files.images.map(f => f.path)
       : [];
 
     if (product.images.length + newImages.length > 6) return res.status(400).json({ message: "สามารถเพิ่มรูปได้สูงสุด 6 รูป" });
