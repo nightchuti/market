@@ -5,7 +5,20 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 
 function Inventory({ products, openId, setOpenId, handleDelete, navigate, publishProduct, userQuota, refreshProducts }) {
-  
+
+  const getImageUrl = (img) => {
+    if (!img) return "/no-image.png";
+
+    // ถ้าเป็น full URL อยู่แล้ว
+    if (img.startsWith("http")) return img;
+
+    // กันกรณี API_URL undefined
+    if (!API_URL) return img;
+
+    // กัน // ซ้อน
+    return `${API_URL.replace(/\/$/, "")}/${img.replace(/^\//, "")}`;
+  };
+
   // ✅ ฟังก์ชันเรียก API บูสสินค้า
   const handleBoost = async (productId) => {
     if (userQuota <= 0) {
@@ -57,22 +70,27 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
         <div className="card-top">
           <div className="product-main-info">
             {p.images && p.images.length > 0 ? (
-              <img 
-                src={`${API_URL}${p.images[0]}`} 
-                alt={p.title} 
-                className="inventory-thumb" 
+              <img
+                src={getImageUrl(p.images?.[0])}
+                alt={p.title}
+                className="inventory-thumb"
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/no-image.png";
+                }}
               />
             ) : (
               <div className="inventory-thumb-placeholder">ไม่มีรูป</div>
             )}
-            
+
             <div className="title-section">
               <h4>
-                {p.title} 
+                {p.title}
                 {isCurrentlyBoosted && <span className="boost-tag">🚀 Boosted</span>}
               </h4>
               {(p.tradeOption === "sell_only" || p.tradeOption === "negotiable") && (
-                 <span className="price">฿{p.price?.toLocaleString()}</span>
+                <span className="price">฿{p.price?.toLocaleString()}</span>
               )}
             </div>
           </div>
@@ -80,7 +98,7 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
           <div className="card-actions">
             {/* ✅ ปุ่มบูสสินค้า (แสดงเฉพาะถ้าสถานะเป็น available) */}
             {p.status === "available" && (
-              <button 
+              <button
                 className={`boost-action-btn ${isCurrentlyBoosted ? 'active' : ''}`}
                 onClick={() => handleBoost(p._id)}
                 disabled={isCurrentlyBoosted}
@@ -119,7 +137,7 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
                 </p>
               )}
               <p className="description-text"><strong>รายละเอียด:</strong> {p.description || "ไม่มีคำอธิบาย"}</p>
-              
+
               <div className="detail-grid">
                 {(p.tradeOption === "sell_only" || p.tradeOption === "negotiable") && (
                   <div className="detail-item"><strong>ราคา:</strong> ฿{p.price?.toLocaleString()}</div>

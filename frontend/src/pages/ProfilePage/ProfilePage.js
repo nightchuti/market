@@ -7,6 +7,17 @@ const API_URL = process.env.REACT_APP_API_URL;
 
 const DEFAULT_AVATAR = "/images/default-avatar.png";
 
+const getImageUrl = (img) => {
+  if (!img) return "/images/default-product.png";
+
+  // ถ้าเป็น full URL แล้ว
+  if (img.startsWith("http")) return img;
+
+  if (!API_URL) return img;
+
+  return `${API_URL.replace(/\/$/, "")}/${img.replace(/^\//, "")}`;
+};
+
 const ORDER_TABS = [
   { key: "all", label: "ทั้งหมด", icon: "📋" },
 
@@ -277,9 +288,7 @@ export default function ProfilePage() {
     ? previewImg
     : removeImage
       ? DEFAULT_AVATAR
-      : profile.profileImage
-        ? `${API_URL}${profile.profileImage}`
-        : DEFAULT_AVATAR;
+      : getImageUrl(profile.profileImage) || DEFAULT_AVATAR;
 
 
   return (
@@ -372,6 +381,10 @@ export default function ProfilePage() {
               className="pp-avatar"
               src={currentAvatar}
               alt="User Avatar"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = DEFAULT_AVATAR;
+              }}
             />
 
           </div>
@@ -530,8 +543,13 @@ export default function ProfilePage() {
                           <div key={i} className="pp-oitem">
                             <img
                               className="pp-oimg"
-                              src={item.product?.images?.length > 0 ? `${API_URL}${item.product.images[0]}` : "/images/default-product.png"}
+                              src={getImageUrl(item.product?.images?.[0])}
                               alt={item.product?.title}
+                              loading="lazy"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = "/images/default-product.png";
+                              }}
                             />
                             <div className="pp-ometa">
                               <div className="pp-oname">

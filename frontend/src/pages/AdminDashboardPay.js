@@ -3,6 +3,17 @@ import api from "../api";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
+const getImageUrl = (img) => {
+    if (!img) return "/images/no-slip.png";
+
+    // ถ้าเป็น full URL แล้ว
+    if (img.startsWith("http")) return img;
+
+    if (!API_URL) return img;
+
+    return `${API_URL.replace(/\/$/, "")}/${img.replace(/^\//, "")}`;
+};
+
 const AdminDashboardPay = () => {
     const [orders, setOrders] = useState([]);
     const [activeTab, setActiveTab] = useState("waiting");
@@ -112,10 +123,14 @@ const AdminDashboardPay = () => {
 
                                     <td style={styles.td}>
                                         <img
-                                            src={order.paymentSlip}
+                                            src={getImageUrl(order.paymentSlip)}
                                             style={styles.thumbnail}
-                                            onClick={() => setSelectedImage(order.paymentSlip)}
+                                            onClick={() => setSelectedImage(getImageUrl(order.paymentSlip))}
                                             alt="slip"
+                                            onError={(e) => {
+                                                e.currentTarget.onerror = null;
+                                                e.currentTarget.src = "/images/no-slip.png";
+                                            }}
                                         />
                                     </td>
 
@@ -147,7 +162,15 @@ const AdminDashboardPay = () => {
             {selectedImage && (
                 <div style={styles.modalOverlay} onClick={() => setSelectedImage(null)}>
                     <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                        <img src={selectedImage} style={styles.modalImage} alt="slip large" />
+                        <img
+                            src={getImageUrl(selectedImage)}
+                            style={styles.modalImage}
+                            alt="slip large"
+                            onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = "/images/no-slip.png";
+                            }}
+                        />
                     </div>
                 </div>
             )}

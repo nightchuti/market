@@ -113,11 +113,7 @@ export default function Navbar({ onLogin, onRegister }) {
               onClick={() => navigate("/profile")}
             >
               <img
-                src={
-                  user.profileImage
-                    ? `${api.defaults.baseURL}${user.profileImage}`
-                    : "/images/default-avatar.png"
-                }
+                src={user?.profileImage || "/images/default-avatar.png"}
                 alt="profile"
                 className="mini-avatar"
                 onError={(e) => {

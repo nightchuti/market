@@ -39,11 +39,34 @@ const PaymentPage = () => {
 
     const onFileChange = (e) => {
         const selectedFile = e.target.files[0];
-        if (selectedFile) {
-            setFile(selectedFile);
-            setPreviewUrl(URL.createObjectURL(selectedFile));
+        if (!selectedFile) return;
+
+        // ✅ ตรวจสอบชนิดไฟล์
+        if (!selectedFile.type.startsWith("image/")) {
+            alert("กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น");
+            return;
         }
+
+        // ✅ จำกัดขนาดไฟล์ (เช่น 5MB)
+        const maxSize = 5 * 1024 * 1024;
+        if (selectedFile.size > maxSize) {
+            alert("ขนาดไฟล์ต้องไม่เกิน 5MB");
+            return;
+        }
+
+        setFile(selectedFile);
+
+        const objectUrl = URL.createObjectURL(selectedFile);
+        setPreviewUrl(objectUrl);
     };
+
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     const handleUpload = async () => {
         if (!file) return alert("กรุณาเลือกไฟล์สลิปก่อนยืนยัน");
@@ -121,7 +144,15 @@ const PaymentPage = () => {
                     {previewUrl && (
                         <div style={styles.previewContainer}>
                             <p style={styles.previewLabel}>ตัวอย่างสลิปของคุณ:</p>
-                            <img src={previewUrl} alt="Preview" style={styles.previewImage} />
+                            <img
+                                src={previewUrl}
+                                alt="Preview"
+                                style={styles.previewImage}
+                                onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = "/no-image.png";
+                                }}
+                            />
                         </div>
                     )}
 

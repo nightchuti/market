@@ -31,6 +31,25 @@ const CheckoutPage = () => {
     const [availableCoupons, setAvailableCoupons] = useState([]);
     const [appliedCoupon, setAppliedCoupon] = useState(null);
 
+    const API_URL = process.env.REACT_APP_API_URL || "";
+
+    const getImageUrl = (path) => {
+        if (!path) return "/no-image.png";
+
+        // ถ้าเป็น full URL แล้ว
+        if (path.startsWith("http")) return path;
+
+        const base = API_URL.replace(/\/$/, "");
+        const imgPath = path.startsWith("/") ? path : `/${path}`;
+
+        return `${base}${imgPath}`;
+    };
+
+    const handleImageError = (e) => {
+        e.currentTarget.onerror = null; // กัน loop
+        e.currentTarget.src = "/no-image.png";
+    };
+
     // ================= REDIRECT IF EMPTY =================
     useEffect(() => {
         if (!location.state?.items || location.state.items.length === 0) {
@@ -352,13 +371,9 @@ const CheckoutPage = () => {
                 {cartItems.map((item) => (
                     <div key={item._id} className="sh-item">
                         <img
-                            src={
-                                item.images?.[0]
-                                    ? `${api.defaults.baseURL}${item.images[0]}`
-                                    : ""
-                            }
-
+                            src={getImageUrl(item.images?.[0])}
                             alt="product"
+                            onError={handleImageError}
                         />
                         <div className="item-detail">
                             <p className="item-title">{item.title}</p>

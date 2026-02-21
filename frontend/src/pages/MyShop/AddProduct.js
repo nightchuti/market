@@ -7,7 +7,10 @@ export default function AddProduct() {
   const navigate = useNavigate();
 
   const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+
   const [tradeImages, setTradeImages] = useState([]);
+  const [tradePreviews, setTradePreviews] = useState([]);
 
   const [form, setForm] = useState({
     title: "",
@@ -45,12 +48,37 @@ export default function AddProduct() {
 
   // ---------------- IMAGE ----------------
   const handleImageChange = (e) => {
-    setImages(prev => [...prev, ...Array.from(e.target.files)]);
+    const files = Array.from(e.target.files);
+
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith("image/")) {
+        alert("กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น");
+        return false;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert("ไฟล์ต้องไม่เกิน 5MB");
+        return false;
+      }
+
+      return true;
+    });
+
+    const previewUrls = validFiles.map(file => URL.createObjectURL(file));
+
+    setImages(prev => [...prev, ...validFiles]);
+    setImagePreviews(prev => [...prev, ...previewUrls]);
   };
+
   const handleTradeImageChange = (e) => {
     setTradeImages(prev => [...prev, ...Array.from(e.target.files)]);
   };
-  const removeImage = (i) => setImages(prev => prev.filter((_, idx) => idx !== i));
+  const removeImage = (index) => {
+    URL.revokeObjectURL(imagePreviews[index]);
+
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
   const removeTradeImage = (i) => setTradeImages(prev => prev.filter((_, idx) => idx !== i));
 
   // ---------------- CHANGE ----------------
@@ -166,9 +194,16 @@ export default function AddProduct() {
         <label>รูปสินค้า *</label>
         <input type="file" multiple accept="image/*" onChange={handleImageChange} />
         <div className="image-preview">
-          {images.map((img, i) => (
+          {imagePreviews.map((preview, i) => (
             <div key={i} className="preview-item">
-              <img src={URL.createObjectURL(img)} alt="" />
+              <img
+                src={preview}
+                alt=""
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/no-image.png";
+                }}
+              />
               <button onClick={() => removeImage(i)}>✕</button>
             </div>
           ))}

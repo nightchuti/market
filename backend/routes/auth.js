@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("../config/cloudinary");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -14,24 +14,16 @@ const router = express.Router();
 /* =====================================================
    1) MULTER CONFIG (จัดการรูปโปรไฟล์)
 ===================================================== */
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = "uploads/profiles/";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    cb(
-      null,
-      `profile-${req.user?.id || "guest"}-${Date.now()}${path.extname(file.originalname)}`
-    );
-  },
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => ({
+    folder: "profiles",
+    public_id: `profile-${req.user.id}-${Date.now()}`,
+    allowed_formats: ["jpg", "png", "jpeg", "webp"],
+  }),
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 2 * 1024 * 1024 },
-});
+const upload = multer({ storage });
 
 /* =====================================================
    2) GET PRIVATE PROFILE (สำหรับหน้าแก้ไขตัวเอง)
@@ -55,7 +47,7 @@ router.get("/user/:id", async (req, res) => {
     const user = await User.findById(req.params.id)
       .select("username email profileImage shopId role bio")
       .populate("shopId");
-    
+
     if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
     res.json(user);
   } catch (err) {
@@ -67,53 +59,43 @@ router.get("/user/:id", async (req, res) => {
    4) UPDATE PROFILE
 ===================================================== */
 router.put("/profile", protect, upload.single("profileImage"), async (req, res) => {
-    try {
-      const user = await User.findById(req.user.id);
-      if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
 
-      const { username, phone, gender, bio, birthday } = req.body;
-      const changedFields = {};
+    const { username, phone, gender, bio, birthday } = req.body;
+    const changedFields = {};
 
-      if (username || phone) {
-        const duplicate = await User.findOne({
-          _id: { $ne: user._id },
-          $or: [
-            ...(username ? [{ username }] : []),
-            ...(phone ? [{ phonenumber: phone }] : []),
-          ],
-        });
-        if (duplicate) return res.status(400).json({ message: "ชื่อผู้ใช้หรือเบอร์โทรนี้ถูกใช้งานแล้ว" });
-      }
-
-      if (username) { changedFields.username = { from: user.username, to: username }; user.username = username; }
-      if (phone) { changedFields.phonenumber = { from: user.phonenumber, to: phone }; user.phonenumber = phone; }
-      if (gender !== undefined) user.gender = gender;
-      if (bio !== undefined) user.bio = bio;
-      if (birthday !== undefined) user.birthday = birthday;
-
-      if (req.body.removeProfileImage === "true" && user.profileImage) {
-        const oldPath = path.join(__dirname, "..", user.profileImage);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        changedFields.profileImage = { from: user.profileImage, to: null };
-        user.profileImage = null;
-      }
-
-      if (req.file) {
-        // เก็บ path โดยตรวจสอบว่ามี / นำหน้าหรือไม่ เพื่อให้ Frontend ต่อ URL ได้ง่าย
-        const imagePath = `/uploads/profiles/${req.file.filename}`;
-        changedFields.profileImage = { from: user.profileImage, to: imagePath };
-        user.profileImage = imagePath;
-      }
-
-      user.lastProfileUpdate = new Date();
-      await ProfileLog.create({ userId: user._id, changedFields });
-      await user.save();
-
-      res.json({ message: "อัปเดตข้อมูลสำเร็จ", user });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
+    if (username || phone) {
+      const duplicate = await User.findOne({
+        _id: { $ne: user._id },
+        $or: [
+          ...(username ? [{ username }] : []),
+          ...(phone ? [{ phonenumber: phone }] : []),
+        ],
+      });
+      if (duplicate) return res.status(400).json({ message: "ชื่อผู้ใช้หรือเบอร์โทรนี้ถูกใช้งานแล้ว" });
     }
+
+    if (username) { changedFields.username = { from: user.username, to: username }; user.username = username; }
+    if (phone) { changedFields.phonenumber = { from: user.phonenumber, to: phone }; user.phonenumber = phone; }
+    if (gender !== undefined) user.gender = gender;
+    if (bio !== undefined) user.bio = bio;
+    if (birthday !== undefined) user.birthday = birthday;
+
+    if (req.file) {
+      user.profileImage = req.file.path;
+    }
+
+    user.lastProfileUpdate = new Date();
+    await ProfileLog.create({ userId: user._id, changedFields });
+    await user.save();
+
+    res.json({ message: "อัปเดตข้อมูลสำเร็จ", user });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
+}
 );
 
 /* =====================================================
