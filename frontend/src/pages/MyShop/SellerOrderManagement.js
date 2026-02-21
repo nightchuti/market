@@ -9,7 +9,15 @@ function SellerOrderManagement({ setOrderCount }) {
   const [openId, setOpenId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [statusTab, setStatusTab] = useState("all");
-  const [otpInput, setOtpInput] = useState(""); // สำหรับเก็บค่าที่ Seller พิมพ์เลข 4 หลัก
+  const [otpInputs, setOtpInputs] = useState({});
+
+  const getImageUrl = (img) => {
+    if (!img) return "/no-image.png";
+    if (img.startsWith("http")) return img;
+    if (!API_URL) return img;
+
+    return `${API_URL.replace(/\/$/, "")}/${img.replace(/^\//, "")}`;
+  };
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -107,12 +115,19 @@ function SellerOrderManagement({ setOrderCount }) {
 
   const handleVerifyOTP = async (orderId) => {
     try {
-      await axios.put(`${API_URL}/api/orders/${orderId}/verify-meetup`, { otp: otpInput }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      setOtpInput("");
+      await axios.put(
+        `${API_URL}/api/orders/${orderId}/verify-meetup`,
+        { otp: otpInputs[orderId] },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        }
+      );
+
+      setOtpInputs(prev => ({ ...prev, [orderId]: "" }));
       fetchOrders();
-    } catch (err) { alert("รหัส OTP ไม่ถูกต้อง"); }
+    } catch {
+      alert("รหัส OTP ไม่ถูกต้อง");
+    }
   };
 
   if (loading) return <div style={{ padding: 40 }}>กำลังโหลด...</div>;
@@ -170,9 +185,14 @@ function SellerOrderManagement({ setOrderCount }) {
               <div className="product-main-info">
                 {order.items?.[0]?.product?.images?.[0] ? (
                   <img
-                    src={`${API_URL}/${order.items?.[0]?.product?.images?.[0]}`}
+                    src={getImageUrl(order.items?.[0]?.product?.images?.[0])}
                     alt="product"
                     className="inventory-thumb"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/no-image.png";
+                    }}
                   />
                 ) : (
                   <div className="inventory-thumb-placeholder">
@@ -246,10 +266,20 @@ function SellerOrderManagement({ setOrderCount }) {
                       type="text"
                       maxLength="4"
                       placeholder="เลข OTP 4 หลัก"
-                      value={otpInput}
-                      onChange={(e) => setOtpInput(e.target.value)}
+                      value={otpInputs[order._id] || ""}
+                      onChange={(e) =>
+                        setOtpInputs(prev => ({
+                          ...prev,
+                          [order._id]: e.target.value
+                        }))
+                      }
                     />
-                    <button onClick={() => handleVerifyOTP(order._id, otpInput)}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleVerifyOTP(order._id);
+                      }}
+                    >
                       ยืนยันส่งมอบสินค้า
                     </button>
                   </div>

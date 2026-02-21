@@ -29,6 +29,12 @@ function EditProduct() {
 
   const [loading, setLoading] = useState(true);
 
+  const getImageUrl = (img) => {
+  if (!img) return "/no-image.png";
+  if (img.startsWith("http")) return img;
+  return `${API_URL}${img}`;
+};
+
   // ================= FETCH PRODUCT =================
   const fetchProduct = useCallback(async () => {
     try {
@@ -161,7 +167,7 @@ function EditProduct() {
           <div className="image-preview">
             {existingImages.map((img, index) => (
               <div key={index} className="image-card">
-                <img src={`${API_URL}${img}`} alt="product" />
+                <img src={getImageUrl(img)} alt="product" />
                 <button type="button" onClick={() => removeOldImage(index)}>✕</button>
               </div>
             ))}

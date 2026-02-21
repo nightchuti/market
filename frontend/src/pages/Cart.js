@@ -10,6 +10,17 @@ function Cart() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const getImageUrl = (img) => {
+    if (!img) return "/images/default-product.png";
+
+    // ถ้าเป็น full URL แล้ว
+    if (img.startsWith("http")) return img;
+
+    if (!API_URL) return img;
+
+    return `${API_URL.replace(/\/$/, "")}/${img.replace(/^\//, "")}`;
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -213,7 +224,7 @@ function Cart() {
             {cart.items.map(item => {
               // ตรวจสอบว่า item.product มีค่าหรือไม่ก่อนที่จะเข้าถึง properties ต่าง ๆ
               const product = item.product || {}; // หาก product เป็น null/undefined ให้ fallback เป็น empty object
-              const img = product.images?.[0] ? `${API_URL}${product.images[0]}` : "/images/default-avatar.png";
+              const img = getImageUrl(product.images?.[0]);
 
               const isOutOfStock = product.quantity === 0;
 
@@ -226,7 +237,14 @@ function Cart() {
                     onChange={() => toggleSelect(item._id)}
                   />
 
-                  <img src={img} alt="" />
+                  <img
+                    src={img}
+                    alt={product?.title}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/images/default-product.png";
+                    }}
+                  />
 
                   <div className="item-info">
                     <h4>{product?.title || "สินค้าหายไป"}</h4> {/* แสดงข้อความ fallback ถ้าไม่มี title */}

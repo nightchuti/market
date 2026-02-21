@@ -20,6 +20,17 @@ export default function ChatFloating() {
   // ✅ รองรับทั้ง _id และ id
   const myId = String(currentUser._id || currentUser.id || "");
 
+  const getImageUrl = (img, fallback = "/images/default-avatar.png") => {
+    if (!img) return fallback;
+
+    // ถ้าเป็น full URL แล้ว
+    if (img.startsWith("http")) return img;
+
+    if (!API_URL) return img;
+
+    return `${API_URL.replace(/\/$/, "")}/${img.replace(/^\//, "")}`;
+  };
+
   const fetchRooms = async () => {
     if (!token) return;
     setLoading(true);
@@ -112,11 +123,12 @@ export default function ChatFloating() {
                     <img
                       className="cf-avatar"
                       src={
-                        other?.avatarUrl || // ✅ ใช้ตัวแปรใหม่จาก Backend
-                        (other?.profileImage?.startsWith("http")
-                          ? other.profileImage
-                          : `${API_URL}${other?.profileImage}`) ||
-                        `https://ui-avatars.com/api/?name=${encodeURIComponent(other?.username || "U")}`
+                        getImageUrl(
+                          other?.avatarUrl || other?.profileImage,
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                            other?.username || "U"
+                          )}`
+                        )
                       }
                       alt="avatar"
                     />
@@ -124,12 +136,12 @@ export default function ChatFloating() {
                     {productImg && (
                       <img
                         className="cf-product-thumb"
-                        src={
-                          productImg.startsWith("http")
-                            ? productImg
-                            : `${API_URL}${productImg}`
-                        }
+                        src={getImageUrl(productImg, "/images/default-product.png")}
                         alt=""
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "/images/default-product.png";
+                        }}
                       />
                     )}
                   </div>

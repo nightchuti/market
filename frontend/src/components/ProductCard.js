@@ -21,12 +21,7 @@ function ProductCard({ product }) {
 // ✅ ปรับ Logic การดึง URL รูปภาพ
 const API_URL = process.env.REACT_APP_API_URL;
 
-const imageUrl =
-  images && images.length > 0
-    ? images[0].startsWith("http")
-      ? images[0]
-      : `${API_URL}${images[0]}`
-    : "/no-image.png";
+const imageUrl = images?.[0] || "/no-image.png";
 
 
     // ✅ ฟังก์ชันดักจับถ้ารูปภาพจาก Server โหลดไม่ได้
