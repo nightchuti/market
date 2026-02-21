@@ -9,7 +9,9 @@ const { protect } = require("../middleware/authMiddleware");
 const { uploadProduct } = require("../middleware/upload");
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = process.env.GEMINI_API_KEY
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+  : null;
 
 // ================= [NEW] TEST UPGRADE PRO =================
 // ใช้สำหรับจำลองการซื้อโปร 99 บาท (เติม 10 สิทธิ์)
@@ -225,14 +227,14 @@ router.post("/", protect, uploadProduct.fields([
 
     // 4. ทำ AI Embedding (ถ้าทำได้)
     async function generateEmbedding(text) {
+      if (!genAI) return null;
+
       try {
-        // แก้ไขจาก embedding-001 เป็น text-embedding-004
         const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
         const result = await model.embedContent(text);
         return result.embedding.values;
       } catch (error) {
-        // ถ้า AI มีปัญหา ให้ Log ไว้แต่ไม่ให้ Error 500 พ่นออกไปหา User
-        console.error("❌ Google AI Embedding Error:", error.message);
+        console.error("AI error:", error.message);
         return null;
       }
     }
@@ -283,12 +285,16 @@ router.put("/:id", protect, uploadProduct.fields([
     product.status = "pending";
 
 
-    if (req.body.title || req.body.description || req.body.category) {
+    if (genAI && (req.body.title || req.body.description || req.body.category)) {
       try {
-        const model = genAI.getGenerativeModel({ model: "embedding-001" });
-        const result = await model.embedContent(`Product: ${product.title}. Category: ${product.category}. Description: ${product.description || ""}. Price: ${product.price}`);
+        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const result = await model.embedContent(
+          `Product: ${product.title}. Category: ${product.category}. Description: ${product.description || ""}. Price: ${product.price}`
+        );
         product.embeddings = result.embedding.values;
-      } catch (aiErr) { console.error("❌ Embedding update failed:", aiErr.message); }
+      } catch (aiErr) {
+        console.error("❌ Embedding update failed:", aiErr.message);
+      }
     }
     if (req.body.meetupAddress !== undefined) {
       product.meetupAddress = req.body.meetupAddress;
@@ -315,7 +321,22 @@ router.put("/:id/publish", protect, async (req, res) => {
     res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err.message });
   }
 });
+router.get("/my-trade-products", protect, async (req, res) => {
+  try {
+    const products = await Product.find({
+      user: req.user.id,
+      tradeOption: { $in: ["trade_allowed", "negotiable"] },
+      status: "available"
+    }).sort({ createdAt: -1 });
 
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({
+      message: "โหลดสินค้าสำหรับเทรดไม่สำเร็จ",
+      error: err.message
+    });
+  }
+});
 // ================= GET PRODUCTS BY USER =================
 router.get("/user/:id", async (req, res) => {
   try {
@@ -410,20 +431,5 @@ router.post("/bulk", async (req, res) => {
   res.json(products);
 });
 
-router.get("/my-trade-products", protect, async (req, res) => {
-  try {
-    const products = await Product.find({
-      user: req.user.id,
-      tradeOption: { $in: ["trade_allowed", "negotiable"] },
-      status: "available"
-    }).sort({ createdAt: -1 });
 
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({
-      message: "โหลดสินค้าสำหรับเทรดไม่สำเร็จ",
-      error: err.message
-    });
-  }
-});
 module.exports = router;
