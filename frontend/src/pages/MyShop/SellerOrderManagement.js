@@ -227,10 +227,10 @@ function SellerOrderManagement({ setOrderCount }) {
                       ORDER #{order._id.slice(-6).toUpperCase()}
                     </span>
 
-                    <span className="top-price">
-                      ฿{order.totalPrice?.toLocaleString()}
-                    </span>
                   </div>
+                  <span className="top-price">
+                    ฿{order.totalPrice?.toLocaleString()}
+                  </span>
                 </div>
 
               </div>
