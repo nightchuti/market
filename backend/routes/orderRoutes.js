@@ -133,6 +133,34 @@ router.get("/my", protect, async (req, res) => {
   }
 });
 
+// ==========================================
+// 🆕 [SELLER] ดึงคำสั่งซื้อที่ส่งมาถึงร้านค้าของเรา
+// ==========================================
+router.get("/seller/all", protect, async (req, res) => {
+  try {
+    // 1. ค้นหาออเดอร์ทั้งหมดที่มีรายการสินค้า
+    const orders = await Order.find()
+      .populate("user", "username")
+      .populate({
+        path: "items.product",
+        model: "Product",
+        select: "title price user images", 
+      })
+      .sort({ createdAt: -1 });
+
+    // 2. กรองเฉพาะออเดอร์ที่มีสินค้าที่เป็นของเรา (req.user._id)
+    const myOrders = orders.filter(order =>
+      order.items.some(item =>
+        item.product && item.product.user && item.product.user.toString() === req.user._id.toString()
+      )
+    );
+
+    res.json(myOrders);
+  } catch (err) {
+    console.error("Seller Order Fetch Error:", err);
+    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงข้อมูลออเดอร์ของร้านค้า" });
+  }
+});
 
 // ==========================================
 // 2. [SELLER] ดึงรายการที่มีคนมาสั่งซื้อสินค้าของฉัน
