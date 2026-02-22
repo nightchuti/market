@@ -67,7 +67,10 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
 
     return (
       <div key={p._id} className={`shop-card ${isCurrentlyBoosted ? 'boosted-border' : ''}`}>
-        <div className="card-top">
+        <div
+          className="card-top"
+          onClick={() => setOpenId(openId === p._id ? null : p._id)}
+        >
           <div className="product-main-info">
             {p.images && p.images.length > 0 ? (
               <img
@@ -121,7 +124,7 @@ function Inventory({ products, openId, setOpenId, handleDelete, navigate, publis
 
             <button
               className={`dropdown-btn ${openId === p._id ? 'active' : ''}`}
-              onClick={() => setOpenId(openId === p._id ? null : p._id)}
+              type="button"
             >
               {openId === p._id ? "−" : "＋"}
             </button>

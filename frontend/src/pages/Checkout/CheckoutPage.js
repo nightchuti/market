@@ -77,6 +77,13 @@ const CheckoutPage = () => {
         fetchData();
     }, [fetchData]);
 
+    useEffect(() => {
+        if (deliveryMode === "DELIVERY") {
+            setPaymentMethod("PROMPTPAY");
+        }
+    }, [deliveryMode]);
+    
+
     // ================= SET DEFAULT ADDRESS =================
     useEffect(() => {
         if (addresses.length > 0) {
@@ -114,8 +121,10 @@ const CheckoutPage = () => {
                 // ⭐ ถ้ายังไม่เคยเลือกเท่านั้นถึงจะ reset
                 setDeliveryMode(prev => prev || "");
             }
+
         }
     }, [cartItems]);
+
 
     // ================= MOCK DISTANCE =================
     useEffect(() => {
@@ -131,9 +140,9 @@ const CheckoutPage = () => {
             let fee = 0;
 
             if (shippingService === "GRAB") {
-                fee = Math.round(25 + distance * 7);
+                fee = Math.round(20 + distance * 7);
             } else {
-                fee = Math.round(20 + distance * 6);
+                fee = Math.round(15 + distance * 6);
             }
 
             setDeliveryFee(fee);
@@ -278,10 +287,6 @@ const CheckoutPage = () => {
             // DELIVERY ต้องมีที่อยู่
             if (deliveryMode === "DELIVERY" && !selectedAddr)
                 return alert("กรุณาเลือกที่อยู่จัดส่ง");
-
-            // นัดรับห้าม COD
-            if (deliveryMode === "PICKUP" && paymentMethod === "COD")
-                return alert("นัดรับสินค้าไม่สามารถเก็บเงินปลายทางได้");
 
             const orderData = {
                 // Backend ใช้โครงสร้าง { product, quantity, price }
@@ -493,7 +498,7 @@ const CheckoutPage = () => {
                     </label>
 
                     {/* ตัวเลือก COD (แสดงเมื่อไม่ใช่ Pickup) */}
-                    {deliveryMode !== "PICKUP" && (
+                    {deliveryMode === "PICKUP" && (
                         <label className={`payment-card ${paymentMethod === "COD" ? "active" : ""}`}>
                             <input
                                 type="radio"
@@ -503,11 +508,12 @@ const CheckoutPage = () => {
                                 onChange={(e) => setPaymentMethod(e.target.value)}
                             />
                             <div className="payment-info">
-                                <span className="payment-name">ชำระเงินปลายทาง (COD)</span>
-                                <span className="payment-subtext">จ่ายเงินเมื่อได้รับสินค้าเท่านั้น</span>
+                                <span className="payment-name">ชำระเงินสดตอนนัดรับ</span>
+                                <span className="payment-subtext">ชำระเงินเมื่อรับสินค้า</span>
                             </div>
                         </label>
                     )}
+
                 </div>
             </div>
 

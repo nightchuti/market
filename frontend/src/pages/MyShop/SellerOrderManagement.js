@@ -31,7 +31,7 @@ function SellerOrderManagement({ setOrderCount }) {
       );
 
       const activeOrders = res.data.filter(order =>
-        ["Paid", "Preparing", "Shipping"].includes(order.status)
+        ["Paid", "Preparing", "Shipping", "WaitingMeetup"].includes(order.status)
       );
 
       setOrders(activeOrders);
@@ -57,6 +57,7 @@ function SellerOrderManagement({ setOrderCount }) {
     if (statusTab === "paid") return orders.filter(o => o.status === "Paid");
     if (statusTab === "preparing") return orders.filter(o => o.status === "Preparing");
     if (statusTab === "shipping") return orders.filter(o => o.status === "Shipping");
+    if (statusTab === "meetup") return orders.filter(o => o.status === "WaitingMeetup");
     return orders;
   };
 
@@ -114,6 +115,11 @@ function SellerOrderManagement({ setOrderCount }) {
   };
 
   const handleVerifyOTP = async (orderId) => {
+    const otp = otpInputs[orderId];
+    if (!otp || otp.length !== 6) {
+      alert("กรุณากรอก OTP 6 หลัก");
+      return;
+    }
     try {
       await axios.put(
         `${API_URL}/api/orders/${orderId}/verify-meetup`,
@@ -125,6 +131,11 @@ function SellerOrderManagement({ setOrderCount }) {
 
       setOtpInputs(prev => ({ ...prev, [orderId]: "" }));
       fetchOrders();
+
+      alert("นัดรับสินค้าสำเร็จ ✅");
+
+      window.location.reload();
+
     } catch {
       alert("รหัส OTP ไม่ถูกต้อง");
     }
@@ -162,6 +173,12 @@ function SellerOrderManagement({ setOrderCount }) {
           onClick={() => setStatusTab("shipping")}
         >
           จัดส่งแล้ว
+        </button>
+        <button
+          className={statusTab === "meetup" ? "tab active" : "tab"}
+          onClick={() => setStatusTab("meetup")}
+        >
+          รอนัดรับ
         </button>
       </div>
 
@@ -210,10 +227,10 @@ function SellerOrderManagement({ setOrderCount }) {
                       ORDER #{order._id.slice(-6).toUpperCase()}
                     </span>
 
-                    <span className="top-price">
-                      ฿{order.totalPrice?.toLocaleString()}
-                    </span>
                   </div>
+                  <span className="top-price">
+                    ฿{order.totalPrice?.toLocaleString()}
+                  </span>
                 </div>
 
               </div>
@@ -225,7 +242,8 @@ function SellerOrderManagement({ setOrderCount }) {
                   {order.status}
                 </span>
 
-                {order.status === "Paid" && (
+                {/* DELIVERY เท่านั้น */}
+                {order.status === "Paid" && order.deliveryMode === "DELIVERY" && (
                   <button
                     className="action-btn"
                     onClick={(e) => {
@@ -250,10 +268,14 @@ function SellerOrderManagement({ setOrderCount }) {
                 )}
 
                 {/* กรณีเป็นนัดรับ และ Admin กดยืนยันจ่ายเงินแล้ว (Paid) */}
+                {/* PICKUP เท่านั้น */}
                 {order.status === "Paid" && order.deliveryMode === "PICKUP" && (
                   <button
                     className="btn-ready"
-                    onClick={() => handleReadyToMeetup(order._id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleReadyToMeetup(order._id);
+                    }}
                   >
                     สินค้าพร้อมนัดรับ
                   </button>
@@ -264,15 +286,18 @@ function SellerOrderManagement({ setOrderCount }) {
                   <div className="otp-verify-box">
                     <input
                       type="text"
-                      maxLength="4"
-                      placeholder="เลข OTP 4 หลัก"
+                      maxLength="6"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="เลข OTP 6 หลัก"
                       value={otpInputs[order._id] || ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, ""); // กันตัวอักษร
                         setOtpInputs(prev => ({
                           ...prev,
-                          [order._id]: e.target.value
-                        }))
-                      }
+                          [order._id]: value
+                        }));
+                      }}
                     />
                     <button
                       onClick={(e) => {

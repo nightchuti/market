@@ -1,14 +1,10 @@
-function calculateDeliveryFee(service, distance) {
+// utils/deliveryFee.js
+module.exports = function calculateDeliveryFee(distanceKm) {
+  const baseFee = 25;       // ค่าขั้นต่ำ
+  const perKm = 7;          // ต่อกิโลเมตร
+  const freeKm = 2;         // ฟรี 2 กม.
 
-  if (service === "GRAB") {
-    return Math.round(25 + distance * 7);
-  }
+  if (distanceKm <= freeKm) return baseFee;
 
-  if (service === "LINEMAN") {
-    return Math.round(20 + distance * 6);
-  }
-
-  return 0;
-}
-
-module.exports = calculateDeliveryFee;
+  return Math.round(baseFee + (distanceKm - freeKm) * perKm);
+};
