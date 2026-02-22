@@ -39,9 +39,12 @@ const { uploadSlip } = require("../middleware/upload");
 router.put("/:orderId/ready-to-meetup", protect, async (req, res) => {
   try {
     const order = await Order.findOne({ _id: req.params.orderId, seller: req.user._id });
+    if (order.status !== "Paid")
+      return res.status(400).json({ message: "สถานะไม่ถูกต้อง" });
     if (!order) return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ" });
 
-    const otp = Math.floor(1000 + Math.random() * 9000).toString(); // สุ่ม 4 หลัก
+    // สุ่ม OTP 6 หลัก
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     order.meetupOTP = otp;
     order.status = "WaitingMeetup";
     await order.save();
@@ -54,15 +57,31 @@ router.put("/:orderId/ready-to-meetup", protect, async (req, res) => {
 // 2. [SELLER] ตรวจสอบ OTP ที่ได้รับจาก Buyer
 router.put("/:orderId/verify-meetup", protect, async (req, res) => {
   const { otp } = req.body;
+
   try {
-    const order = await Order.findOne({ _id: req.params.orderId, seller: req.user._id });
-    if (order.meetupOTP !== otp) return res.status(400).json({ message: "OTP ไม่ถูกต้อง" });
+    const order = await Order.findOne({
+      _id: req.params.orderId,
+      seller: req.user._id
+    });
+
+    if (!order)
+      return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ" });
+
+    if (!otp || otp.length !== 6)
+      return res.status(400).json({ message: "OTP ต้องเป็น 6 หลัก" });
+
+    if (order.meetupOTP !== otp)
+      return res.status(400).json({ message: "OTP ไม่ถูกต้อง" });
 
     order.status = "Completed";
     order.meetupVerified = true;
     order.escrowStatus = "Released";
+    order.meetupOTP = null; // 🔥 ล้าง OTP ป้องกัน reuse
+
     await order.save();
+
     res.json({ message: "นัดรับสินค้าสำเร็จ" });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -207,6 +226,11 @@ router.post("/checkout", protect, async (req, res) => {
 
     // ... (ส่วนคำนวณค่าส่ง/คูปอง เหมือนเดิม) ...
 
+    let initialStatus = "PendingPayment";
+
+    if (paymentMethod === "COD") {
+      initialStatus = "Paid";
+    }
     // 4. สร้าง Order (ตาม Schema ที่คุณส่งมา)
     const order = await Order.create(
       [
@@ -221,7 +245,7 @@ router.post("/checkout", protect, async (req, res) => {
           subTotal,
           totalPrice,
           couponCode,
-          status: req.body.deliveryMode === "PICKUP" ? "WaitingMeetup" : "PendingPayment"
+          status: initialStatus
         }
       ],
       { session }
@@ -249,10 +273,11 @@ router.patch("/:id/upload-slip", protect, uploadSlip.single("slip"), async (req,
     }
 
     const order = await Order.findOneAndUpdate(
-      { 
-        _id: req.params.id, 
-        user: req.user.id, 
-        status: "PendingPayment" 
+      {
+        _id: req.params.id,
+        user: req.user.id,
+        status: "PendingPayment",
+        paymentMethod: "PROMPTPAY"
       },
       {
         // ✅ ใช้ URL จาก Cloudinary แทน
@@ -267,10 +292,10 @@ router.patch("/:id/upload-slip", protect, uploadSlip.single("slip"), async (req,
       return res.status(404).json({ message: "ไม่พบออเดอร์หรือสถานะไม่ถูกต้อง" });
     }
 
-    res.json({ 
-      success: true, 
-      message: "อัปโหลดสลิปสำเร็จ รอแอดมินตรวจสอบ", 
-      order 
+    res.json({
+      success: true,
+      message: "อัปโหลดสลิปสำเร็จ รอแอดมินตรวจสอบ",
+      order
     });
 
   } catch (err) {

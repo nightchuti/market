@@ -279,10 +279,6 @@ const CheckoutPage = () => {
             if (deliveryMode === "DELIVERY" && !selectedAddr)
                 return alert("กรุณาเลือกที่อยู่จัดส่ง");
 
-            // นัดรับห้าม COD
-            if (deliveryMode === "PICKUP" && paymentMethod === "COD")
-                return alert("นัดรับสินค้าไม่สามารถเก็บเงินปลายทางได้");
-
             const orderData = {
                 // Backend ใช้โครงสร้าง { product, quantity, price }
                 items: cartItems.map(item => ({
@@ -493,21 +489,20 @@ const CheckoutPage = () => {
                     </label>
 
                     {/* ตัวเลือก COD (แสดงเมื่อไม่ใช่ Pickup) */}
-                    {deliveryMode !== "PICKUP" && (
-                        <label className={`payment-card ${paymentMethod === "COD" ? "active" : ""}`}>
-                            <input
-                                type="radio"
-                                name="payment"
-                                value="COD"
-                                checked={paymentMethod === "COD"}
-                                onChange={(e) => setPaymentMethod(e.target.value)}
-                            />
-                            <div className="payment-info">
-                                <span className="payment-name">ชำระเงินปลายทาง (COD)</span>
-                                <span className="payment-subtext">จ่ายเงินเมื่อได้รับสินค้าเท่านั้น</span>
-                            </div>
-                        </label>
-                    )}
+                    <label className={`payment-card ${paymentMethod === "COD" ? "active" : ""}`}>
+                        <input
+                            type="radio"
+                            name="payment"
+                            value="COD"
+                            checked={paymentMethod === "COD"}
+                            onChange={(e) => setPaymentMethod(e.target.value)}
+                        />
+                        <div className="payment-info">
+                            <span className="payment-name">ชำระเงินปลายทาง (COD)</span>
+                            <span className="payment-subtext">จ่ายเงินเมื่อได้รับสินค้าเท่านั้น</span>
+                        </div>
+                    </label>
+
                 </div>
             </div>
 

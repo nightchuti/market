@@ -101,11 +101,11 @@ function MyShop() {
         }
       );
 
-      const paidOrders = res.data.filter(
-        (order) => order.status === "Paid"
+      const activeOrders = res.data.filter(order =>
+        ["Paid", "Preparing", "Shipping", "WaitingMeetup"].includes(order.status)
       );
 
-      setOrderCount(paidOrders.length);
+      setOrderCount(activeOrders.length);
 
     } catch (err) {
       console.error("โหลดจำนวนออเดอร์ไม่สำเร็จ", err);

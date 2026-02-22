@@ -200,3 +200,61 @@
     transform: translateY(0);
   }
 }
+
+/* ===== นัดรับ (PICKUP) ===== */
+
+.btn-ready {
+  background-color: #2e7d32;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn-ready:hover {
+  background-color: #1b5e20;
+}
+
+
+/* กล่อง OTP ให้ดูเหมือน action area */
+.otp-verify-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+/* ช่องกรอก OTP */
+.otp-verify-box input {
+  width: 150px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  text-align: center;
+  transition: 0.2s ease;
+}
+
+.otp-verify-box input:focus {
+  outline: none;
+  border-color: #2e7d32;
+}
+
+/* ปุ่มยืนยัน */
+.otp-verify-box button {
+  background-color: #1565c0;
+  color: white;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.otp-verify-box button:hover {
+  background-color: #0d47a1;
+}
