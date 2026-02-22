@@ -582,5 +582,102 @@ router.patch("/:id/admin-confirm", protect, async (req, res) => {
   res.json({ message: "Updated" });
 });
 
+// 🔵 [ADMIN] รายการที่โอนแล้ว
+router.get("/admin/transferred", protect, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "ไม่มีสิทธิ์เข้าถึง" });
+    }
+
+    const orders = await Order.find({
+      sellerTransferStatus: "Transferred"
+    })
+      .populate({
+        path: "items.product",
+        populate: {
+          path: "user",
+          select: "username bankAccount"
+        }
+      })
+      .sort({ sellerTransferredAt: -1 });
+
+    res.json(orders);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.get("/admin/pending-transfer", protect, async (req, res) => {
+  try {
+
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "ไม่มีสิทธิ์เข้าถึง" });
+    }
+
+    const orders = await Order.find({
+      status: "Completed",
+      sellerTransferStatus: { $ne: "Transferred" }
+    })
+      .populate("user", "username")
+      .populate({
+        path: "items.product",
+        select: "title price user",
+        populate: {
+          path: "user",
+          select: "username bankAccount" // ✅ ตรงนี้คือจุดสำคัญ
+        }
+      })
+      .sort({ completedAt: -1 });
+
+    res.json(orders);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 🔥 [ADMIN] โอนเงินให้ร้าน
+router.patch("/:id/admin-transfer-seller", protect, async (req, res) => {
+  try {
+    // 🔒 เช็คว่าเป็น admin จริง
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "ไม่มีสิทธิ์เข้าถึง" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "ไม่พบออเดอร์" });
+    }
+
+    // ✅ ต้อง Completed ก่อนถึงจะโอนได้
+    if (order.status !== "Completed") {
+      return res.status(400).json({ message: "ออเดอร์ยังไม่เสร็จสิ้น" });
+    }
+
+    // ❌ กันกดซ้ำ
+    if (order.sellerTransferStatus === "Transferred") {
+      return res.status(400).json({ message: "โอนเงินไปแล้ว" });
+    }
+    
+
+    // 💰 เปลี่ยนสถานะโอนเงิน
+    order.sellerTransferStatus = "Transferred";
+    order.sellerTransferredAt = new Date();
+
+    await order.save();
+
+    res.json({
+      success: true,
+      message: "โอนเงินให้ร้านเรียบร้อยแล้ว",
+      order
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 module.exports = router;

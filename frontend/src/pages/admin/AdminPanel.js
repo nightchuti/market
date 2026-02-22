@@ -4,6 +4,7 @@ import AdminDashboardPay from "./AdminDashboardPay";
 import AdminCoupon from "./AdminCoupon";
 import AdminAdsManager from "./AdminAdsManager";
 import AdminActivity from "./AdminActivity";
+import AdminTransfer from "./AdminTransfer";
 
 const AdminPanel = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -27,6 +28,8 @@ const AdminPanel = () => {
         return <AdminAdsManager />;
       case "activity":
         return <AdminActivity />;
+      case "transfer":
+        return <AdminTransfer />;
       default:
         return (
           <div style={{ padding: 30 }}>
@@ -39,7 +42,7 @@ const AdminPanel = () => {
 
   return (
     <div style={styles.wrapper}>
-      
+
       {/* ===== Sidebar ===== */}
       <div style={styles.sidebar}>
         <h2 style={styles.logo}>ADMIN</h2>
@@ -48,12 +51,13 @@ const AdminPanel = () => {
         <button style={styles.menuBtn} onClick={() => setActiveMenu("payments")}>ตรวจสอบการจ่ายเงิน</button>
         <button style={styles.menuBtn} onClick={() => setActiveMenu("coupon")}>จัดการคูปอง</button>
         <button style={styles.menuBtn} onClick={() => setActiveMenu("ads")}>จัดการโฆษณา</button>
+        <button style={styles.menuBtn} onClick={() => setActiveMenu("transfer")}>โอนเงินให้ร้านค้า</button>
         <button style={styles.menuBtn} onClick={() => setActiveMenu("activity")}>กิจกรรมทั้งหมด</button>
       </div>
 
       {/* ===== Main Section ===== */}
       <div style={styles.mainSection}>
-        
+
         {/* ===== Header ===== */}
         <div style={styles.header}>
           <div>🛠 ระบบจัดการแอดมิน</div>
