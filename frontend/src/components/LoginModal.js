@@ -12,7 +12,8 @@ function LoginModal({ close, switchToRegister }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const submit = async () => {
+  const submit = async (e) => {
+    e.preventDefault();
     try {
       const res = await api.post("/api/auth/login", {
         email: form.email,
@@ -47,8 +48,14 @@ function LoginModal({ close, switchToRegister }) {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-card">
-        <button className="close" onClick={close}>×</button>
+      <form className="modal-card" onSubmit={submit}>
+        <button
+          type="button"
+          className="close"
+          onClick={close}
+        >
+          ×
+        </button>
 
         <h2>เข้าสู่ระบบ</h2>
 
@@ -67,7 +74,7 @@ function LoginModal({ close, switchToRegister }) {
           onChange={handleChange}
         />
 
-        <button className="btn-main" onClick={submit}>
+        <button className="btn-main" type="submit">
           เข้าสู่ระบบ
         </button>
 
@@ -75,7 +82,7 @@ function LoginModal({ close, switchToRegister }) {
           ยังไม่มีบัญชี?
           <span onClick={switchToRegister}> สมัครสมาชิก</span>
         </p>
-      </div>
+      </form>
     </div>
   );
 }

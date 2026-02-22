@@ -23,7 +23,8 @@ function RegisterModal({ close }) {
   };
 
   // ===== submit register =====
-  const submit = async () => {
+  const submit = async (e) => {
+    e.preventDefault();
     try {
       setError("");
 
@@ -81,9 +82,15 @@ function RegisterModal({ close }) {
   // ===== UI =====
   return (
     <div className="modal-overlay">
-      <div className="modal-card">
+      <form className="modal-card" onSubmit={submit}>
 
-        <button className="close" onClick={close}>×</button>
+        <button
+          type="button"
+          className="close"
+          onClick={close}
+        >
+          ×
+        </button>
 
         <h2>สมัครสมาชิก</h2>
 
@@ -138,13 +145,13 @@ function RegisterModal({ close }) {
 
         <button
           className="btn-main"
-          onClick={submit}
+          type="submit"
           disabled={loading}
         >
           {loading ? "กำลังสมัคร..." : "สมัครสมาชิก"}
         </button>
 
-      </div>
+      </form>
     </div>
   );
 }
