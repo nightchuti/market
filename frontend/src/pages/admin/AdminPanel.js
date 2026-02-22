@@ -5,6 +5,7 @@ import AdminCoupon from "./AdminCoupon";
 import AdminAdsManager from "./AdminAdsManager";
 import AdminActivity from "./AdminActivity";
 import AdminTransfer from "./AdminTransfer";
+import AdminMember from "./AdminDashboardSubPay"
 
 const AdminPanel = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -30,6 +31,8 @@ const AdminPanel = () => {
         return <AdminActivity />;
       case "transfer":
         return <AdminTransfer />;
+      case "member":
+        return <AdminMember />;
       default:
         return (
           <div style={{ padding: 30 }}>
@@ -49,6 +52,7 @@ const AdminPanel = () => {
 
         <button style={styles.menuBtn} onClick={() => setActiveMenu("dashboard")}>Dashboard</button>
         <button style={styles.menuBtn} onClick={() => setActiveMenu("payments")}>ตรวจสอบการจ่ายเงิน</button>
+        <button style={styles.menuBtn} onClick={() => setActiveMenu("member")}>ตรวจสอบการจ่ายเงินสมาชิก</button>
         <button style={styles.menuBtn} onClick={() => setActiveMenu("coupon")}>จัดการคูปอง</button>
         <button style={styles.menuBtn} onClick={() => setActiveMenu("ads")}>จัดการโฆษณา</button>
         <button style={styles.menuBtn} onClick={() => setActiveMenu("transfer")}>โอนเงินให้ร้านค้า</button>

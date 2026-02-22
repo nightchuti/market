@@ -1,55 +1,207 @@
 const express = require("express");
 const router = express.Router();
-const shop = require("../models/Shop");
+
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("cloudinary").v2;
+
+const Membership = require("../models/Membership");
 const User = require("../models/User");
+const Shop = require("../models/Shop");
 const { protect } = require("../middleware/authMiddleware");
 
-// POST /api/subscription/upgrade (สมัครสมาชิก 99.-)
+
+// ============================
+// ☁️ Cloudinary Config
+// ============================
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "membership-slips",
+    allowed_formats: ["jpg", "jpeg", "png"],
+  },
+});
+
+const upload = multer({ storage });
+
+
+// ============================
+// 🟢 สร้างคำขอสมัครสมาชิก (แนบสลิป)
+// ============================
+router.post("/", protect, upload.single("slip"), async (req, res) => {
+  try {
+    const { planType } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "กรุณาแนบสลิป" });
+    }
+
+    let price = 99;
+    let plan = "PRO";
+
+    if (planType === "SINGLE") {
+      price = 20;
+      plan = "SINGLE";
+    }
+
+    const membership = await Membership.create({
+      user: req.user.id,
+      plan,
+      price,
+      slip: req.file.path, // ✅ Cloudinary URL
+      status: "pending"
+    });
+
+    res.json({
+      message: "ส่งคำขอสำเร็จ รอแอดมินตรวจสอบ",
+      data: membership
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+// POST /api/subscription/upgrade
 router.post("/upgrade", protect, async (req, res) => {
   try {
-    const { planDays, planType } = req.body; 
+    const { planDays, planType } = req.body;
     const userId = req.user.id;
 
-    // 1. หา Shop ของ User คนนี้
-    const shop = await shop.findOne({ ownerId: userId });
-    if (!shop) return res.status(404).json({ message: "กรุณาสร้างร้านค้าก่อนสมัครสมาชิก PRO" });
-
-    // --- LOGIC การชำระเงิน (สมมติว่าผ่านแล้ว) ---
-
-    // 2. คำนวณวันหมดอายุของสมาชิก PRO
-    let newExpireDate = new Date();
-    if (shop.promotionExpireAt && shop.promotionExpireAt > new Date()) {
-      newExpireDate = new Date(shop.promotionExpireAt);
+    // 1️⃣ หา Shop
+    const shop = await Shop.findOne({ ownerId: userId });
+    if (!shop) {
+      return res.status(404).json({
+        message: "กรุณาสร้างร้านค้าก่อนสมัครสมาชิก"
+      });
     }
-    newExpireDate.setDate(newExpireDate.getDate() + parseInt(planDays || 30));
 
-    // 3. อัปเดตข้อมูล Shop
-    shop.isPromoted = true;
-    shop.promotionTier = planType || 'PRO';
-    shop.promotionExpireAt = newExpireDate;
-    await shop.save();
+    // ===============================
+    // 🔵 กรณีสมัคร PRO (รายเดือน)
+    // ===============================
+    if (planType === "PRO") {
 
-    // 4. อัปเดต User: เปลี่ยน Tier และ "เติมโควตาบูส" (Boost Quota)
-    // สมมติว่า 99.- ได้บูส 5 ครั้ง หรือ 10 ครั้ง ตามที่คุณต้องการ
-    const updatedUser = await User.findByIdAndUpdate(
-      userId, 
-      { 
-        membershipTier: 'PRO',
-        $inc: { boostQuota: 5 } // ✅ ใช้ $inc เพื่อบวกเพิ่มจากของเดิมที่มีอยู่
-      },
-      { new: true }
-    );
+      let newExpireDate = new Date();
 
-    res.json({ 
-      message: "อัปเกรดเป็น PRO สำเร็จ! คุณได้รับสิทธิ์บูสสินค้าเพิ่ม 5 ครั้ง", 
-      expireAt: newExpireDate,
-      tier: 'PRO',
-      currentQuota: updatedUser.boostQuota // ส่งค่าปัจจุบันกลับไปอัปเดตหน้า UI
+      if (shop.promotionExpireAt && shop.promotionExpireAt > new Date()) {
+        newExpireDate = new Date(shop.promotionExpireAt);
+      }
+
+      newExpireDate.setDate(
+        newExpireDate.getDate() + parseInt(planDays || 30)
+      );
+
+      // อัปเดต Shop
+      shop.isPromoted = true;
+      shop.promotionTier = "PRO";
+      shop.promotionExpireAt = newExpireDate;
+      await shop.save();
+
+      // อัปเดต User (+5 boost)
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          membershipTier: "PRO",
+          $inc: { boostQuota: 5 }
+        },
+        { new: true }
+      );
+
+      return res.json({
+        message: "อัปเกรดเป็น PRO สำเร็จ! ได้รับ Boost 5 ครั้ง",
+        expireAt: newExpireDate,
+        tier: "PRO",
+        currentQuota: updatedUser.boostQuota
+      });
+    }
+
+    // ===============================
+    // 🟢 กรณี Boost รายครั้ง
+    // ===============================
+    if (planType === "SINGLE") {
+
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          $inc: { boostQuota: 1 }
+        },
+        { new: true }
+      );
+
+      return res.json({
+        message: "ซื้อ Boost สำเร็จ +1 ครั้ง",
+        tier: updatedUser.membershipTier || "FREE",
+        currentQuota: updatedUser.boostQuota
+      });
+    }
+
+    // ===============================
+    // ❌ ถ้า planType ไม่ถูกต้อง
+    // ===============================
+    return res.status(400).json({
+      message: "ประเภทแพ็กเกจไม่ถูกต้อง"
     });
 
   } catch (error) {
-    res.status(500).json({ message: "เกิดข้อผิดพลาด: " + error.message });
+    res.status(500).json({
+      message: "เกิดข้อผิดพลาด: " + error.message
+    });
   }
 });
+
+// ============================
+// 🟡 อนุมัติ (Manual Approve)
+// ============================
+router.post("/approve/:id", async (req, res) => {
+  try {
+    const membership = await Membership.findById(req.params.id);
+    if (!membership) {
+      return res.status(404).json({ message: "ไม่พบข้อมูล" });
+    }
+
+    membership.status = "approved";
+    await membership.save();
+
+    const user = await User.findById(membership.user);
+
+    if (membership.plan === "PRO") {
+      user.membershipTier = "PRO";
+      user.boostQuota += 5;
+      user.premiumUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    }
+
+    if (membership.plan === "SINGLE") {
+      user.boostQuota += 1;
+    }
+
+    await user.save();
+
+    res.json({ message: "อนุมัติสำเร็จ" });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET pending memberships (Admin)
+router.get("/admin/memberships", protect, async (req, res) => {
+  try {
+    const memberships = await Membership.find()
+      .populate("user", "email")
+      .sort({ createdAt: -1 });
+
+    res.json(memberships);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 module.exports = router;

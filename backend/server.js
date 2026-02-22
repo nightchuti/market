@@ -75,4 +75,6 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/trades", tradeRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/memberships", require("./routes/subscription"));
+
 

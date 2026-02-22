@@ -19,6 +19,7 @@ import ShopProfile from "./pages/ShopProfile/ShopProfile";
 import SelectTradeProduct from "./pages/SelectTradeProduct";
 import AdminRoute from "./components/AdminRoute";
 import AdminPanel from "./pages/admin/AdminPanel";
+import MembershipPaymentPage from "./pages/PreMember/MembershipPaymentPage";
 
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
           <Route path="/address" element={<AddressPage />} />
           <Route path="/profile/:id" element={<ShopProfile />} />
           <Route path="/select-trade-product" element={<SelectTradeProduct />} />
+          <Route path="/membership-payment" element={<MembershipPaymentPage />} />
 
         </Route>
 

@@ -16,7 +16,7 @@ function PremiumMember() {
 
       {/* ส่วนตารางเปรียบเทียบราคา */}
       <div className="pricing-layout">
-        
+
         {/* Card 1: สำหรับนิสิตใหม่ */}
         <div className="plan-card">
           <div className="plan-header">
@@ -54,49 +54,53 @@ function PremiumMember() {
               <li className="disabled">✕ ไม่มีป้าย Verified</li>
             </ul>
           </div>
-          <button className="plan-btn btn-dark" onClick={() => navigate("/payment?type=single")}>
-            ซื้อสิทธิ์รายครั้ง
-          </button>
-        </div>
-
-        {/* Card 3: Pro Seller (จุดเด่นเรื่อง Ads ร้านอาหาร) */}
-        <div className="plan-card featured-pro">
-          <div className="popular-tag">คุ้มค่าที่สุด</div>
-          <div className="plan-header">
-            <div className="plan-icon">👑</div>
-            <h3>Pro Seller</h3>
-            <p className="plan-price">฿99 <span>/ เดือน</span></p>
-          </div>
-          <div className="plan-body">
-            <ul>
-              <li><i className="check-icon">✓</i> <b>Boost ฟรี 5 สิทธิ์ทุกเดือน</b></li>
-              <li><i className="check-icon">✓</i> ป้าย <b>Verified Member</b> สีทอง</li>
-              <li><i className="check-icon">✓</i> สินค้าแสดงแทรกทุก 3 รายการ</li>
-              <li><i className="check-icon">✓</i> บริการซัพพอร์ตระดับพรีเมียม</li>
-            </ul>
-          </div>
-          <button className="plan-btn btn-gold" onClick={() => navigate("/payment?type=premium")}>
-            สมัครสมาชิก PRO
-          </button>
-        </div>
-
+          <button className="plan-btn btn-dark" onClick={() =>
+            navigate("/membership-payment", { state: { type: "SINGLE" } })
+          }>
+          ซื้อสิทธิ์รายครั้ง
+        </button>
       </div>
 
-      {/* ส่วนอธิบายเรื่อง Ads ร้านอาหาร (ให้ผู้ใช้เข้าใจว่า Ads อยู่ตรงไหน) */}
-      <section className="ads-explanation">
-        <div className="ads-info-content">
-          <h3>โฆษณา(Native Ads) คืออะไร?</h3>
-          <p>
-            สำหรับสมาชิก <b>Pro Seller</b> คุณสามารถสร้างการ์ดแนะนำร้านอาหารหรือบริการของคุณ 
-            ที่จะไปปรากฏ "แทรก" อยู่ท่ามกลางสินค้าทั่วไปในหน้า All Products 
-            ช่วยให้คนหิวที่กำลังเลือกซื้อของ เห็นร้านของคุณได้ง่ายขึ้น!
-          </p>
-          <div className="ad-preview-box">
-             <span>ตัวอย่างการแสดงผลโฆษณาแทรกในรายการสินค้า (ทุกๆ 6 ชิ้น)</span>
-          </div>
+      {/* Card 3: Pro Seller (จุดเด่นเรื่อง Ads ร้านอาหาร) */}
+      <div className="plan-card featured-pro">
+        <div className="popular-tag">คุ้มค่าที่สุด</div>
+        <div className="plan-header">
+          <div className="plan-icon">👑</div>
+          <h3>Pro Seller</h3>
+          <p className="plan-price">฿99 <span>/ เดือน</span></p>
         </div>
-      </section>
+        <div className="plan-body">
+          <ul>
+            <li><i className="check-icon">✓</i> <b>Boost ฟรี 5 สิทธิ์ทุกเดือน</b></li>
+            <li><i className="check-icon">✓</i> ป้าย <b>Verified Member</b> สีทอง</li>
+            <li><i className="check-icon">✓</i> สินค้าแสดงแทรกทุก 3 รายการ</li>
+            <li><i className="check-icon">✓</i> บริการซัพพอร์ตระดับพรีเมียม</li>
+          </ul>
+        </div>
+        <button className="plan-btn btn-gold" onClick={() =>
+          navigate("/membership-payment", { state: { type: "PRO" } })
+        }>
+          สมัครสมาชิก PRO
+        </button>
+      </div>
+
     </div>
+
+      {/* ส่วนอธิบายเรื่อง Ads ร้านอาหาร (ให้ผู้ใช้เข้าใจว่า Ads อยู่ตรงไหน) */ }
+  <section className="ads-explanation">
+    <div className="ads-info-content">
+      <h3>โฆษณา(Native Ads) คืออะไร?</h3>
+      <p>
+        สำหรับสมาชิก <b>Pro Seller</b> คุณสามารถสร้างการ์ดแนะนำร้านอาหารหรือบริการของคุณ
+        ที่จะไปปรากฏ "แทรก" อยู่ท่ามกลางสินค้าทั่วไปในหน้า All Products
+        ช่วยให้คนหิวที่กำลังเลือกซื้อของ เห็นร้านของคุณได้ง่ายขึ้น!
+      </p>
+      <div className="ad-preview-box">
+        <span>ตัวอย่างการแสดงผลโฆษณาแทรกในรายการสินค้า (ทุกๆ 6 ชิ้น)</span>
+      </div>
+    </div>
+  </section>
+    </div >
   );
 }
 

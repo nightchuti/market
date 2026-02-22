@@ -176,21 +176,6 @@ function MyShop() {
         </button>
       </div>
 
-      {user?.membershipTier === "PRO" && (
-        <div className="ad-request-card">
-          <div className="ad-card-content">
-            <div className="ad-icon">🍴</div>
-            <div>
-              <h4>สิทธิพิเศษ: ลงโฆษณาร้านอาหาร</h4>
-              <p>โปรโมทร้านของคุณแทรกระหว่างสินค้าในหน้าแรกฟรี!</p>
-            </div>
-          </div>
-          <button className="btn-request" onClick={() => navigate("/request-ad")}>
-            ส่งคำขอโฆษณา
-          </button>
-        </div>
-      )}
-
       <div className="summary-cards">
         <div className="summary-card">
           <h3>{inventoryProducts.length}</h3>
