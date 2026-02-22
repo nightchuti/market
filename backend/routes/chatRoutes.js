@@ -255,6 +255,7 @@ router.post("/create-from-order", protect, async (req, res) => {
 // 5. สร้างห้องแชทเทรด (trade)
 // ==========================================
 router.post("/create-trade", protect, async (req, res) => {
+
   try {
     const { productId, offeredProductId } = req.body;
 
@@ -376,14 +377,20 @@ router.post("/create-trade", protect, async (req, res) => {
 // ==========================================
 router.put("/:roomId/accept", protect, async (req, res) => {
   try {
+
     const room = await ChatRoomTalk.findById(req.params.roomId)
       .populate("productId")
       .populate("offeredProductId");
-
+    console.log("ROOM:", room);
+    console.log("Product1:", room?.productId);
+    console.log("Product2:", room?.offeredProductId);
     if (!room || room.type !== "trade") {
       return res.status(404).json({ error: "ไม่พบห้องเทรด" });
     }
 
+    if (!room.productId || !room.offeredProductId) {
+      return res.status(400).json({ error: "ข้อมูลสินค้าไม่ครบ" });
+    }
     // เช็คว่าเป็นเจ้าของสินค้าหรือไม่
     const ownerId = String(room.productId.user);
     if (ownerId !== String(req.user.id)) {
@@ -417,8 +424,8 @@ router.put("/:roomId/accept", protect, async (req, res) => {
       user: room.offeredProductId.user
     };
     // 🔒 เปลี่ยนสถานะสินค้าเป็น reserved
-    room.productId.status = "reserved";
-    room.offeredProductId.status = "reserved";
+    room.productId.status = "trading";
+    room.offeredProductId.status = "trading";
 
     await Promise.all([
       room.productId.save(),
@@ -510,14 +517,14 @@ router.put("/:roomId/cancel", protect, async (req, res) => {
       return res.status(403).json({ error: "คุณไม่มีสิทธิ์" });
     }
     if (room.tradeStatus === "accepted") {
-  const product1 = await Product.findById(room.productId);
-  const product2 = await Product.findById(room.offeredProductId);
+      const product1 = await Product.findById(room.productId);
+      const product2 = await Product.findById(room.offeredProductId);
 
-  product1.status = "available";
-  product2.status = "available";
+      product1.status = "available";
+      product2.status = "available";
 
-  await Promise.all([product1.save(), product2.save()]);
-}
+      await Promise.all([product1.save(), product2.save()]);
+    }
 
     room.tradeStatus = "cancelled";
     room.lastMessage = "ยกเลิกการเทรด";
@@ -569,7 +576,7 @@ router.put("/:roomId/confirm-swap", protect, async (req, res) => {
       return res.status(400).json({ error: "การเทรดถูกปิดไปแล้ว" });
     }
 
-    if (product1.status !== "reserved" || product2.status !== "reserved") {
+    if (product1.status !== "trading" || product2.status !== "trading") {
       return res.status(400).json({ error: "สินค้าบางรายการไม่พร้อมเทรดแล้ว" });
     }
 
