@@ -190,6 +190,8 @@ router.post("/checkout", protect, async (req, res) => {
       deliveryMode,
       paymentMethod,
       shippingAddress,
+      deliveryFee,
+      totalPrice,
       couponCode
     } = req.body;
 
@@ -247,38 +249,6 @@ router.post("/checkout", protect, async (req, res) => {
     // 🔥 คำนวณค่าส่ง
     // =============================
 
-    let finalDeliveryFee = 0;
-
-    if (deliveryMode === "DELIVERY") {
-
-      if (
-        shippingAddress?.lat === undefined ||
-        shippingAddress?.lng === undefined
-      ) {
-        throw new Error("ไม่พบพิกัดที่อยู่จัดส่ง");
-      }
-
-      const sellerShop = await shop.findOne({ owner: sellerId });
-      if (!sellerShop?.location?.lat) {
-        throw new Error("ร้านค้ายังไม่ได้ตั้งค่าพิกัด");
-      }
-
-      const distanceKm = calculateDistance(
-        sellerShop.location.lat,
-        sellerShop.location.lng,
-        shippingAddress.lat,
-        shippingAddress.lng
-      );
-
-      if (distanceKm > 30) {
-        throw new Error("อยู่นอกเขตให้บริการ");
-      }
-
-      finalDeliveryFee = calculateDeliveryFee(distanceKm);
-    }
-
-    // 🔥 คำนวณยอดรวมจริงใน Backend เท่านั้น
-    const finalTotal = subTotal + finalDeliveryFee;
 
     let initialStatus = "PendingPayment";
 
@@ -295,8 +265,8 @@ router.post("/checkout", protect, async (req, res) => {
         paymentMethod,
         shippingAddress,
         subTotal,
-        deliveryFee: finalDeliveryFee,
-        totalPrice: finalTotal,
+        deliveryFee,
+        totalPrice,
         couponCode,
         status: initialStatus
       }],
