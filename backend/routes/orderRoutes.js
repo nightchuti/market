@@ -39,9 +39,11 @@ const { uploadSlip } = require("../middleware/upload");
 router.put("/:orderId/ready-to-meetup", protect, async (req, res) => {
   try {
     const order = await Order.findOne({ _id: req.params.orderId, seller: req.user._id });
+    if (!order)
+      return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ" });
+
     if (order.status !== "Paid")
       return res.status(400).json({ message: "สถานะไม่ถูกต้อง" });
-    if (!order) return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ" });
 
     // สุ่ม OTP 6 หลัก
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -77,6 +79,10 @@ router.put("/:orderId/verify-meetup", protect, async (req, res) => {
     order.meetupVerified = true;
     order.escrowStatus = "Released";
     order.meetupOTP = null; // 🔥 ล้าง OTP ป้องกัน reuse
+
+    if (order.paymentMethod === "COD") {
+      order.paidAt = new Date();
+    }
 
     await order.save();
 
@@ -178,6 +184,10 @@ router.post("/checkout", protect, async (req, res) => {
       couponCode
     } = req.body;
 
+    // ===== VALIDATE PAYMENT RULE =====
+    if (deliveryMode === "DELIVERY" && paymentMethod !== "PROMPTPAY") {
+      throw new Error("การจัดส่งต้องชำระเงินแบบโอนเท่านั้น");
+    }
     const buyerId = req.user.id; // ID ของคนซื้อที่ล็อกอินอยู่
 
     let subTotal = 0;
@@ -228,8 +238,8 @@ router.post("/checkout", protect, async (req, res) => {
 
     let initialStatus = "PendingPayment";
 
-    if (paymentMethod === "COD") {
-      initialStatus = "Paid";
+    if (deliveryMode === "PICKUP" && paymentMethod === "COD") {
+      initialStatus = "Paid"; // นัดรับเงินสด = ถือว่าพร้อมรอนัดรับ
     }
     // 4. สร้าง Order (ตาม Schema ที่คุณส่งมา)
     const order = await Order.create(

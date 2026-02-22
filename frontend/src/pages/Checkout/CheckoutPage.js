@@ -77,6 +77,12 @@ const CheckoutPage = () => {
         fetchData();
     }, [fetchData]);
 
+    useEffect(() => {
+        if (deliveryMode === "DELIVERY") {
+            setPaymentMethod("PROMPTPAY");
+        }
+    }, [deliveryMode]);
+
     // ================= SET DEFAULT ADDRESS =================
     useEffect(() => {
         if (addresses.length > 0) {
@@ -114,8 +120,10 @@ const CheckoutPage = () => {
                 // ⭐ ถ้ายังไม่เคยเลือกเท่านั้นถึงจะ reset
                 setDeliveryMode(prev => prev || "");
             }
+
         }
     }, [cartItems]);
+
 
     // ================= MOCK DISTANCE =================
     useEffect(() => {
@@ -489,19 +497,21 @@ const CheckoutPage = () => {
                     </label>
 
                     {/* ตัวเลือก COD (แสดงเมื่อไม่ใช่ Pickup) */}
-                    <label className={`payment-card ${paymentMethod === "COD" ? "active" : ""}`}>
-                        <input
-                            type="radio"
-                            name="payment"
-                            value="COD"
-                            checked={paymentMethod === "COD"}
-                            onChange={(e) => setPaymentMethod(e.target.value)}
-                        />
-                        <div className="payment-info">
-                            <span className="payment-name">ชำระเงินปลายทาง (COD)</span>
-                            <span className="payment-subtext">จ่ายเงินเมื่อได้รับสินค้าเท่านั้น</span>
-                        </div>
-                    </label>
+                    {deliveryMode === "PICKUP" && (
+                        <label className={`payment-card ${paymentMethod === "COD" ? "active" : ""}`}>
+                            <input
+                                type="radio"
+                                name="payment"
+                                value="COD"
+                                checked={paymentMethod === "COD"}
+                                onChange={(e) => setPaymentMethod(e.target.value)}
+                            />
+                            <div className="payment-info">
+                                <span className="payment-name">ชำระเงินสดตอนนัดรับ</span>
+                                <span className="payment-subtext">ชำระเงินเมื่อรับสินค้า</span>
+                            </div>
+                        </label>
+                    )}
 
                 </div>
             </div>
