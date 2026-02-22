@@ -4,7 +4,7 @@ import "./SellerOrderManagement.css";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-function SellerOrderManagement({ setOrderCount }) {
+function SellerOrderManagement() {
   const [orders, setOrders] = useState([]);
   const [openId, setOpenId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,17 +36,12 @@ function SellerOrderManagement({ setOrderCount }) {
 
       setOrders(activeOrders);
 
-      if (setOrderCount) {
-        const paidCount = activeOrders.filter(o => o.status === "Paid").length;
-        setOrderCount(paidCount);
-      }
-
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [setOrderCount]);
+  }, []);
 
   useEffect(() => {
     fetchOrders();
