@@ -91,7 +91,7 @@ chatRoomSchema.pre("validate", function () {
 
 chatRoomSchema.index(
   { type: 1, productId: 1, participants: 1 },
-  { unique: true }  
+  { unique: true }
 );
 
 chatRoomSchema.index(
