@@ -276,17 +276,19 @@ router.post("/checkout", protect, async (req, res) => {
     );
 
     // 🔥 ลบสินค้าออกจากตะกร้า
-    await Cart.updateOne(
-      { user: buyerId },
-      {
-        $pull: {
-          items: {
-            product: { $in: items.map(i => i.product) }
-          }
-        }
-      },
-      { session }
-    );
+    const cart = await Cart.findOne({ user: buyerId }).session(session);
+
+    if (cart) {
+      const productIds = items.map(i =>
+        new mongoose.Types.ObjectId(i.product)
+      );
+
+      cart.items = cart.items.filter(
+        item => !productIds.some(id => id.equals(item.product))
+      );
+
+      await cart.save({ session });
+    }
 
     await session.commitTransaction();
 

@@ -131,7 +131,7 @@ router.delete("/:id", protect, async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const { search, category, minPrice, maxPrice, deliveryType, tradeOption, page = 1, limit = 18 } = req.query;
-    let filter = { isActive: true, status: "available" };
+    let filter = { isActive: true, status: "available", quantity: { $gt: 0 }  };
 
     if (search && search.trim() !== "") {
       const regex = new RegExp(search.trim().split("").join(".*"), "i");
