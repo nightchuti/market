@@ -14,7 +14,9 @@ export default function Layout() {
         onLogin={() => setLogin(true)}
         onRegister={() => setRegister(true)}
       />
-      <Outlet />
+      <div style={{ paddingTop: "72px" }}>
+        <Outlet />
+      </div>
 
       {login && <LoginModal close={() => setLogin(false)} />}
       {register && <RegisterModal close={() => setRegister(false)} />}

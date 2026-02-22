@@ -1,0 +1,70 @@
+.ads-wrapper {
+  min-height: 100vh;
+  background: #f4f6f9;
+
+  display: flex;
+  justify-content: center;   /* กลางแนวนอน */
+  align-items: center;       /* กลางแนวตั้ง */
+
+  padding: 20px;
+}
+
+.ads-container {
+  width: 100%;
+  max-width: 650px;
+}
+
+.ads-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 25px;
+  color: #1e293b;
+}
+
+.ads-form {
+  max-width: 600px;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ads-input,
+.ads-textarea {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.ads-textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.ads-input:focus,
+.ads-textarea:focus {
+  outline: none;
+  border-color: #66bb6a;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.ads-button {
+  background: #66bb6a;
+  color: white;
+  padding: 14px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.ads-button:hover {
+  background: #2e7d32;
+}

@@ -21,7 +21,7 @@ const AdminCoupon = () => {
   return (
     <div className="admin-coupon-container">
       <div className="admin-card">
-        <h2>🎟️ สร้างคูปองใหม่</h2>
+        <h2>สร้างคูปองใหม่</h2>
         
         <form onSubmit={handleSubmit} className="admin-form">
           

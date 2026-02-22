@@ -95,6 +95,15 @@ export default function Navbar({ onLogin, onRegister }) {
             <span className="nav-badge">{orderCount}</span>
           )}
         </Link>
+        {user?.email === "admin@gmail.com" &&
+          user?.role === "admin" && (
+            <Link
+              to="/admin"
+              className={`nav-link ${location.pathname === "/admin" ? "active" : ""}`}
+            >
+              แดชบอร์ดแอดมิน
+            </Link>
+          )}
       </div>
 
       <div className="nav-btn">

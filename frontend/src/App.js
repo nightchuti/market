@@ -11,15 +11,14 @@ import Cart from "./pages/Cart";
 import ProfilePage from "./pages/ProfilePage/ProfilePage";
 import EditProduct from "./pages/MyShop/EditProduct";
 import PremiumMember from "./pages/PreMember/PremiumMember";
-import AdminDashboard from "./pages/AdminDashboard";
 import CheckoutPage from "./pages/Checkout/CheckoutPage";
 import CouponCenter from "./pages/coupon/CouponCenter";
-import AdminCoupon from "./pages/coupon/AdminCoupon";
 import AddressPage from "./pages/Checkout/AddressPage";
 import PaymentPage from "./pages/Checkout/PaymentPage";
 import ShopProfile from "./pages/ShopProfile/ShopProfile";
-import AdminDashboardPay from "./pages/AdminDashboardPay";
 import SelectTradeProduct from "./pages/SelectTradeProduct";
+import AdminRoute from "./components/AdminRoute";
+import AdminPanel from "./pages/admin/AdminPanel";
 
 
 function App() {
@@ -48,11 +47,17 @@ function App() {
           <Route path="/profile/:id" element={<ShopProfile />} />
           <Route path="/select-trade-product" element={<SelectTradeProduct />} />
 
-          <Route path="/admin/coupons" element={<AdminCoupon />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/payments" element={<AdminDashboardPay />} />
-
         </Route>
+
+        <Route
+          path="/admin/*"
+          element={
+            <AdminRoute>
+              <AdminPanel />
+            </AdminRoute>
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );

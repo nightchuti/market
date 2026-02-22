@@ -23,8 +23,22 @@ function LoginModal({ close, switchToRegister }) {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      close();
-      window.location.reload();
+      const user = res.data.user;
+
+      close(); // ปิด modal
+
+      if (
+        user.email === "admin@gmail.com" &&
+        user.role === "admin"
+      ) {
+        window.location.href = "/admin";
+        return;
+      }
+
+      window.location.href = "/";
+
+      // close();
+      // window.location.reload();
     } catch (err) {
       console.log(err.response?.data);
       alert(err.response?.data?.message || "Login failed");
