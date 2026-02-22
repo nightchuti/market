@@ -275,6 +275,19 @@ router.post("/checkout", protect, async (req, res) => {
       { session }
     );
 
+    // 🔥 ลบสินค้าออกจากตะกร้า
+    await Cart.updateOne(
+      { user: buyerId },
+      {
+        $pull: {
+          items: {
+            product: { $in: items.map(i => i.product) }
+          }
+        }
+      },
+      { session }
+    );
+
     await session.commitTransaction();
 
     res.status(201).json({

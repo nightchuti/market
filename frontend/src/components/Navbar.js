@@ -28,8 +28,9 @@ export default function Navbar({ onLogin, onRegister }) {
         const res = await api.get("/api/auth/profile");
         setUser(res.data);
 
-        const orderRes = await api.get("/api/orders/seller/all");
-        const pending = orderRes.data.filter(
+        const orderRes = await api.get("/api/orders/seller/orders");
+
+        const pending = orderRes.data.orders.filter(
           (o) => o.status === "Paid"
         );
 
