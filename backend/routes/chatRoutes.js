@@ -255,10 +255,7 @@ router.post("/create-from-order", protect, async (req, res) => {
 // 5. สร้างห้องแชทเทรด (trade)
 // ==========================================
 router.post("/create-trade", protect, async (req, res) => {
-
   try {
-    console.log("BODY:", req.body);
-    console.log("USER:", req.user);
     const { productId, offeredProductId } = req.body;
 
     if (!productId || !offeredProductId) {
