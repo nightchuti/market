@@ -45,6 +45,10 @@ router.put("/:orderId/ready-to-meetup", protect, async (req, res) => {
     if (order.status !== "Paid")
       return res.status(400).json({ message: "สถานะไม่ถูกต้อง" });
 
+    if (order.deliveryMode !== "PICKUP") {
+      return res.status(400).json({ message: "ออเดอร์นี้ไม่ใช่นัดรับ" });
+    }
+
     // สุ่ม OTP 6 หลัก
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     order.meetupOTP = otp;
@@ -61,6 +65,7 @@ router.put("/:orderId/verify-meetup", protect, async (req, res) => {
   const { otp } = req.body;
 
   try {
+
     const order = await Order.findOne({
       _id: req.params.orderId,
       seller: req.user._id
@@ -68,6 +73,12 @@ router.put("/:orderId/verify-meetup", protect, async (req, res) => {
 
     if (!order)
       return res.status(404).json({ message: "ไม่พบคำสั่งซื้อ" });
+
+    if (order.deliveryMode !== "PICKUP")
+      return res.status(400).json({ message: "ออเดอร์นี้ไม่ใช่นัดรับ" });
+
+    if (order.status !== "WaitingMeetup")
+      return res.status(400).json({ message: "สถานะไม่ถูกต้อง" });
 
     if (!otp || otp.length !== 6)
       return res.status(400).json({ message: "OTP ต้องเป็น 6 หลัก" });
@@ -122,34 +133,6 @@ router.get("/my", protect, async (req, res) => {
   }
 });
 
-// ==========================================
-// 🆕 [SELLER] ดึงคำสั่งซื้อที่ส่งมาถึงร้านค้าของเรา
-// ==========================================
-router.get("/seller/all", protect, async (req, res) => {
-  try {
-    // 1. ค้นหาออเดอร์ทั้งหมดที่มีรายการสินค้า
-    const orders = await Order.find()
-      .populate("user", "username")
-      .populate({
-        path: "items.product",
-        model: "Product",
-        select: "title price user images",  // ดึงข้อมูล seller มาด้วยเพื่อกรอง
-      })
-      .sort({ createdAt: -1 });
-
-    // 2. กรองเฉพาะออเดอร์ที่มีสินค้าที่เป็นของเรา (req.user._id)
-    const myOrders = orders.filter(order =>
-      order.items.some(item =>
-        item.product && item.product.user && item.product.user.toString() === req.user._id.toString()
-      )
-    );
-
-    res.json(myOrders);
-  } catch (err) {
-    console.error("Seller Order Fetch Error:", err);
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงข้อมูลออเดอร์ของร้านค้า" });
-  }
-});
 
 // ==========================================
 // 2. [SELLER] ดึงรายการที่มีคนมาสั่งซื้อสินค้าของฉัน
@@ -179,33 +162,35 @@ router.post("/checkout", protect, async (req, res) => {
       deliveryMode,
       paymentMethod,
       shippingAddress,
-      deliveryFee,
-      totalPrice,
       couponCode
     } = req.body;
 
-    // ===== VALIDATE PAYMENT RULE =====
     if (deliveryMode === "DELIVERY" && paymentMethod !== "PROMPTPAY") {
       throw new Error("การจัดส่งต้องชำระเงินแบบโอนเท่านั้น");
     }
-    const buyerId = req.user.id; // ID ของคนซื้อที่ล็อกอินอยู่
+
+    const buyerId = req.user.id;
 
     let subTotal = 0;
     const orderItems = [];
+    let sellerId = null;
 
+    // 🔥 LOOP สินค้า
     for (const item of items) {
 
       const productData = await Product.findById(item.product).session(session);
+      if (!productData) throw new Error("ไม่พบสินค้า");
 
-      if (!productData) {
-        throw new Error("ไม่พบสินค้า");
+      // กันซื้อของตัวเอง
+      if (productData.user.toString() === buyerId.toString()) {
+        throw new Error(`ไม่สามารถซื้อสินค้าของตัวเองได้`);
       }
 
-      // ✅ กันเจ้าของซื้อสินค้าตัวเอง (ชั้น Backend)
-      if (productData.user.toString() === req.user.id.toString()) {
-        throw new Error(
-          `ไม่สามารถสั่งซื้อสินค้า "${productData.title}" ของตนเองได้`
-        );
+      // 🔥 กันหลายร้าน
+      if (!sellerId) {
+        sellerId = productData.user;
+      } else if (sellerId.toString() !== productData.user.toString()) {
+        throw new Error("ไม่สามารถสั่งซื้อหลายร้านในคำสั่งซื้อเดียวได้");
       }
 
       const updatedProduct = await Product.findOneAndUpdate(
@@ -213,14 +198,12 @@ router.post("/checkout", protect, async (req, res) => {
           _id: item.product,
           quantity: { $gte: item.quantity }
         },
-        {
-          $inc: { quantity: -item.quantity }
-        },
+        { $inc: { quantity: -item.quantity } },
         { new: true, session }
       );
 
       if (!updatedProduct) {
-        throw new Error(`สินค้า ${productData.title} หมดหรือจำนวนไม่พอ`);
+        throw new Error("สินค้าไม่พอ");
       }
 
       subTotal += updatedProduct.price * item.quantity;
@@ -230,43 +213,78 @@ router.post("/checkout", protect, async (req, res) => {
         quantity: item.quantity,
         price: updatedProduct.price
       });
-
-      var sellerId = updatedProduct.user;
     }
 
-    // ... (ส่วนคำนวณค่าส่ง/คูปอง เหมือนเดิม) ...
+    // =============================
+    // 🔥 คำนวณค่าส่ง
+    // =============================
+
+    let finalDeliveryFee = 0;
+
+    if (deliveryMode === "DELIVERY") {
+
+      if (
+        shippingAddress?.lat === undefined ||
+        shippingAddress?.lng === undefined
+      ) {
+        throw new Error("ไม่พบพิกัดที่อยู่จัดส่ง");
+      }
+
+      const sellerShop = await shop.findOne({ owner: sellerId });
+      if (!sellerShop?.location?.lat) {
+        throw new Error("ร้านค้ายังไม่ได้ตั้งค่าพิกัด");
+      }
+
+      const distanceKm = calculateDistance(
+        sellerShop.location.lat,
+        sellerShop.location.lng,
+        shippingAddress.lat,
+        shippingAddress.lng
+      );
+
+      if (distanceKm > 30) {
+        throw new Error("อยู่นอกเขตให้บริการ");
+      }
+
+      finalDeliveryFee = calculateDeliveryFee(distanceKm);
+    }
+
+    // 🔥 คำนวณยอดรวมจริงใน Backend เท่านั้น
+    const finalTotal = subTotal + finalDeliveryFee;
 
     let initialStatus = "PendingPayment";
 
     if (deliveryMode === "PICKUP" && paymentMethod === "COD") {
-      initialStatus = "Paid"; // นัดรับเงินสด = ถือว่าพร้อมรอนัดรับ
+      initialStatus = "Paid";
     }
-    // 4. สร้าง Order (ตาม Schema ที่คุณส่งมา)
+
     const order = await Order.create(
-      [
-        {
-          user: buyerId,
-          seller: sellerId,
-          items: orderItems,
-          deliveryMode: deliveryMode,
-          paymentMethod,
-          shippingAddress,
-          deliveryFee,
-          subTotal,
-          totalPrice,
-          couponCode,
-          status: initialStatus
-        }
-      ],
+      [{
+        user: buyerId,
+        seller: sellerId,
+        items: orderItems,
+        deliveryMode,
+        paymentMethod,
+        shippingAddress,
+        subTotal,
+        deliveryFee: finalDeliveryFee,
+        totalPrice: finalTotal,
+        couponCode,
+        status: initialStatus
+      }],
       { session }
     );
 
     await session.commitTransaction();
-    res.status(201).json({ success: true, order: order[0] });
+
+    res.status(201).json({
+      success: true,
+      order: order[0]
+    });
 
   } catch (err) {
     await session.abortTransaction();
-    res.status(400).json({ message: err.message }); // ข้อความ Error จะถูกส่งไปโชว์ที่หน้าบ้าน
+    res.status(400).json({ message: err.message });
   } finally {
     session.endSession();
   }
@@ -360,6 +378,9 @@ router.patch("/:id/call-delivery", protect, async (req, res) => {
 
     if (!order)
       return res.status(404).json({ message: "ไม่พบออเดอร์" });
+
+    if (order.deliveryMode !== "DELIVERY")
+      return res.status(400).json({ message: "ออเดอร์นี้ไม่ใช่การจัดส่ง" });
 
     if (order.status !== "Preparing")
       return res.status(400).json({ message: "ต้องเตรียมสินค้าก่อน" });

@@ -82,6 +82,7 @@ const CheckoutPage = () => {
             setPaymentMethod("PROMPTPAY");
         }
     }, [deliveryMode]);
+    
 
     // ================= SET DEFAULT ADDRESS =================
     useEffect(() => {
@@ -139,9 +140,9 @@ const CheckoutPage = () => {
             let fee = 0;
 
             if (shippingService === "GRAB") {
-                fee = Math.round(25 + distance * 7);
+                fee = Math.round(20 + distance * 7);
             } else {
-                fee = Math.round(20 + distance * 6);
+                fee = Math.round(15 + distance * 6);
             }
 
             setDeliveryFee(fee);
