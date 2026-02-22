@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./SellerOrderManagement.css";
+import { useNavigate } from "react-router-dom";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -10,6 +11,7 @@ function SellerOrderManagement() {
   const [loading, setLoading] = useState(true);
   const [statusTab, setStatusTab] = useState("all");
   const [otpInputs, setOtpInputs] = useState({});
+  const navigate = useNavigate();
 
   const getImageUrl = (img) => {
     if (!img) return "/no-image.png";
@@ -136,6 +138,28 @@ function SellerOrderManagement() {
     }
   };
 
+  const handleChatCustomer = async (order) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.post(
+        `${API_URL}/api/chat/create-from-order`,
+        {
+          buyerId: order.user?._id,
+          productId: order.items?.[0]?.product?._id
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      navigate(`/chat/${res.data._id}`);
+
+    } catch (err) {
+      alert(err.response?.data?.error || "ไม่สามารถเปิดแชทได้");
+    }
+  };
+
   if (loading) return <div style={{ padding: 40 }}>กำลังโหลด...</div>;
   if (orders.length === 0)
     return <div style={{ padding: 40, textAlign: "center" }}>ไม่มีคำสั่งซื้อใหม่</div>;
@@ -228,6 +252,16 @@ function SellerOrderManagement() {
                   </span>
                 </div>
 
+                <button
+                  className="action-btn chat-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleChatCustomer(order);
+                  }}
+                >
+                  แชทกับลูกค้า
+                </button>
+
               </div>
 
               {/* RIGHT : ปุ่ม + status */}
@@ -305,6 +339,7 @@ function SellerOrderManagement() {
                   </div>
                 )}
 
+
                 <button className="dropdown-btn">
                   {openId === order._id ? "−" : "＋"}
                 </button>
@@ -365,6 +400,7 @@ function SellerOrderManagement() {
                     </div>
                   </div>
                 )}
+
 
               </div>
             )}
