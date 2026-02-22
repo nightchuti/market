@@ -8,14 +8,16 @@ const AddressPage = () => {
   const location = useLocation();
 
   const [addresses, setAddresses] = useState([]);
-const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
 
 
   const [showModal, setShowModal] = useState(false);
 
   const [formData, setFormData] = useState({
     dormName: "",
-    note: ""
+    note: "",
+    lat: "",
+    lng: ""
   });
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -74,7 +76,9 @@ const [selectedId, setSelectedId] = useState(null);
     try {
       const cleanData = {
         dormName: formData.dormName.trim(),
-        note: formData.note.trim()
+        note: formData.note.trim(),
+        lat: Number(formData.lat),
+        lng: Number(formData.lng)
       };
 
       let res;
@@ -92,7 +96,12 @@ const [selectedId, setSelectedId] = useState(null);
 
       setSelectedId(res.data._id);
       setShowModal(false);
-      setFormData({ dormName: "", note: "" });
+      setFormData({
+        dormName: "",
+        note: "",
+        lat: "",
+        lng: ""
+      });
       setEditingId(null);
       setErrorMessage("");
 
@@ -159,7 +168,9 @@ const [selectedId, setSelectedId] = useState(null);
                     setEditingId(addr._id);
                     setFormData({
                       dormName: addr.dormName,
-                      note: addr.note || ""
+                      note: addr.note || "",
+                      lat: addr.lat || "",
+                      lng: addr.lng || ""
                     });
                     setShowModal(true);
                   }}

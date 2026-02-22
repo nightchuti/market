@@ -25,27 +25,27 @@ const getImgUrl = (path) => {
 
 // ── Trade Status Config ──────────────────────────────────
 const STATUS = {
-  pending:     { t: "⏳ รอตอบรับ",      c: "#f59e0b" },
-  negotiating: { t: "💬 กำลังเจรจา",    c: "#3b82f6" },
-  accepted:    { t: "✅ ตกลงแล้ว",       c: "#10b981" },
-  rejected:    { t: "❌ ปฏิเสธแล้ว",     c: "#ef4444" },
-  cancelled:   { t: "🚫 ยกเลิกแล้ว",    c: "#6b7280" },
-  completed:   { t: "🎉 เทรดสำเร็จ!",   c: "#8b5cf6" },
+  pending: { t: "⏳ รอตอบรับ", c: "#f59e0b" },
+  negotiating: { t: "💬 กำลังเจรจา", c: "#3b82f6" },
+  accepted: { t: "✅ ตกลงแล้ว", c: "#10b981" },
+  rejected: { t: "❌ ปฏิเสธแล้ว", c: "#ef4444" },
+  cancelled: { t: "🚫 ยกเลิกแล้ว", c: "#6b7280" },
+  completed: { t: "🎉 เทรดสำเร็จ!", c: "#8b5cf6" },
 };
 
 // ── Trade Product Bar ─────────────────────────────────────
 // แสดงสินค้าสองฝั่งตลอดเวลา ไม่ว่า tradeStatus จะเป็นอะไร
 function TradeProductBar({ room, getImgUrl, navigate }) {
   // ดึงข้อมูลสินค้าจาก snapshot (ถ้ามี) หรือ populate object
-  const wantImg   = room.lockedProductSnapshot?.images?.[0]        || room.productId?.images?.[0];
-  const wantTitle = room.lockedProductSnapshot?.title               || room.productId?.title        || "สินค้าที่ต้องการ";
-  const wantPrice = room.lockedProductSnapshot?.price               ?? room.productId?.price;
+  const wantImg = room.lockedProductSnapshot?.images?.[0] || room.productId?.images?.[0];
+  const wantTitle = room.lockedProductSnapshot?.title || room.productId?.title || "สินค้าที่ต้องการ";
+  const wantPrice = room.lockedProductSnapshot?.price ?? room.productId?.price;
 
-  const offerImg   = room.lockedOfferedProductSnapshot?.images?.[0] || room.offeredProductId?.images?.[0];
-  const offerTitle = room.lockedOfferedProductSnapshot?.title        || room.offeredProductId?.title || "สินค้าที่เสนอ";
-  const offerPrice = room.lockedOfferedProductSnapshot?.price        ?? room.offeredProductId?.price;
+  const offerImg = room.lockedOfferedProductSnapshot?.images?.[0] || room.offeredProductId?.images?.[0];
+  const offerTitle = room.lockedOfferedProductSnapshot?.title || room.offeredProductId?.title || "สินค้าที่เสนอ";
+  const offerPrice = room.lockedOfferedProductSnapshot?.price ?? room.offeredProductId?.price;
 
-  const wantId  = room.productId?._id  || room.productId;
+  const wantId = room.productId?._id || room.productId;
   const offerId = room.offeredProductId?._id || room.offeredProductId;
 
   return (
@@ -93,10 +93,10 @@ function TradeMessageCard({ msg, myId, getImgUrl }) {
   const meta = msg.metadata || {};
 
   const typeLabel = {
-    trade_request: { icon: "🔄", label: "ขอเทรดสินค้า",    bg: "#eff6ff", border: "#bfdbfe" },
-    trade_accept:  { icon: "✅", label: "ยืนยันรับเทรด",   bg: "#f0fdf4", border: "#bbf7d0" },
-    trade_reject:  { icon: "❌", label: "ปฏิเสธการเทรด",   bg: "#fef2f2", border: "#fecaca" },
-    trade_cancel:  { icon: "🚫", label: "ยกเลิกการเทรด",   bg: "#f9fafb", border: "#e5e7eb" },
+    trade_request: { icon: "🔄", label: "ขอเทรดสินค้า", bg: "#eff6ff", border: "#bfdbfe" },
+    trade_accept: { icon: "✅", label: "ยืนยันรับเทรด", bg: "#f0fdf4", border: "#bbf7d0" },
+    trade_reject: { icon: "❌", label: "ปฏิเสธการเทรด", bg: "#fef2f2", border: "#fecaca" },
+    trade_cancel: { icon: "🚫", label: "ยกเลิกการเทรด", bg: "#f9fafb", border: "#e5e7eb" },
     trade_confirm: { icon: "🎉", label: "ยืนยันส่งสินค้าแล้ว", bg: "#faf5ff", border: "#e9d5ff" },
   };
   const cfg = typeLabel[msg.messageType] || { icon: "📌", label: msg.messageType, bg: "#f9fafb", border: "#e5e7eb" };
@@ -135,7 +135,7 @@ function TradeMessageCard({ msg, myId, getImgUrl }) {
 }
 
 // ── Confirm Swap Modal ────────────────────────────────────
-function ConfirmSwapModal({ room, onConfirm, onClose, getImgUrl }) {
+function ConfirmSwapModal({ room, onConfirm, onClose, getImgUrl, navigate }) {
   const [step, setStep] = useState("choose"); // choose | meetup | payment
   const [confirming, setConfirming] = useState(false);
 
@@ -149,7 +149,36 @@ function ConfirmSwapModal({ room, onConfirm, onClose, getImgUrl }) {
             <button className="cp-btn accept" onClick={() => setStep("meetup")}>
               📍 นัดรับสินค้า
             </button>
-            <button className="cp-btn accept" onClick={() => setStep("payment")}>
+            <button
+              className="cp-btn accept"
+              onClick={() => {
+
+                const product = room?.productId;
+                const productId =
+                  typeof product === "object" ? product._id : product;
+
+                if (!productId) {
+                  return alert("ไม่พบข้อมูลสินค้า");
+                }
+
+                navigate("/checkout", {
+                  state: {
+                    items: [
+                      {
+                        _id: productId,
+                        product: productId,
+                        title: product?.title || "สินค้า",
+                        price: product?.price || 0,
+                        images: product?.images || [],
+                        qty: 1,
+                        deliveryType: product?.deliveryType || "both"
+                      }
+                    ]
+                  }
+                });
+
+              }}
+            >
               💳 ชำระผ่านระบบ
             </button>
           </div>
@@ -204,16 +233,16 @@ export default function ChatPage() {
   const roomId = params.roomId || params.sellerId;
   const navigate = useNavigate();
 
-  const socketRef    = useRef(null);
-  const bottomRef    = useRef(null);
-  const typingTimer  = useRef(null);
+  const socketRef = useRef(null);
+  const bottomRef = useRef(null);
+  const typingTimer = useRef(null);
 
-  const [messages, setMessages]       = useState([]);
-  const [text, setText]               = useState("");
-  const [room, setRoom]               = useState(null);
-  const [typing, setTyping]           = useState("");
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState("");
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
+  const [room, setRoom] = useState(null);
+  const [typing, setTyping] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [showSwapModal, setShowSwapModal] = useState(false);
 
   const token = localStorage.getItem("token");
@@ -292,9 +321,9 @@ export default function ChatPage() {
       });
       // อัปเดต tradeStatus ใน room state จาก messageType
       const statusMap = {
-        trade_accept:  "accepted",
-        trade_reject:  "rejected",
-        trade_cancel:  "cancelled",
+        trade_accept: "accepted",
+        trade_reject: "rejected",
+        trade_cancel: "cancelled",
         trade_confirm: "completed",
       };
       if (statusMap[msg.messageType]) {
@@ -309,9 +338,9 @@ export default function ChatPage() {
       fetchRoom();
     });
 
-    socket.on("user_typing",      ({ username }) => setTyping(username));
-    socket.on("user_stop_typing", ()             => setTyping(""));
-    socket.on("chat_error",       ({ message })  => alert(message));
+    socket.on("user_typing", ({ username }) => setTyping(username));
+    socket.on("user_stop_typing", () => setTyping(""));
+    socket.on("chat_error", ({ message }) => alert(message));
 
     return () => {
       socket.emit("leave_room", roomId);
@@ -361,8 +390,8 @@ export default function ChatPage() {
       await axios.put(`${API_URL}/api/chat/${roomId}/${action}`, {}, { headers });
 
       const newStatus = action === "accept" ? "accepted"
-                      : action === "reject" ? "rejected"
-                      : "cancelled";
+        : action === "reject" ? "rejected"
+          : "cancelled";
 
       // แจ้งอีกฝ่ายผ่าน socket
       socketRef.current?.emit("trade_status_update", { roomId, status: newStatus, updatedBy: myId });
@@ -407,13 +436,13 @@ export default function ChatPage() {
 
   // ── Render Helpers ─────────────────────────────────────
   const otherUser = room?.participants?.find(p => String(p._id || p) !== myId);
-  const fmt     = d => d ? new Date(d).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "";
+  const fmt = d => d ? new Date(d).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "";
   const fmtDate = d => d ? new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "short" }) : "";
 
   // ── Early Returns ──────────────────────────────────────
-  if (!token)  return <div className="cp-notice">กรุณาเข้าสู่ระบบก่อน</div>;
+  if (!token) return <div className="cp-notice">กรุณาเข้าสู่ระบบก่อน</div>;
   if (loading) return <div className="cp-loading"><div className="cp-spin" /><p>กำลังโหลด...</p></div>;
-  if (error)   return (
+  if (error) return (
     <div className="cp-error-page">
       <p>⚠️ {error}</p>
       <button className="cp-retry-btn" onClick={fetchRoom}>ลองใหม่</button>
@@ -531,7 +560,7 @@ export default function ChatPage() {
         )}
 
         {messages.map((msg, i) => {
-          const me    = String(msg.sender?._id || msg.sender) === myId;
+          const me = String(msg.sender?._id || msg.sender) === myId;
           const isSys = msg.messageType && msg.messageType !== "text";
           const showDate = i === 0 || fmtDate(msg.createdAt) !== fmtDate(messages[i - 1].createdAt);
           const isTradeCard = isSys && msg.messageType?.startsWith("trade_");
@@ -603,6 +632,7 @@ export default function ChatPage() {
           onConfirm={handleConfirmSwap}
           onClose={() => setShowSwapModal(false)}
           getImgUrl={getImgUrl}
+          navigate={navigate}   // 👈 เพิ่มบรรทัดนี้
         />
       )}
     </div>

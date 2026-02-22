@@ -417,7 +417,7 @@ router.post("/:id/boost", protect, async (req, res) => {
     await product.save();
 
     res.json({ message: `ดันโพสต์สำเร็จ! ถึงวันที่ ${expireDate.toLocaleDateString()}`, boostExpireAt: expireDate });
-  } catch (err) {
+  } catch (err) { 
     res.status(500).json({ message: err.message });
   }
 });

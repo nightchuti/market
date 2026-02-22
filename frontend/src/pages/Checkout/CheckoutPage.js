@@ -310,7 +310,7 @@ const CheckoutPage = () => {
                 totalPrice: total,
                 couponCode: appliedCoupon ? appliedCoupon.code : null
             };
-
+            console.log("ส่งไป Backend:", orderData);
             const res = await api.post("/api/orders/checkout", orderData);
 
             if (res.data.success) {
