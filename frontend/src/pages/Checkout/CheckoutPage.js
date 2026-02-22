@@ -82,7 +82,7 @@ const CheckoutPage = () => {
             setPaymentMethod("PROMPTPAY");
         }
     }, [deliveryMode]);
-    
+
 
     // ================= SET DEFAULT ADDRESS =================
     useEffect(() => {
@@ -137,19 +137,71 @@ const CheckoutPage = () => {
     // ================= CALCULATE DELIVERY FEE =================
     useEffect(() => {
         if (deliveryMode === "DELIVERY" && selectedAddr) {
+
             let fee = 0;
 
-            if (shippingService === "GRAB") {
-                fee = Math.round(20 + distance * 7);
-            } else {
-                fee = Math.round(15 + distance * 6);
+            if (shippingService === "LINEMAN") {
+                const baseFee = 20;
+                const perKm = 6;
+                fee = Math.round(baseFee + distance * perKm);
+            }
+            else { // GRAB default
+                const baseFee = 25;
+                const perKm = 7;
+                const freeKm = 2;
+
+                if (distance <= freeKm) {
+                    fee = baseFee;
+                } else {
+                    fee = Math.round(baseFee + (distance - freeKm) * perKm);
+                }
             }
 
             setDeliveryFee(fee);
+
         } else {
             setDeliveryFee(0);
         }
-    }, [deliveryMode, selectedAddr, shippingService, distance]);
+    }, [deliveryMode, selectedAddr, distance, shippingService]);
+
+    useEffect(() => {
+
+    const fetchDeliveryFee = async () => {
+
+        if (deliveryMode !== "DELIVERY" || !selectedAddr) {
+            setDeliveryFee(0);
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem("token");
+
+            const res = await api.post(
+                "/api/orders/preview-delivery",
+                {
+                    items: cartItems.map(item => ({
+                        product: item.product?._id || item._id,
+                        quantity: item.quantity || item.qty
+                    })),
+                    shippingAddress: selectedAddr,
+                    shippingService
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            setDeliveryFee(res.data.deliveryFee);
+            setDistance(res.data.distanceKm);
+
+        } catch (err) {
+            console.error("Delivery Preview Error:", err);
+        }
+    };
+
+    fetchDeliveryFee();
+
+}, [deliveryMode, selectedAddr, shippingService, cartItems]);
 
     // ================= RECEIVE SELECTED ADDRESS FROM ADDRESS PAGE =================
     useEffect(() => {
@@ -240,9 +292,9 @@ const CheckoutPage = () => {
 
     // ================= TOTAL =================
     const subTotal = cartItems.reduce(
-        (sum, i) => sum + (i.price * i.qty),
-        0
-    );
+    (sum, i) => sum + (i.price * (i.quantity || i.qty || 1)),
+    0
+);
 
     const total = Math.max(0, subTotal + deliveryFee - discount);
 
@@ -298,7 +350,6 @@ const CheckoutPage = () => {
                 // ถ้านัดรับ (PICKUP) ให้ส่งเป็น null หรือไม่ส่ง (ตาม Logic Backend)
                 shippingAddress: deliveryMode === "PICKUP" ? null : {
                     dormName: selectedAddr.dormName,
-                    room: selectedAddr.room,
                     note: selectedAddr.note,
                     lat: selectedAddr.lat,
                     lng: selectedAddr.lng
@@ -308,7 +359,8 @@ const CheckoutPage = () => {
                 subTotal: subTotal,
                 deliveryFee: deliveryFee,
                 totalPrice: total,
-                couponCode: appliedCoupon ? appliedCoupon.code : null
+                couponCode: appliedCoupon ? appliedCoupon.code : null,
+                shippingService: shippingService,
             };
             console.log("ส่งไป Backend:", orderData);
             const res = await api.post("/api/orders/checkout", orderData);
@@ -431,7 +483,11 @@ const CheckoutPage = () => {
                             className={`ship-box ${shippingService === "GRAB" ? "active" : ""}`}
                             onClick={() => setShippingService("GRAB")}
                         >
-                            Grab - ฿{Math.round(25 + distance * 7)}
+                            Grab - ฿{
+                                distance <= 2
+                                    ? 25
+                                    : Math.round(25 + (distance - 2) * 7)
+                            }
                         </div>
 
                         <div
