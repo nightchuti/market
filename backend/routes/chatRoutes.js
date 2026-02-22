@@ -152,12 +152,12 @@ router.post("/create-normal", protect, async (req, res) => {
     if (sellerId === buyerId) {
       return res.status(400).json({ error: "ไม่สามารถแชทกับตัวเองได้" });
     }
-
+const sortedParticipants = [buyerId, sellerId].sort();
     // เช็คว่ามีห้องอยู่แล้วหรือไม่
     let room = await ChatRoomTalk.findOne({
       type: "normal",
       productId,
-      participants: { $all: [buyerId, sellerId] }
+      participants: sortedParticipants,
     })
       .populate("participants", "username profileImage")
       .populate("productId", "title images price");
@@ -166,7 +166,7 @@ router.post("/create-normal", protect, async (req, res) => {
     if (!room) {
       room = await ChatRoomTalk.create({
         type: "normal",
-        participants: [buyerId, sellerId],
+        participants: sortedParticipants,
         productId,
         lastMessage: "เริ่มการสนทนา",
         lastMessageAt: new Date(),
@@ -235,12 +235,14 @@ router.post("/create-trade", protect, async (req, res) => {
       return res.status(400).json({ error: "สินค้าบางรายการไม่พร้อมเทรดแล้ว" });
     }
 
+  const sortedParticipants = [requesterId, ownerId].sort();
+
     // เช็คว่ามีห้องอยู่แล้วหรือไม่
     let room = await ChatRoomTalk.findOne({
       type: "trade",
       productId,
       offeredProductId,
-      participants: { $all: [requesterId, ownerId] }
+      participants: sortedParticipants
     })
       .populate("participants", "username profileImage")
       .populate("productId", "title images price")
@@ -249,7 +251,7 @@ router.post("/create-trade", protect, async (req, res) => {
     if (!room) {
       room = await ChatRoomTalk.create({
         type: "trade",
-        participants: [requesterId, ownerId],
+        participants: sortedParticipants,
         productId,
         offeredProductId,
         tradeStatus: "pending",

@@ -28,8 +28,8 @@ const chatRoomSchema = new mongoose.Schema({
   tradeStatus: {
     type: String,
     enum: ["pending", "negotiating", "accepted", "rejected", "cancelled", "completed"],
-    default: "pending"
-    //default: null
+    //default: "pending"
+    default: null
   },
   isLocked: { type: Boolean, default: false },
   lockedProductSnapshot: { type: Object, default: null },
@@ -46,10 +46,6 @@ const chatRoomSchema = new mongoose.Schema({
   unreadBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
 }, { timestamps: true });
 
-// ✅ เพิ่ม Validation ตรวจสอบจำนวนผู้เข้าร่วม (ป้องกัน participants.1 required)
-chatRoomSchema.path('participants').validate(function (value) {
-  return value.length === 2;
-}, 'ต้องมีผู้เข้าร่วมแชท 2 คน (ผู้ซื้อและผู้ขาย)');
 
 chatRoomSchema.index({ participants: 1 });
 chatRoomSchema.index({ lastMessageAt: -1 });
@@ -58,37 +54,49 @@ chatRoomSchema.index({ lastMessageAt: -1 });
 chatRoomSchema.index({ tradeStatus: 1 });
 
 // 🔥 กัน normal room มี trade data
-chatRoomSchema.pre("save", function (next) {
+chatRoomSchema.pre("save", async function () {
 
   if (this.type === "normal") {
-    this.tradeId = undefined;
-    this.tradeStatus = undefined;
+    this.tradeId = null;
+    this.tradeStatus = null;
     this.isLocked = false;
     this.lockedProductSnapshot = null;
     this.lockedOfferedProductSnapshot = null;
+    this.offeredProductId = null;
   }
 
-  next();
+  if (this.type === "trade" && !this.tradeStatus) {
+    this.tradeStatus = "pending";
+  }
+
 });
 
 // 🔥 เพิ่ม index
 chatRoomSchema.index({ tradeId: 1 });
 
-
-// 🔥 ป้องกัน participants ซ้ำ
 chatRoomSchema.path("participants").validate(function (value) {
   if (value.length !== 2) return false;
   return value[0].toString() !== value[1].toString();
 }, "ต้องมีผู้เข้าร่วม 2 คน และต้องไม่ใช่คนเดียวกัน");
 
 
-chatRoomSchema.pre("validate", function (next) {
+
+chatRoomSchema.pre("validate", function () {
   if (this.type === "trade") {
     if (!this.productId || !this.offeredProductId) {
-      return next(new Error("Trade room must have both productId and offeredProductId"));
+      throw new Error("Trade room must have both productId and offeredProductId");
     }
   }
-  next();
 });
+
+chatRoomSchema.index(
+  { type: 1, productId: 1, participants: 1 },
+  { unique: true }
+);
+
+chatRoomSchema.index(
+  { type: 1, productId: 1, offeredProductId: 1, participants: 1 },
+  { unique: true }
+);
 
 module.exports = mongoose.model("ChatRoomTalk", chatRoomSchema);
