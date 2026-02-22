@@ -36,6 +36,30 @@ function AllProducts() {
     });
   }, [searchParams]);
 
+  useEffect(() => {
+    setSearchParams({
+      page: 1,
+      search,
+      category,
+      tradeOption,
+      deliveryType
+    });
+  }, [category, tradeOption, deliveryType]);
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      setSearchParams({
+        page: 1,
+        search,
+        category,
+        tradeOption,
+        deliveryType
+      });
+    }, 500);
+
+    return () => clearTimeout(delay);
+  }, [search]);
+
   const fetchProducts = async (params = {}) => {
     try {
       const res = await api.get("/api/products", { params });
