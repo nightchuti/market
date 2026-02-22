@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./SellerOrderManagement.css";
+import { useNavigate } from "react-router-dom";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-function SellerOrderManagement({ setOrderCount }) {
+function SellerOrderManagement() {
   const [orders, setOrders] = useState([]);
   const [openId, setOpenId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [statusTab, setStatusTab] = useState("all");
   const [otpInputs, setOtpInputs] = useState({});
+  const navigate = useNavigate();
 
   const getImageUrl = (img) => {
     if (!img) return "/no-image.png";
@@ -36,17 +38,12 @@ function SellerOrderManagement({ setOrderCount }) {
 
       setOrders(activeOrders);
 
-      if (setOrderCount) {
-        const paidCount = activeOrders.filter(o => o.status === "Paid").length;
-        setOrderCount(paidCount);
-      }
-
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [setOrderCount]);
+  }, []);
 
   useEffect(() => {
     fetchOrders();
@@ -138,6 +135,28 @@ function SellerOrderManagement({ setOrderCount }) {
 
     } catch {
       alert("รหัส OTP ไม่ถูกต้อง");
+    }
+  };
+
+  const handleChatCustomer = async (order) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.post(
+        `${API_URL}/api/chat/create-from-order`,
+        {
+          buyerId: order.user?._id,
+          productId: order.items?.[0]?.product?._id
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      navigate(`/chat/${res.data._id}`);
+
+    } catch (err) {
+      alert(err.response?.data?.error || "ไม่สามารถเปิดแชทได้");
     }
   };
 
@@ -233,6 +252,16 @@ function SellerOrderManagement({ setOrderCount }) {
                   </span>
                 </div>
 
+                <button
+                  className="action-btn chat-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleChatCustomer(order);
+                  }}
+                >
+                  แชทกับลูกค้า
+                </button>
+
               </div>
 
               {/* RIGHT : ปุ่ม + status */}
@@ -310,6 +339,7 @@ function SellerOrderManagement({ setOrderCount }) {
                   </div>
                 )}
 
+
                 <button className="dropdown-btn">
                   {openId === order._id ? "−" : "＋"}
                 </button>
@@ -370,6 +400,7 @@ function SellerOrderManagement({ setOrderCount }) {
                     </div>
                   </div>
                 )}
+
 
               </div>
             )}

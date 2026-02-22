@@ -65,7 +65,7 @@ const userSchema = new mongoose.Schema(
       enum: ["FREE", "PRO"],
       default: "FREE"
     },
-    
+
     // โควตาสำหรับการกด Boost (พรีเมียมได้ 3-5, เด็กใหม่ได้ 1)
     boostQuota: {
       type: Number,
@@ -78,9 +78,17 @@ const userSchema = new mongoose.Schema(
       default: null
     },
 
-    shopId: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" }
+    shopId: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
+
+    bankAccount: {
+      bankName: { type: String },
+      accountName: { type: String },
+      accountNumber: { type: String },
+      promptPayNumber: { type: String }
+    }
   },
   { timestamps: true }
+
 );
 
 module.exports = mongoose.model("User", userSchema);

@@ -195,6 +195,63 @@ router.post("/create-normal", protect, async (req, res) => {
 });
 
 // ==========================================
+// 🔟 Seller แชทหาลูกค้าจาก Order
+// ==========================================
+router.post("/create-from-order", protect, async (req, res) => {
+  try {
+    const { buyerId, productId } = req.body;
+
+    if (!buyerId || !productId) {
+      return res.status(400).json({ error: "ข้อมูลไม่ครบ" });
+    }
+
+    const sellerId = String(req.user.id);
+
+    if (sellerId === String(buyerId)) {
+      return res.status(400).json({ error: "ไม่สามารถแชทกับตัวเองได้" });
+    }
+
+    const sortedParticipants = [sellerId, buyerId].sort();
+
+    let room = await ChatRoomTalk.findOne({
+      type: "normal",
+      productId,
+      participants: sortedParticipants
+    })
+      .populate("participants", "username profileImage")
+      .populate("productId", "title images price");
+
+    if (!room) {
+      room = await ChatRoomTalk.create({
+        type: "normal",
+        participants: sortedParticipants,
+        productId,
+        lastMessage: "เริ่มการสนทนา",
+        lastMessageAt: new Date(),
+        unreadBy: [buyerId]
+      });
+
+      room = await ChatRoomTalk.findById(room._id)
+        .populate("participants", "username profileImage")
+        .populate("productId", "title images price");
+
+      await Message.create({
+        roomId: room._id,
+        sender: sellerId,
+        text: "เริ่มการสนทนา",
+        messageType: "system"
+      });
+    }
+
+    res.json(room);
+
+  } catch (err) {
+    console.error("Create chat from order error:", err);
+    res.status(500).json({ error: "ไม่สามารถสร้างห้องแชทได้" });
+  }
+});
+
+// ==========================================
 // 5. สร้างห้องแชทเทรด (trade)
 // ==========================================
 router.post("/create-trade", protect, async (req, res) => {

@@ -99,7 +99,11 @@ export default function ProfilePage() {
     phonenumber: "",
     gender: "",
     bio: "",
-    birthday: ""
+    birthday: "",
+    bankName: "",
+    accountName: "",
+    accountNumber: "",
+    promptPayNumber: ""
   });
 
   const [editing, setEditing] = useState(false);
@@ -139,6 +143,11 @@ export default function ProfilePage() {
         gender: data.gender || "",
         bio: data.bio || "",
         birthday: formattedBirthday,
+
+        bankName: data.bankAccount?.bankName || "",
+        accountName: data.bankAccount?.accountName || "",
+        accountNumber: data.bankAccount?.accountNumber || "",
+        promptPayNumber: data.bankAccount?.promptPayNumber || ""
       });
     } catch (err) {
       console.error("Profile Error:", err);
@@ -187,6 +196,10 @@ export default function ProfilePage() {
     formData.append("gender", form.gender);
     formData.append("bio", form.bio);
     formData.append("birthday", form.birthday);
+    formData.append("bankName", form.bankName);
+    formData.append("accountName", form.accountName);
+    formData.append("accountNumber", form.accountNumber);
+    formData.append("promptPayNumber", form.promptPayNumber);
 
     if (form.imageFile instanceof File) {
       formData.append("profileImage", form.imageFile);
@@ -226,7 +239,11 @@ export default function ProfilePage() {
         bio: updatedUser.bio,
         birthday: updatedUser.birthday
           ? new Date(updatedUser.birthday).toISOString().split('T')[0]
-          : ""
+          : "",
+        bankName: updatedUser.bankAccount?.bankName || "",
+        accountName: updatedUser.bankAccount?.accountName || "",
+        accountNumber: updatedUser.bankAccount?.accountNumber || "",
+        promptPayNumber: updatedUser.bankAccount?.promptPayNumber || ""
       }));
 
       setEditing(false);
@@ -490,6 +507,70 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
+
+              <div className="pp-card" style={{ marginTop: 20 }}>
+                <div className="pp-card-top">
+                  <h3 className="pp-ct">ข้อมูลบัญชีรับเงิน</h3>
+                </div>
+
+                <div className="pp-fields">
+
+                  <div className="pp-field">
+                    <label>ธนาคาร</label>
+                    {editing ? (
+                      <input
+                        className="pp-inp"
+                        value={form.bankName}
+                        onChange={e => setForm({ ...form, bankName: e.target.value })}
+                      />
+                    ) : (
+                      <p>{profile.bankAccount?.bankName || "-"}</p>
+                    )}
+                  </div>
+
+                  <div className="pp-field">
+                    <label>ชื่อบัญชี</label>
+                    {editing ? (
+                      <input
+                        className="pp-inp"
+                        value={form.accountName}
+                        onChange={e => setForm({ ...form, accountName: e.target.value })}
+                      />
+                    ) : (
+                      <p>{profile.bankAccount?.accountName || "-"}</p>
+                    )}
+                  </div>
+
+                  <div className="pp-field">
+                    <label>เลขบัญชี</label>
+                    {editing ? (
+                      <input
+                        className="pp-inp"
+                        value={form.accountNumber}
+                        onChange={e => setForm({ ...form, accountNumber: e.target.value })}
+                      />
+                    ) : (
+                      <p>{profile.bankAccount?.accountNumber || "-"}</p>
+                    )}
+                  </div>
+
+                  <div className="pp-field">
+                    <label>PromptPay</label>
+                    {editing ? (
+                      <input
+                        className="pp-inp"
+                        value={form.promptPayNumber}
+                        onChange={e => setForm({ ...form, promptPayNumber: e.target.value })}
+                      />
+                    ) : (
+                      <p>{profile.bankAccount?.promptPayNumber || "-"}</p>
+                    )}
+                  </div>
+
+                </div>
+              </div>
+
+
             </div>
             {/* เอาส่วน Log ออกตามที่ต้องการแล้ว */}
           </div>

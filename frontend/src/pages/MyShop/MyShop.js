@@ -24,8 +24,6 @@ function MyShop() {
   useEffect(() => {
     const checkAuth = async () => {
 
-      await fetchCompletedOrders();
-
       const token = localStorage.getItem("token");
 
       if (!token) {
@@ -39,6 +37,7 @@ function MyShop() {
         await fetchUserProfile();
         await fetchMyProducts();
         await fetchOrderCount();
+        await fetchCompletedOrders();
       } catch (err) {
         setIsLoggedIn(false);
       }
@@ -244,7 +243,7 @@ function MyShop() {
 
         {/* ✅ เพิ่มส่วนเรียกใช้ SellerOrderManagement */}
         {activeTab === "orders" && (
-          <SellerOrderManagement setOrderCount={setOrderCount} />
+          <SellerOrderManagement />
         )}
 
         {activeTab === "sales" && (

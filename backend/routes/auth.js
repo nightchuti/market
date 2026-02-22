@@ -63,7 +63,10 @@ router.put("/profile", protect, upload.single("profileImage"), async (req, res) 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
 
-    const { username, phone, gender, bio, birthday } = req.body;
+    const { username, phone, gender, bio, birthday, bankName,
+      accountName,
+      accountNumber,
+      promptPayNumber } = req.body;
     const changedFields = {};
 
     if (username || phone) {
@@ -82,6 +85,12 @@ router.put("/profile", protect, upload.single("profileImage"), async (req, res) 
     if (gender !== undefined) user.gender = gender;
     if (bio !== undefined) user.bio = bio;
     if (birthday !== undefined) user.birthday = birthday;
+    if (!user.bankAccount) user.bankAccount = {};
+
+    if (bankName !== undefined) user.bankAccount.bankName = bankName;
+    if (accountName !== undefined) user.bankAccount.accountName = accountName;
+    if (accountNumber !== undefined) user.bankAccount.accountNumber = accountNumber;
+    if (promptPayNumber !== undefined) user.bankAccount.promptPayNumber = promptPayNumber;
 
     if (req.file) {
       user.profileImage = req.file.path;

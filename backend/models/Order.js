@@ -100,6 +100,12 @@ const orderSchema = new mongoose.Schema({
   paidAt: Date,
   completedAt: Date,
 
+  sellerTransferStatus: {
+    type: String,
+    default: "Pending"
+  },
+  sellerTransferredAt: Date,
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("Order", orderSchema);
