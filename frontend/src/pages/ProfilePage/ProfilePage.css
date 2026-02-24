@@ -574,3 +574,38 @@
 .pp-obtn.pay:hover {
   background: #ea580c;
 }
+/* ============================================================
+   FIX — typo ในต้นฉบับ + MOBILE RESPONSIVE
+============================================================ */
+/* แก้ typo "ห0vh" → "100vh" */
+.pp-root { min-height: 100vh; }
+
+@media (max-width: 768px) {
+  .pp-root { padding-bottom: 36px; }
+  .pp-hero { padding: 28px 16px 0; }
+  .pp-body { padding: 14px; }
+  .pp-oactions { flex-wrap: wrap; gap: 8px; }
+  .pp-ofooter { flex-wrap: wrap; gap: 10px; }
+  .pp-delivery-info { white-space: normal; font-size: 13px; }
+}
+
+@media (max-width: 520px) {
+  .pp-fields { grid-template-columns: 1fr; }
+  .pp-field.full { grid-column: span 1; }
+  .pp-hname { font-size: 18px; }
+  .pp-card-top { flex-wrap: wrap; gap: 8px; }
+  .pp-edit-actions { flex-wrap: wrap; }
+  .pp-avatar-modal-content { margin: 16px; padding: 20px; }
+  .pp-avatar-large { width: 200px; height: 200px; }
+  .pp-obtn.confirm, .pp-obtn.pay { padding: 8px 14px; font-size: 13px; }
+  .pp-action-right { flex-wrap: wrap; gap: 8px; }
+}
+
+@media (max-width: 375px) {
+  .pp-hero { padding: 22px 12px 0; }
+  .pp-avatar-wrap { width: 68px; height: 68px; }
+  .pp-hname { font-size: 16px; }
+  .pp-body { padding: 10px; }
+  .pp-tabs { padding: 0 8px; }
+  .pp-tab { padding: 12px 12px; font-size: 13px; }
+}

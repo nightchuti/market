@@ -388,3 +388,38 @@
   transform:translateY(-2px);
   box-shadow:0 12px 25px rgba(0,0,0,0.35);
 }
+/* ============================================================
+   MOBILE RESPONSIVE — เพิ่มเติม ไม่แตะ desktop
+============================================================ */
+@media (max-width: 768px) {
+  .product-detail { padding: 20px 16px 48px; }
+  .main-image { height: 300px; }
+  .image-box { padding: 16px; border-radius: 16px; }
+  .thumbnail-row img { width: 58px; height: 58px; }
+  .seller-mini { padding: 12px 14px; }
+  .seller-mini img { width: 44px; height: 44px; }
+  .info-section { padding: 22px 18px; border-radius: 18px; }
+  .info-section h2 { font-size: 22px; }
+  .price { font-size: 28px; }
+  .wanted-card { flex-direction: column; gap: 14px; }
+  .btn-cart, .btn-chat, .btn-buy { padding: 15px; font-size: 14px; }
+  .btn-buy { font-size: 15px; }
+}
+
+@media (max-width: 480px) {
+  .product-detail { padding: 14px 12px 40px; }
+  .main-image { height: 240px; }
+  .image-box { padding: 12px; }
+  .thumbnail-row img { width: 50px; height: 50px; border-radius: 8px; }
+  .info-section { padding: 16px 14px; }
+  .badge-row span { font-size: 11px; padding: 4px 10px; }
+}
+
+@media (max-width: 375px) {
+  .main-image { height: 200px; }
+  .thumbnail-row img { width: 44px; height: 44px; }
+}
+
+@media (max-width: 320px) {
+  .main-image { height: 170px; }
+}

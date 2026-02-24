@@ -165,7 +165,7 @@ function SellerOrderManagement() {
     return <div style={{ padding: 40, textAlign: "center" }}>ไม่มีคำสั่งซื้อใหม่</div>;
 
   return (
-    <div style={{ padding: 20 }}>
+    <div>
 
       {/* STATUS TABS */}
       <div className="seller-tabs">

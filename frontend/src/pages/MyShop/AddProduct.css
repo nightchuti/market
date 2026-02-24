@@ -219,3 +219,19 @@ select {
 
   h1{font-size:22px;}
 }
+
+/* ============================================================
+   MOBILE RESPONSIVE — เพิ่มเติม ไม่แตะ desktop
+============================================================ */
+@media (max-width: 768px) {
+  .add-product-container { margin: 20px 14px; padding: 22px 18px; }
+  .add-product-container h1 { font-size: 22px; }
+  .inline-row { grid-template-columns: 1fr; }
+  input, textarea, select { width: 100%; box-sizing: border-box; }
+  .form-row { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .add-product-container { margin: 16px 10px; padding: 18px 14px; }
+  .preview-item img { width: 80px; height: 80px; }
+}

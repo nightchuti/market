@@ -177,3 +177,21 @@
 .product-row span {
   color: #2e7d32;
 }
+
+/* ============================================================
+   MOBILE RESPONSIVE — เพิ่มเติม ไม่แตะ desktop
+============================================================ */
+@media (max-width: 768px) {
+  .seller-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .seller-tabs::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; }
+  .card-top { gap: 10px; }
+  .card-actions { flex-wrap: wrap; gap: 6px; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .shop-card { padding: 14px 12px; }
+  .inventory-thumb, .inventory-thumb-placeholder { width: 52px; height: 52px; }
+  .title-section h4 { font-size: 14px; }
+}

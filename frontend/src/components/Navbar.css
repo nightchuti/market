@@ -1,251 +1,175 @@
+/* ============================================================
+   GLOBAL RESET — ป้องกัน horizontal overflow
+============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html { overflow-x: hidden; }
+body { overflow-x: hidden; padding-top: 72px; margin: 0; }
+
+/* ============================================================
+   NAVBAR BASE
+============================================================ */
 .navbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-
-  position: fixed;       /* จาก sticky → fixed */
-  top: 0;
-  left: 0;
-  width: 100%;
-
-  height: 72px;          /* เพิ่มความสูง */
+  justify-content: space-between;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 72px;
   padding: 0 40px;
-
   background: rgb(6, 7, 24);
   z-index: 1000;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  gap: 12px;
 }
 
-
+/* LOGO */
 .logo {
-  font-weight: 700;
-  font-size: 20px;
-  color: #10bd4a;
-  cursor: pointer;
-  border-radius: 999px;
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 20px; color: #10bd4a;
+  cursor: pointer; flex-shrink: 0; text-decoration: none;
 }
+.logo-img { width: 56px; height: 56px; object-fit: cover; border-radius: 50%; flex-shrink: 0; }
+.logo span { white-space: nowrap; font-size: 20px; }
 
-.menu {
-  display: flex;
-  gap: 10px;
-}
+/* DESKTOP MENU */
+.menu { display: flex; align-items: center; gap: 15px; flex: 1; justify-content: center; }
 
 .nav-link {
-  padding: 8px 18px;
-  border-radius: 999px;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  color: #ffffff;
-  transition: 0.2s;
+  padding: 8px 18px; border-radius: 999px;
+  text-decoration: none; font-size: 16px; font-weight: 500;
+  color: #fff; transition: 0.2s; white-space: nowrap; flex-shrink: 0;
+}
+.nav-link:hover  { background: #e0eadb; color: #2f5d1e; }
+.nav-link.active { background: #2f5d1e; color: #fff; font-weight: 600; }
+
+.shop-link-container { position: relative; display: inline-flex; align-items: center; }
+
+.nav-badge {
+  position: absolute; top: -3px; right: -3px;
+  background: #ff4d4f; color: #fff;
+  font-size: 9px; font-weight: 700;
+  min-width: 16px; height: 16px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid rgb(6,7,24); pointer-events: none;
 }
 
-.nav-link:hover {
-  background: #e0eadb;
-  color: #2f5d1e;
-}
-
-.nav-link.active {
-  background: #2f5d1e;
-  color: white;
-  font-weight: 600;
-}
-
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.username {
-  font-size: 14px;
-  font-weight: 600;
-  color: #2f5d1e;
-}
-
-.btn-outline {
-  border: 2.5px solid #2f5d1e;   /* จาก 1.8px → 2.5px */
-  background: white;
-  color: #2f5d1e;
-  padding: 8px 18px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-
-.btn-outline:hover {
-  background: #e0eadb;
-}
-
-.btn-solid {
-  background: #2f5d1e;
-  color: white;
-  padding: 8px 18px;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-solid:hover {
-  background: #244a16;
-}
-
-.error-text {
-  color: #ff4d4f;
-  font-size: 12px;
-  margin-top: 6px;
-  margin-bottom: 10px;
-  text-align: center;
-  font-weight: 400;
-}
+/* RIGHT BUTTONS */
+.nav-btn { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
 .btn-add {
-  background-color: #2e7d32;
-  color: white;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  margin-right: 10px;
-  transition: 0.2s;
-
+  background: #2e7d32; color: #fff; border: none;
+  padding: 8px 18px; border-radius: 8px;
+  cursor: pointer; font-weight: 600; font-size: 15px;
+  white-space: nowrap; transition: 0.2s;
 }
+.btn-add:hover { background: #1b5e20; }
 
-.btn-add:hover {
-  background-color: #1b5e20;
+.btn-outline {
+  border: 2px solid #2f5d1e; background: #fff; color: #2f5d1e;
+  padding: 8px 18px; border-radius: 999px;
+  cursor: pointer; font-size: 15px; white-space: nowrap; transition: 0.2s;
 }
-/* ===== USER MINI PROFILE ===== */
+.btn-outline:hover { background: #e0eadb; }
 
+.btn-solid {
+  background: #2f5d1e; color: #fff;
+  padding:8px 18px; border-radius: 999px;
+  border: none; cursor: pointer; font-size: 15px; white-space: nowrap; transition: 0.2s;
+}
+.btn-solid:hover { background: #244a16; }
+
+/* USER MINI */
 .user-mini {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 12px;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: 0.25s;
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 10px; border-radius: 25px;
+  cursor: pointer; transition: 0.25s;
 }
-
-.user-mini:hover {
-  background: #f1f5f9;
-}
-
-/* รูปโปรไฟล์ */
-.mini-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #22c55e;
-}
-
-/* กล่องข้อความ */
-.user-mini-info {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-
-.user-mini-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.user-mini-sub {
-  font-size: 11px;
-  color: #6b7280;
-}
-
-@media (max-width: 768px) {
-  .menu {
-    display: none;
-  }
-
-  .user-mini-info {
-    display: none;
-  }
-
-  .navbar {
-    height: 64px;
-    padding: 0 18px;
-  }
-
-  .logo-img {
-    width: 42px;
-    height: 42px;
-  }
-
-  body {
-    padding-top: 64px;
-  }
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.logo-img {
-  width: 56px;
-  height: 56px;
-  object-fit: cover;     /* เต็มกรอบ */
-  border-radius: 50%;    /* วงกลม */
-}
-
-
-/* ===== USER MINI ACTIVE (ตอนอยู่หน้าโปรไฟล์) ===== */
-
-/* พื้นหลังขาว */
-.user-mini-name,
-.user-mini-sub {
-  color: white;   /* ก่อนกด = ขาว */
-}
-.user-mini.active {
-  background: white;
-}
+.user-mini:hover        { background: rgba(255,255,255,0.08); }
+.user-mini.active       { background: #fff; }
 .user-mini.active .user-mini-name,
-.user-mini.active .user-mini-sub {
-  color: black;   /* เมื่อกด = ดำ */
+.user-mini.active .user-mini-sub { color: #111; }
+
+.mini-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #22c55e; flex-shrink: 0; }
+
+.user-mini-info { display: flex; flex-direction: column; line-height: 1.2; }
+.user-mini-name { font-size: 15px; font-weight: 600; color: #fff; white-space: nowrap; }
+.user-mini-sub  { font-size: 12px; color: #1ddd3d; }
+
+/* HAMBURGER */
+.hamburger {
+  display: none; background: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff; font-size: 20px; cursor: pointer;
+  padding: 5px 10px; border-radius: 7px; line-height: 1;
+  transition: background 0.2s; flex-shrink: 0;
 }
-.user-mini {
-  transition: background 0.25s, color 0.25s;
-}
- .user-mini-sub {
-  color: rgb(29, 221, 61);
+.hamburger:hover { background: rgba(255,255,255,0.1); }
+
+.error-text { color: #ff4d4f; font-size: 12px; margin-top: 6px; margin-bottom: 10px; text-align: center; }
+
+/* MOBILE DRAWER */
+.mobile-menu {
+  position: fixed; top: 60px; left: 0; right: 0;
+  background: rgb(6,7,24); display: flex; flex-direction: column;
+  z-index: 999; border-bottom: 2px solid rgba(16,189,74,0.25);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+  animation: slideDown 0.2s ease; overflow: hidden; padding-bottom: 8px;
 }
 
-/* 🆕 เพิ่ม: จัดตำแหน่งให้ Link ร้านค้าเป็นแนวระนาบเพื่อวาง Badge */
-.shop-link-container {
-  position: relative;
-  display: flex;
-  align-items: center;
+.mobile-user-info {
+  display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+  background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.mobile-user-info img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #22c55e; flex-shrink: 0; }
+.mobile-user-name { font-size: 14px; font-weight: 600; color: #fff; }
+.mobile-user-role { font-size: 11px; color: #22c55e; }
+
+.mobile-menu a,
+.mobile-menu-btn {
+  display: flex; align-items: center; gap: 11px;
+  color: rgba(255,255,255,0.85); text-decoration: none;
+  background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 14px; font-weight: 500; text-align: left;
+  cursor: pointer; padding: 13px 18px; width: 100%;
+  transition: background 0.15s, color 0.15s;
+}
+.mobile-menu a:hover, .mobile-menu-btn:hover { background: rgba(255,255,255,0.05); color: #22c55e; }
+.mobile-menu a.active-link { color: #22c55e; font-weight: 600; }
+.mobile-menu-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0; }
+.mobile-badge { background: #ff4d4f; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 999px; margin-left: auto; font-weight: 700; }
+.mobile-menu-btn.logout       { color: #ff7875; }
+.mobile-menu-btn.logout:hover { background: rgba(255,107,107,0.08); color: #ff4d4f; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* 🆕 เพิ่ม: สไตล์ของตัวเลขแจ้งเตือน */
-.nav-badge {
-  position: absolute;
-  top: -2px;              /* ขยับขึ้นด้านบน */
-  right: -2px;             /* ขยับไปทางขวา */
-  background-color: #ff4d4f; /* สีแดง */
-  color: white;
-  font-size: 10px;
-  font-weight: bold;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2px;
-  border: 2px solid rgb(6, 7, 24); /* ขอบสีเดียวกับพื้นหลัง Navbar */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  pointer-events: none;    /* ไม่ให้ตัวเลขขวางการคลิกเมนู */
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
+/* Tablet landscape */
+@media (max-width: 1024px) {
+  .navbar    { padding: 0 20px; }
+  .nav-link  { padding: 7px 12px; font-size: 13px; }
 }
 
-/* 🆕 เพิ่ม: ขยายช่องว่างระหว่างเมนูเล็กน้อย ไม่ให้ Badge ทับเมนูข้างๆ */
-.menu {
-  gap: 15px; 
+/* Tablet portrait / large phone → hamburger */
+@media (max-width: 768px) {
+  body { padding-top: 56px; }
+  .navbar { height: 56px; padding: 0 14px; }
+  .logo-img  { width: 36px; height: 36px; }
+  .logo span { font-size: 14px; }
+  .menu { display: none; }
+  .nav-btn .btn-add,
+  .nav-btn .btn-outline,
+  .nav-btn .btn-solid,
+  .nav-btn .user-mini { display: none; }
+  .hamburger { display: block; }
+  .mobile-menu { top: 56px; }
 }
+
+@media (max-width: 480px) { .navbar { padding: 0 12px; } .logo span { font-size: 13px; } .logo-img { width: 34px; height: 34px; } }
+@media (max-width: 375px) { .navbar { padding: 0 10px; } }
+@media (max-width: 320px) { .logo span { display: none; } }

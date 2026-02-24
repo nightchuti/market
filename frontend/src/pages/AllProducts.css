@@ -138,3 +138,32 @@
   50% { opacity: 1; }
   100% { opacity: 0.8; }
 }
+/* ============================================================
+   MOBILE RESPONSIVE — เพิ่มเติม ไม่แตะ desktop
+============================================================ */
+@media (max-width: 768px) {
+  .all-products { margin: 0; padding: 24px 16px; }
+  .all-products h1 { font-size: 22px; margin-bottom: 20px; }
+  .filter-bar { gap: 8px; margin-bottom: 24px; }
+  .filter-bar input,
+  .filter-bar select { min-width: unset; width: 100%; }
+  .filter-bar .btn-main { width: 100%; }
+  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .pagination-container { gap: 14px; padding: 20px 0; }
+  .page-btn { padding: 9px 16px; font-size: 13px; }
+}
+
+@media (max-width: 480px) {
+  .all-products { padding: 20px 12px; }
+  .product-grid { gap: 10px; }
+}
+
+@media (max-width: 375px) {
+  .filter-bar input,
+  .filter-bar select { height: 42px; font-size: 13px; }
+  .filter-bar .btn-main { height: 42px; font-size: 13px; }
+}
+
+@media (max-width: 320px) {
+  .product-grid { grid-template-columns: 1fr; }
+}

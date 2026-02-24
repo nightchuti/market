@@ -1,7 +1,7 @@
 .shop-wrapper {
   max-width: 1100px;
   margin: auto;
-  padding: 40px 20px;
+  padding: 20px;
   background: #f7f7f8;
 }
 
@@ -299,4 +299,85 @@
   .ad-card-content {
     flex-direction: column;
   }
+}
+/* ============================================================
+   MOBILE RESPONSIVE — เพิ่มเติม ไม่แตะ desktop
+============================================================ */
+
+/* tablet */
+@media (max-width: 900px) {
+  .summary-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* large phone */
+@media (max-width: 768px) {
+  .shop-wrapper { padding: 10px 12px }
+
+  /* HEADER — ชื่อซ้าย ปุ่มขวา */
+  .shop-header { margin-bottom: 20px; }
+  .shop-header h2 { font-size: 20px; }
+  .btn-main { width: auto; padding: 8px 16px; }
+
+  /* SUMMARY CARDS — 2×2 */
+  .summary-cards { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 22px; }
+  .summary-card { padding: 16px 12px; border-radius: 14px; }
+  .summary-card h3 { font-size: 18px; }
+  .summary-card span { font-size: 12px; }
+
+  /* TABS — scroll ได้ */
+  .shop-tabs { gap: 6px; overflow-x: auto; padding-bottom: 4px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .shop-tabs::-webkit-scrollbar { display: none; }
+  .shop-tabs button { white-space: nowrap; flex-shrink: 0; font-size: 14px; padding-bottom: 8px; }
+
+  /* CARDS */
+  .shop-card { padding: 14px; border-radius: 14px; }
+  .card-top { gap: 10px; }
+
+  /* DETAIL GRID — 2 col */
+  .detail-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* AD CARD */
+  .ad-request-card { padding: 16px; }
+}
+
+/* standard phone */
+@media (max-width: 600px) {
+  /* card-top: info ซ้าย, actions ขวา — ยังคงอยู่บรรทัดเดียวกัน */
+  .card-top { align-items: flex-start; }
+  .card-actions { flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+  /* ปุ่มเล็กลงนิด */
+  .publish-btn, .edit-btn, .delete-btn, .boost-action-btn {
+    height: 32px; padding: 0 12px; font-size: 12px;
+  }
+  .status-badge { font-size: 11px; padding: 3px 9px; }
+
+  .ad-request-card { flex-direction: column; gap: 14px; text-align: center; }
+  .ad-card-content { flex-direction: column; }
+  .btn-request { width: 100%; }
+}
+
+/* small phone */
+@media (max-width: 480px) {
+  .shop-wrapper { padding: 10px 12px; }
+  .shop-header h2 { font-size: 18px; }
+
+  /* summary cards — ยังคง 2 col แต่เล็กลง */
+  .summary-cards { gap: 10px; }
+  .summary-card { padding: 14px 10px; }
+  .summary-card h3 { font-size: 16px; }
+
+  /* card-top พับแนวตั้งถ้าจำเป็น */
+  .product-main-info { min-width: 0; flex: 1; }
+
+  /* detail grid — 1 col บนจอเล็ก */
+  .detail-grid { grid-template-columns: 1fr; gap: 8px; }
+  .dropdown-buttons { flex-wrap: wrap; }
+}
+
+/* extra small */
+@media (max-width: 375px) {
+  .shop-header { flex-wrap: wrap; gap: 10px; }
+  .btn-main { width: 100%; text-align: center; }
+  .shop-tabs button { font-size: 13px; }
 }

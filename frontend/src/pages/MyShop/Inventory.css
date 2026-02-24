@@ -237,3 +237,21 @@
   70% { box-shadow: 0 0 0 10px rgba(255, 140, 0, 0); }
   100% { box-shadow: 0 0 0 0 rgba(255, 140, 0, 0); }
 }
+/* ============================================================
+   MOBILE RESPONSIVE — เพิ่มเติม ไม่แตะ desktop
+============================================================ */
+@media (max-width: 768px) {
+  .publish-btn, .edit-btn, .delete-btn, .boost-action-btn {
+    height: 32px; padding: 0 12px; font-size: 12px;
+  }
+  .card-actions { gap: 8px; flex-wrap: wrap; }
+  .detail-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+  .card-top { align-items: flex-start; }
+  .card-actions { justify-content: flex-start; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .inventory-thumb, .inventory-thumb-placeholder { width: 52px; height: 52px; }
+  .title-section h4 { font-size: 14px; }
+}

@@ -41,12 +41,12 @@
 
 selectAllLabel {
   display: "flex";
-  alignItems: "center";
-  marginBottom: "20px";
-  fontSize: "16px";
+  align-items: "center";
+  margin-bottom: "20px";
+  font-size: "16px";
 }
 selectAllCheckbox {
-  marginRight: "10px";
+  margin-right: "10px";
 }
 
 /* ================= TOP BAR ================= */
@@ -248,4 +248,39 @@ selectAllCheckbox {
   background: #ccc;
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE — เพิ่มเติม ไม่แตะ desktop
+============================================================ */
+@media (max-width: 768px) {
+  .cart-page { padding: 0 14px; margin: 20px auto; }
+  .cart-page h2 { font-size: 22px; }
+
+  .cart-item {
+    grid-template-columns: 28px 68px 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px 12px;
+    padding: 14px;
+  }
+  /* row 1: checkbox | img | info */
+  .cart-item > input[type="checkbox"] { grid-row: 1; grid-column: 1; align-self: start; margin-top: 4px; }
+  .cart-item img { grid-row: 1; grid-column: 2; width: 68px; height: 68px; }
+  .item-info { grid-row: 1; grid-column: 3; }
+  /* row 2: ราคารวม + ปุ่มลบ */
+  .item-total { grid-row: 2; grid-column: 2 / 4; text-align: left; font-size: 14px; }
+  .delete-one { grid-row: 2; grid-column: 1; font-size: 16px; }
+
+  .item-info h4 { font-size: 14px; }
+  .cart-summary { font-size: 14px; padding: 16px; }
+  .total-price { font-size: 16px; }
+}
+
+@media (max-width: 480px) {
+  .cart-item { padding: 12px 10px; }
+  .cart-item img { width: 60px; height: 60px; }
+}
+
+@media (max-width: 375px) {
+  .checkout-btn { font-size: 14px; padding: 11px; }
 }

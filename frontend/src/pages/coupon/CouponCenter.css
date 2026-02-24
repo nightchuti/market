@@ -167,3 +167,30 @@ body {
   position: relative;
   z-index: 2;
 }
+
+/* ============================================================
+   MOBILE RESPONSIVE — เพิ่มเติม ไม่แตะ desktop
+============================================================ */
+@media (max-width: 768px) {
+  .coupon-wrapper { margin: 24px 14px; padding: 28px 18px; border-radius: 20px; }
+  .page-title { font-size: 22px; }
+  .coupon-grid { grid-template-columns: 1fr; gap: 14px; }
+}
+
+@media (max-width: 480px) {
+  .coupon-wrapper { margin: 16px 10px; padding: 22px 14px; }
+  .coupon-card { padding: 16px; }
+  .big { font-size: 26px; }
+  .coupon-price { width: 80px; }
+}
+
+@media (max-width: 375px) {
+  /* card พับแนวตั้ง */
+  .coupon-card { flex-direction: column; gap: 12px; }
+  .coupon-price {
+    width: 100%; border-right: none; border-bottom: 1px dashed #ddd;
+    padding-right: 0; padding-bottom: 10px;
+    display: flex; flex-direction: row; gap: 12px; align-items: center; justify-content: center;
+  }
+  .btn { align-self: stretch; text-align: center; }
+}

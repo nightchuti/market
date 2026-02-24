@@ -23,7 +23,7 @@ function SalesHistory({ orders }) {
   }
 
   return (
-    <div style={{ padding: 20 }}>
+    <div>
       {orders.map(order => (
         <div key={order._id} className="shop-card">
 

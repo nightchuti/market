@@ -253,3 +253,19 @@ select[name="status"] {
   background: #c62828;
   transform: scale(1.1);
 }
+/* ============================================================
+   MOBILE RESPONSIVE — เพิ่มเติม ไม่แตะ desktop
+============================================================ */
+@media (max-width: 768px) {
+  .edit-page { margin: 20px 14px; padding: 22px 18px; }
+  .edit-form input,
+  .edit-form textarea,
+  .edit-form select { box-sizing: border-box; }
+  .image-card img { width: 90px; height: 90px; }
+}
+
+@media (max-width: 480px) {
+  .edit-page { margin: 14px 10px; padding: 16px 14px; }
+  .image-card img { width: 75px; height: 75px; }
+  .form-actions { flex-direction: column; }
+}
