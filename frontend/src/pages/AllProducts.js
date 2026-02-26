@@ -1,8 +1,79 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../api";
 import "./AllProducts.css";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
+
+/* ─── Custom Select — dropdown ไม่ล้นจอมือถือ ─── */
+function CustomSelect({ value, onChange, options, placeholder }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div className="cselect" ref={ref}>
+      <button
+        type="button"
+        className={`cselect-trigger ${open ? "open" : ""}`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span>{selected ? selected.label : placeholder}</span>
+        <svg className="cselect-arrow" viewBox="0 0 10 6" width="10" height="6">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        </svg>
+      </button>
+
+      {open && (
+        <ul className="cselect-menu">
+          {options.map((o) => (
+            <li
+              key={o.value}
+              className={`cselect-option ${o.value === value ? "selected" : ""}`}
+              onClick={() => { onChange(o.value); setOpen(false); }}
+            >
+              {o.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+const CATEGORY_OPTIONS = [
+  { value: "", label: "ทุกหมวดหมู่" },
+  { value: "เสื้อผ้า", label: "เสื้อผ้า" },
+  { value: "เครื่องใช้ไฟฟ้า", label: "เครื่องใช้ไฟฟ้า" },
+  { value: "หนังสือ", label: "หนังสือ" },
+  { value: "เฟอร์นิเจอร์", label: "เฟอร์นิเจอร์" },
+  { value: "อุปกรณ์การเรียน", label: "อุปกรณ์การเรียน" },
+  { value: "อาหาร", label: "อาหาร" },
+  { value: "อุปกรณ์สัตว์เลี้ยง", label: "อุปกรณ์สัตว์เลี้ยง" },
+  { value: "อุปกรณ์อิเล็กทรอนิกส์", label: "อุปกรณ์อิเล็กทรอนิกส์" },
+  { value: "อื่นๆ", label: "อื่นๆ" },
+];
+
+const TRADE_OPTIONS = [
+  { value: "", label: "ทุกประเภทการขาย" },
+  { value: "sell_only", label: "ขายเท่านั้น" },
+  { value: "trade_allowed", label: "แลกเปลี่ยนเท่านั้น" },
+  { value: "negotiable", label: "ต่อรองได้" },
+];
+
+const DELIVERY_OPTIONS = [
+  { value: "", label: "ทุกประเภทการส่ง" },
+  { value: "delivery", label: "จัดส่ง" },
+  { value: "meetup", label: "นัดรับ" },
+];
 
 function AllProducts() {
   const [products, setProducts] = useState([]);
@@ -11,7 +82,6 @@ function AllProducts() {
   const [category, setCategory] = useState("");
   const [tradeOption, setTradeOption] = useState("");
   const [deliveryType, setDeliveryType] = useState("");
-
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -37,26 +107,13 @@ function AllProducts() {
   }, [searchParams]);
 
   useEffect(() => {
-    setSearchParams({
-      page: 1,
-      search,
-      category,
-      tradeOption,
-      deliveryType
-    });
+    setSearchParams({ page: 1, search, category, tradeOption, deliveryType });
   }, [category, tradeOption, deliveryType]);
 
   useEffect(() => {
     const delay = setTimeout(() => {
-      setSearchParams({
-        page: 1,
-        search,
-        category,
-        tradeOption,
-        deliveryType
-      });
+      setSearchParams({ page: 1, search, category, tradeOption, deliveryType });
     }, 500);
-
     return () => clearTimeout(delay);
   }, [search]);
 
@@ -71,21 +128,13 @@ function AllProducts() {
   };
 
   const handleSearch = () => {
-    setSearchParams({
-      page: 1,
-      search,
-      category,
-      tradeOption,
-      deliveryType
-    });
+    setSearchParams({ page: 1, search, category, tradeOption, deliveryType });
   };
-
 
   return (
     <div className="all-products">
       <h1>สินค้าทั้งหมด</h1>
 
-      {/* ===== FILTER BAR ===== */}
       <div className="filter-bar">
         <input
           placeholder="ค้นหาสินค้า..."
@@ -93,38 +142,13 @@ function AllProducts() {
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">ทุกหมวดหมู่</option>
-          <option value="เสื้อผ้า">เสื้อผ้า</option>
-          <option value="เครื่องใช้ไฟฟ้า">เครื่องใช้ไฟฟ้า</option>
-          <option value="หนังสือ">หนังสือ</option>
-          <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
-          <option value="อุปกรณ์การเรียน">อุปกรณ์การเรียน</option>
-          <option value="อาหาร">อาหาร</option>
-          <option value="อุปกรณ์สัตว์เลี้ยง">อุปกรณ์สัตว์เลี้ยง</option>
-          <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
-          <option value="อื่นๆ">อื่นๆ</option>
-        </select>
+        <CustomSelect value={category} onChange={setCategory} options={CATEGORY_OPTIONS} placeholder="ทุกหมวดหมู่" />
+        <CustomSelect value={tradeOption} onChange={setTradeOption} options={TRADE_OPTIONS} placeholder="ทุกประเภทการขาย" />
+        <CustomSelect value={deliveryType} onChange={setDeliveryType} options={DELIVERY_OPTIONS} placeholder="ทุกประเภทการส่ง" />
 
-        <select value={tradeOption} onChange={(e) => setTradeOption(e.target.value)}>
-          <option value="">ทุกประเภทการขาย</option>
-          <option value="sell_only">ขายเท่านั้น</option>
-          <option value="trade_allowed">แลกเปลี่ยนเท่านั้น</option>
-          <option value="negotiable">ต่อรองได้</option>
-        </select>
-
-        <select value={deliveryType} onChange={(e) => setDeliveryType(e.target.value)}>
-          <option value="">ทุกประเภทการส่ง</option>
-          <option value="delivery">จัดส่ง</option>
-          <option value="meetup">นัดรับ</option>
-        </select>
-
-        <button className="btn-main" onClick={handleSearch}>
-          ค้นหา
-        </button>
+        <button className="btn-main" onClick={handleSearch}>ค้นหา</button>
       </div>
 
-      {/* ===== PRODUCT GRID ===== */}
       <div className="product-grid">
         {products.map((p) => (
           <ProductCard key={p._id} product={p} />
@@ -133,41 +157,20 @@ function AllProducts() {
 
       {products.length === 0 && <p>ไม่พบสินค้า</p>}
 
-      {/* ===== PAGINATION ===== */}
       {pagination && (
         <div className="pagination-container">
           <button
             className="page-btn"
             disabled={pagination.page === 1}
-            onClick={() =>
-              setSearchParams({
-                page: pagination.page - 1,
-                search,
-                category,
-                tradeOption,
-                deliveryType
-              })
-            }
+            onClick={() => setSearchParams({ page: pagination.page - 1, search, category, tradeOption, deliveryType })}
           >
             ← ก่อนหน้า
           </button>
-
-          <div className="page-info">
-            หน้า <span>{pagination.page}</span> จาก {pagination.pages}
-          </div>
-
+          <div className="page-info">หน้า <span>{pagination.page}</span> จาก {pagination.pages}</div>
           <button
             className="page-btn"
             disabled={pagination.page === pagination.pages}
-            onClick={() =>
-              setSearchParams({
-                page: pagination.page + 1,
-                search,
-                category,
-                tradeOption,
-                deliveryType
-              })
-            }
+            onClick={() => setSearchParams({ page: pagination.page + 1, search, category, tradeOption, deliveryType })}
           >
             ถัดไป →
           </button>

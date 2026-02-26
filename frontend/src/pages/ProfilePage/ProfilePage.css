@@ -581,7 +581,7 @@
 .pp-root { min-height: 100vh; }
 
 @media (max-width: 768px) {
-  .pp-root { padding-bottom: 36px; }
+  .pp-root { padding-bottom: 36px;  max-width: 90%; }
   .pp-hero { padding: 28px 16px 0; }
   .pp-body { padding: 14px; }
   .pp-oactions { flex-wrap: wrap; gap: 8px; }

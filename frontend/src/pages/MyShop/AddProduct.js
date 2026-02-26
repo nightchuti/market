@@ -177,6 +177,12 @@ export default function AddProduct() {
   // ================= UI =================
   return (
     <div className="add-product-container">
+
+      {/* ปุ่มย้อนกลับ */}
+      <button className="back-btn" onClick={() => navigate(-1)}>
+        ← ย้อนกลับ
+      </button>
+
       <h1>ลงขายสินค้า</h1>
 
       <div className="form-group">

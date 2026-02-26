@@ -157,8 +157,8 @@ body { overflow-x: hidden; padding-top: 72px; margin: 0; }
 
 /* Tablet portrait / large phone → hamburger */
 @media (max-width: 768px) {
-  body { padding-top: 56px; }
-  .navbar { height: 56px; padding: 0 14px; }
+  body { padding-top: 0px; }
+  .navbar { height: 64px; padding: 0 14px; }
   .logo-img  { width: 36px; height: 36px; }
   .logo span { font-size: 14px; }
   .menu { display: none; }

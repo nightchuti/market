@@ -1,3 +1,5 @@
+html, body { overflow-x: hidden; max-width: 100%; }
+
 .all-products {
   min-height: 100vh;
   padding: 40px 20px;
@@ -11,7 +13,7 @@
   color: #333;
 }
 
-/* ===== FILTER BAR ===== */
+/* ===== FILTER BAR (desktop — เหมือนเดิม) ===== */
 .filter-bar {
   display: flex;
   gap: 10px;
@@ -20,8 +22,7 @@
   justify-content: center;
 }
 
-.filter-bar input,
-.filter-bar select {
+.filter-bar input {
   padding: 10px 15px;
   border-radius: 8px;
   border: 1px solid #ddd;
@@ -29,7 +30,6 @@
   height: 45px;
 }
 
-/* ✅ แก้ปุ่มค้นหาให้ไม่ใหญ่ไป */
 .filter-bar .btn-main {
   padding: 0 25px;
   background: #f7b733;
@@ -39,13 +39,103 @@
   font-weight: 600;
   cursor: pointer;
   height: 45px;
-  min-width: 100px; /* ลดจาก 200px ลงมา */
-  width: auto;      /* ให้กว้างตามตัวอักษร */
+  min-width: 100px;
+  width: auto;
   transition: 0.2s;
 }
 
 .filter-bar .btn-main:hover {
   background: #e5a520;
+}
+
+/* ===== CUSTOM SELECT ===== */
+.cselect {
+  position: relative;
+  min-width: 180px;
+  height: 45px;
+}
+
+.cselect-trigger {
+  width: 100%;
+  height: 45px;
+  padding: 0 36px 0 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  text-align: left;
+  transition: border-color 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cselect-trigger:hover,
+.cselect-trigger.open {
+  border-color: #2e7d32;
+  outline: none;
+}
+
+.cselect-trigger span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cselect-arrow {
+  flex-shrink: 0;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.cselect-trigger.open .cselect-arrow {
+  transform: rotate(180deg);
+}
+
+/* dropdown menu — จำกัดไม่ให้เกิน viewport */
+.cselect-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  max-width: min(260px, calc(100vw - 32px)); /* ไม่เกินจอ */
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  z-index: 999;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  max-height: 240px;
+}
+
+.cselect-option {
+  padding: 10px 15px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.cselect-option:hover {
+  background: #f1f8e9;
+  color: #2e7d32;
+}
+
+.cselect-option.selected {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-weight: 600;
 }
 
 /* ===== PRODUCT GRID ===== */
@@ -56,7 +146,6 @@
   margin-bottom: 50px;
 }
 
-/* ✅ SCOPED BOOST (เนียนแต่เด่นพอประมาณ) */
 .product-wrapper-scoped {
   position: relative;
   transition: transform 0.3s ease;
@@ -80,17 +169,32 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #f7b733;
-  color: #000;
+  background: linear-gradient(90deg, #2e7d32, #66bb6a);
+  color: #fff;
   padding: 3px 10px;
   border-radius: 6px;
   font-size: 11px;
   font-weight: bold;
   z-index: 10;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  animation: pulse-green 2s infinite;
 }
 
-/* ===== PAGINATION (แก้ปัญหาทับช่องแชท) ===== */
+.boosted-active {
+  border: 1.5px solid #2e7d32;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(46, 125, 50, 0.15);
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+
+@keyframes pulse-green {
+  0%   { opacity: 0.8; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+/* ===== PAGINATION ===== */
 .pagination-container {
   display: flex;
   justify-content: center;
@@ -120,34 +224,71 @@
   font-weight: bold;
   color: #2e7d32;
 }
-.boosted-active {
-  border: 1.5px solid #2e7d32; /* เขียว มก. */
-  border-radius: 12px;
-  box-shadow: 0 0 15px rgba(46, 125, 50, 0.15);
-  transform: scale(1.02); /* ขยายขนาดขึ้นนิดเดียว */
-  transition: all 0.3s ease;
-}
 
-.boost-badge-scoped {
-  background: linear-gradient(90deg, #2e7d32, #66bb6a);
-  animation: pulse-green 2s infinite;
-}
-
-@keyframes pulse-green {
-  0% { opacity: 0.8; }
-  50% { opacity: 1; }
-  100% { opacity: 0.8; }
-}
 /* ============================================================
-   MOBILE RESPONSIVE — เพิ่มเติม ไม่แตะ desktop
+   MOBILE RESPONSIVE
 ============================================================ */
 @media (max-width: 768px) {
-  .all-products { margin: 0; padding: 24px 16px; }
+  .all-products {
+    margin: 0;
+    padding: 24px 16px;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
   .all-products h1 { font-size: 22px; margin-bottom: 20px; }
-  .filter-bar { gap: 8px; margin-bottom: 24px; }
-  .filter-bar input,
-  .filter-bar select { min-width: unset; width: 100%; }
-  .filter-bar .btn-main { width: 100%; }
+
+  .filter-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 24px;
+    justify-content: unset;
+    width: 100%;
+  }
+
+  /* input ยืดเต็ม grid cell */
+  .filter-bar input {
+    min-width: unset;
+    width: 100%;
+    height: 42px;
+    font-size: 13px;
+    padding: 8px 10px;
+    box-sizing: border-box;
+  }
+
+  /* cselect ยืดเต็ม grid cell */
+  .cselect {
+    min-width: unset;
+    width: 100%;
+    height: 42px;
+  }
+
+  .cselect-trigger {
+    height: 42px;
+    font-size: 13px;
+    padding: 0 32px 0 10px;
+  }
+
+  /* dropdown ไม่เกินจอ — เปิดออกมาด้านซ้าย */
+  .cselect-menu {
+    left: 0;
+    right: auto;
+    max-width: calc(100vw - 32px);
+  }
+
+  /* ถ้า cselect อยู่ฝั่งขวา ให้ dropdown เปิดชิดขวาแทน */
+  .filter-bar > .cselect:nth-child(even) .cselect-menu {
+    left: auto;
+    right: 0;
+  }
+
+  .filter-bar .btn-main {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 42px;
+    font-size: 14px;
+  }
+
   .product-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
   .pagination-container { gap: 14px; padding: 20px 0; }
   .page-btn { padding: 9px 16px; font-size: 13px; }
@@ -159,9 +300,8 @@
 }
 
 @media (max-width: 375px) {
-  .filter-bar input,
-  .filter-bar select { height: 42px; font-size: 13px; }
-  .filter-bar .btn-main { height: 42px; font-size: 13px; }
+  .filter-bar { grid-template-columns: 1fr; }
+  .filter-bar .btn-main { grid-column: 1; }
 }
 
 @media (max-width: 320px) {

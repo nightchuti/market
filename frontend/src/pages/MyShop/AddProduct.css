@@ -181,6 +181,30 @@ select {
 }
 
 /* =========================
+   BACK BUTTON
+========================= */
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-bottom: 14px;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.back-btn:hover {
+  color: #111;
+  transform: translateX(-3px);
+}
+
+/* =========================
    SUBMIT
 ========================= */
 
