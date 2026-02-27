@@ -5,6 +5,7 @@ import "./MyShop.css";
 import Inventory from "./Inventory";
 import SalesHistory from "./SalesHistory";
 import SellerOrderManagement from "./SellerOrderManagement"; // ✅ นำเข้า Component ใหม่
+import LoginModal from "../../components/LoginModal"; // ✅ นำเข้า LoginModal
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -18,6 +19,7 @@ function MyShop() {
   const [loading, setLoading] = useState(true);
   const [orderCount, setOrderCount] = useState(0); // เก็บจำนวนออเดอร์ใหม่
   const [completedOrders, setCompletedOrders] = useState([]);
+  const [showLogin, setShowLogin] = useState(false);
 
   const navigate = useNavigate();
 
@@ -44,7 +46,7 @@ function MyShop() {
     };
 
     checkAuth();
-  }, [navigate]);  // หรือใส่ location.pathname ก็ได้
+  }, []);
 
 
   const fetchUserProfile = async () => {
@@ -148,10 +150,25 @@ function MyShop() {
 
   if (!isLoggedIn) {
     return (
-      <div style={{ padding: "100px 20px", textAlign: "center" }}>
-        <h2>กรุณาเข้าสู่ระบบก่อนใช้งาน</h2>
-        <button style={{ marginTop: "20px" }} onClick={() => navigate("/login")}>ไปหน้าเข้าสู่ระบบ</button>
-      </div>
+      <>
+        <div style={{ padding: "100px 20px", textAlign: "center" }}>
+          <h2>กรุณาเข้าสู่ระบบก่อนใช้งาน</h2>
+          <button
+            className="btn-request"
+            style={{ marginTop: "24px" }} 
+            onClick={() => setShowLogin(true)}
+          >
+            เข้าสู่ระบบ
+          </button>
+        </div>
+
+        {showLogin && (
+          <LoginModal
+            close={() => setShowLogin(false)}
+            switchToRegister={() => { }}
+          />
+        )}
+      </>
     );
   }
 
