@@ -3,7 +3,7 @@
 ============================================================ */
 *, *::before, *::after { box-sizing: border-box; }
 html { overflow-x: hidden; }
-body { overflow-x: hidden; padding-top: 72px; margin: 0; }
+body { overflow-x: hidden; padding-top: 0px; margin: 0; }
 
 /* ============================================================
    NAVBAR BASE

@@ -6,6 +6,7 @@ import AdminAdsManager from "./AdminAdsManager";
 import AdminActivity from "./AdminActivity";
 import AdminTransfer from "./AdminTransfer";
 import AdminMember from "./AdminDashboardSubPay";
+import AdminDashboard from "./AdminDashboard";
 
 const MENUS = [
   { key: "dashboard", label: " Dashboard" },
@@ -106,11 +107,7 @@ const AdminPanel = () => {
       case "activity":  return <AdminActivity />;
       case "transfer":  return <AdminTransfer />;
       case "member":    return <AdminMember />;
-      default: return (
-        <div style={{ padding:30 }}>
-          <h2>Dashboard</h2><p>ยินดีต้อนรับเข้าสู่ระบบผู้ดูแลระบบ</p>
-        </div>
-      );
+      default: return <AdminDashboard />;
     }
   };
 
