@@ -118,7 +118,7 @@ const AdminPanel = () => {
       <div className={`ap-overlay ${open ? "open" : ""}`} onClick={() => setOpen(false)} />
 
       <div className={`ap-sidebar ${open ? "open" : ""}`}>
-        <div className="ap-logo">⚙️ ADMIN</div>
+        <div className="ap-logo">ADMIN</div>
         {MENUS.map(m => (
           <button key={m.key} className={`ap-menu ${active === m.key ? "active" : ""}`}
             onClick={() => pick(m.key)}>{m.label}</button>
