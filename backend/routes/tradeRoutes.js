@@ -90,4 +90,12 @@ router.put(
   tradeController.acceptMatch
 );
 
+// เพิ่ม route สำหรับ confirm ผ่าน ChatRoom
+router.put(
+  "/:id/confirm-chat",
+  protect,
+  validateObjectId,
+  tradeController.confirmSwapChat
+);
+
 module.exports = router;
