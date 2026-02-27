@@ -24,7 +24,7 @@ const AdminActivity = () => {
 
   return (
     <div style={{ padding: 30 }}>
-      <h2>📝 กิจกรรมทั้งหมดของระบบ</h2>
+      <h2>กิจกรรมทั้งหมดของระบบ</h2>
 
       <table style={tableStyle}>
         <thead>

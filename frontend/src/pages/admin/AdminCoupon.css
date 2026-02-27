@@ -84,3 +84,12 @@
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(46, 125, 50, 0.3);
 }
+/* ── MOBILE ── */
+@media (max-width: 640px) {
+  .admin-coupon-container { padding: 16px; }
+  .admin-card { padding: 20px 16px; border-radius: 16px; }
+  .admin-card h2 { font-size: 20px; margin-bottom: 20px; }
+  .admin-form { grid-template-columns: 1fr; gap: 14px; }
+  .full-width { grid-column: span 1; }
+  .btn-submit { grid-column: span 1; font-size: 16px; }
+}

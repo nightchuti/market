@@ -2,243 +2,156 @@ import React, { useState, useEffect } from "react";
 import api from "../../api";
 
 const API_URL = process.env.REACT_APP_API_URL;
-
-const getImageUrl = (img) => {
-    if (!img) return "/images/no-slip.png";
-    if (img.startsWith("http")) return img;
-    if (!API_URL) return img;
-    return `${API_URL.replace(/\/$/, "")}/${img.replace(/^\//, "")}`;
+const getImg = (img) => {
+  if (!img) return "/images/no-slip.png";
+  if (img.startsWith("http")) return img;
+  if (!API_URL) return img;
+  return `${API_URL.replace(/\/$/, "")}/${img.replace(/^\//, "")}`;
 };
+
+const STYLE = `
+  .asp { padding:24px; max-width:1000px; margin:0 auto; font-family:'Prompt',sans-serif; }
+  .asp-h2 { color:#00467f; margin-bottom:18px; font-size:20px; }
+  .asp-tabs { display:flex; gap:20px; margin-bottom:18px; border-bottom:1px solid #ddd; }
+  .asp-tab { padding:10px 14px; cursor:pointer; background:none; border:none;
+    font-size:15px; font-weight:600; color:#888; font-family:inherit;
+    border-bottom:3px solid transparent; margin-bottom:-1px; }
+  .asp-tab.on { color:#00467f; border-bottom-color:#00467f; }
+
+  .asp-table-wrap { background:#fff; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,.05); overflow-x:auto; }
+  .asp-table { width:100%; border-collapse:collapse; min-width:580px; }
+  .asp-table thead tr { background:#f9fafb; }
+  .asp-table th { padding:14px 12px; text-align:left; font-size:13px; color:#666; white-space:nowrap; }
+  .asp-table td { padding:13px 12px; font-size:14px; vertical-align:middle; border-bottom:1px solid #f1f1f1; }
+  .asp-thumb { width:46px; height:64px; object-fit:cover; border-radius:6px; cursor:pointer; border:1px solid #eee; }
+  .asp-price { font-size:16px; font-weight:700; color:#ee4d2d; }
+  .asp-paid  { color:#28a745; font-weight:600; font-size:13px; }
+  .asp-init  { background:#00467f; color:#fff; border:none; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:13px; }
+  .asp-cg    { display:flex; gap:5px; }
+  .asp-yes   { background:#28a745; color:#fff; border:none; padding:7px 12px; border-radius:6px; cursor:pointer; }
+  .asp-no    { background:#6c757d; color:#fff; border:none; padding:7px 12px; border-radius:6px; cursor:pointer; }
+
+  /* mobile cards */
+  .asp-cards { display:none; flex-direction:column; gap:12px; }
+  .asp-card  { background:#fff; border-radius:12px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.06); border:1px solid #f0f0f0; }
+  .asp-card-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+  .asp-card-name { font-weight:700; font-size:14px; color:#333; }
+  .asp-card-plan { font-size:12px; color:#00467f; margin-top:2px; }
+  .asp-card-row  { display:flex; gap:12px; margin-bottom:10px; align-items:center; }
+  .asp-card-foot { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; border-top:1px solid #f1f1f1; padding-top:10px; }
+  .asp-card-date { font-size:11px; color:#999; }
+
+  .asp-modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; padding:20px; }
+  .asp-modal img { max-width:80vw; max-height:80vh; object-fit:contain; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+
+  @media (max-width:640px) {
+    .asp { padding:14px; }
+    .asp-table-wrap { display:none; }
+    .asp-cards { display:flex; }
+  }
+`;
+if (!document.getElementById("asp-style")) {
+  const el = document.createElement("style"); el.id="asp-style"; el.textContent=STYLE; document.head.appendChild(el);
+}
 
 const AdminDashboardSubPay = () => {
-    const [memberships, setMemberships] = useState([]);
-    const [activeTab, setActiveTab] = useState("waiting");
-    const [loading, setLoading] = useState(true);
-    const [confirmId, setConfirmId] = useState(null);
-    const [isUpdating, setIsUpdating] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(null);
+  const [list, setList]           = useState([]);
+  const [tab, setTab]             = useState("waiting");
+  const [loading, setLoading]     = useState(true);
+  const [confirmId, setConfirmId] = useState(null);
+  const [updating, setUpdating]   = useState(false);
+  const [bigImg, setBigImg]       = useState(null);
 
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get("/api/memberships/admin/memberships");
-            setMemberships(res.data);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const load = async () => {
+    setLoading(true);
+    try { const r = await api.get("/api/memberships/admin/memberships"); setList(r.data); }
+    catch(e){ console.error(e); } finally { setLoading(false); }
+  };
+  useEffect(()=>{ load(); },[]);
 
-    useEffect(() => { fetchData(); }, []);
+  const approve = async (id) => {
+    setUpdating(true);
+    try { await api.post(`/api/memberships/approve/${id}`); setConfirmId(null); load(); }
+    catch(e){ console.error(e); } finally { setUpdating(false); }
+  };
 
-    const handleConfirmFinal = async (id) => {
-        setIsUpdating(true);
-        try {
-            await api.post(`/api/memberships/approve/${id}`);
-            setConfirmId(null);
-            fetchData();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsUpdating(false);
-        }
-    };
+  const filtered = list.filter(m => tab==="waiting" ? m.status==="pending" : m.status==="approved");
 
-    const filteredData = memberships.filter(item =>
-        activeTab === "waiting"
-            ? item.status === "pending"
-            : item.status === "approved"
-    );
-
-    return (
-        <div style={styles.container}>
-            <h2 style={styles.title}>จัดการการสมัครสมาชิก</h2>
-
-            {/* Tabs */}
-            <div style={styles.tabContainer}>
-                <button
-                    onClick={() => { setActiveTab("waiting"); setConfirmId(null); }}
-                    style={{
-                        ...styles.tabBtn,
-                        color: activeTab === "waiting" ? "#00467f" : "#888",
-                        borderBottom: activeTab === "waiting" ? "3px solid #00467f" : "none"
-                    }}
-                >
-                    รอตรวจสอบ ({memberships.filter(m => m.status === "pending").length})
-                </button>
-
-                <button
-                    onClick={() => { setActiveTab("approved"); setConfirmId(null); }}
-                    style={{
-                        ...styles.tabBtn,
-                        color: activeTab === "approved" ? "#00467f" : "#888",
-                        borderBottom: activeTab === "approved" ? "3px solid #00467f" : "none"
-                    }}
-                >
-                    อนุมัติแล้ว
-                </button>
-            </div>
-
-            {loading ? (
-                <p style={{ textAlign: "center" }}>กำลังโหลดข้อมูล...</p>
-            ) : (
-                <div style={styles.tableWrapper}>
-                    <table style={styles.table}>
-                        <thead>
-                            <tr style={styles.thRow}>
-                                <th style={styles.th}>ผู้ใช้</th>
-                                <th style={styles.th}>แพ็กเกจ</th>
-                                <th style={styles.th}>ราคา</th>
-                                <th style={styles.th}>หลักฐานการชำระเงิน</th>
-                                <th style={styles.th}>วันที่สมัคร</th>
-                                <th style={styles.th}>จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredData.map(item => (
-                                <tr key={item._id} style={styles.tr}>
-                                    <td style={styles.td}>
-                                        {item.user?.email || "ไม่พบผู้ใช้"}
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        {item.plan}
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        <strong style={{ color: "#ee4d2d" }}>
-                                            ฿{item.price?.toLocaleString()}
-                                        </strong>
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        <img
-                                            src={getImageUrl(item.slip)}
-                                            style={styles.thumbnail}
-                                            onClick={() => setSelectedImage(getImageUrl(item.slip))}
-                                            alt="slip"
-                                        />
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        {new Date(item.createdAt).toLocaleString("th-TH")}
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        {activeTab === "waiting" ? (
-                                            confirmId === item._id ? (
-                                                <div style={styles.confirmGroup}>
-                                                    <button
-                                                        disabled={isUpdating}
-                                                        onClick={() => handleConfirmFinal(item._id)}
-                                                        style={styles.yesBtn}
-                                                    >
-                                                        ใช่
-                                                    </button>
-                                                    <button
-                                                        disabled={isUpdating}
-                                                        onClick={() => setConfirmId(null)}
-                                                        style={styles.noBtn}
-                                                    >
-                                                        ไม่
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    onClick={() => setConfirmId(item._id)}
-                                                    style={styles.initBtn}
-                                                >
-                                                    อนุมัติ
-                                                </button>
-                                            )
-                                        ) : (
-                                            <span style={styles.statusPaid}>✔️ อนุมัติแล้ว</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {/* Modal ดูรูปใหญ่ */}
-            {selectedImage && (
-                <div style={styles.modalOverlay} onClick={() => setSelectedImage(null)}>
-                    <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                        <img
-                            src={selectedImage}
-                            style={styles.modalImage}
-                            alt="slip large"
-                        />
-                    </div>
-                </div>
-            )}
+  const ActionBtn = ({ item }) => tab==="waiting" ? (
+    confirmId===item._id
+      ? <div className="asp-cg">
+          <button className="asp-yes" disabled={updating} onClick={()=>approve(item._id)}>ใช่</button>
+          <button className="asp-no"  disabled={updating} onClick={()=>setConfirmId(null)}>ไม่</button>
         </div>
-    );
+      : <button className="asp-init" onClick={()=>setConfirmId(item._id)}>อนุมัติ</button>
+  ) : <span className="asp-paid">อนุมัติแล้ว</span>;
+
+  const pendingCount = list.filter(m=>m.status==="pending").length;
+
+  return (
+    <div className="asp">
+      <h2 className="asp-h2">จัดการการสมัครสมาชิก</h2>
+
+      <div className="asp-tabs">
+        {[["waiting",`รอตรวจสอบ (${pendingCount})`],["approved","อนุมัติแล้ว"]].map(([k,l])=>(
+          <button key={k} className={`asp-tab ${tab===k?"on":""}`}
+            onClick={()=>{setTab(k);setConfirmId(null);}}>{l}</button>
+        ))}
+      </div>
+
+      {loading ? <p style={{textAlign:"center"}}>กำลังโหลด...</p> : (<>
+
+        {/* Desktop table */}
+        <div className="asp-table-wrap">
+          <table className="asp-table">
+            <thead><tr>
+              {["ผู้ใช้","แพ็กเกจ","ราคา","หลักฐาน","วันที่สมัคร","จัดการ"].map(h=><th key={h}>{h}</th>)}
+            </tr></thead>
+            <tbody>{filtered.map(item=>(
+              <tr key={item._id}>
+                <td>{item.user?.email||"ไม่พบผู้ใช้"}</td>
+                <td>{item.plan}</td>
+                <td><span className="asp-price">฿{item.price?.toLocaleString()}</span></td>
+                <td><img src={getImg(item.slip)} className="asp-thumb" onClick={()=>setBigImg(getImg(item.slip))} alt="slip"/></td>
+                <td style={{fontSize:13}}>{new Date(item.createdAt).toLocaleString("th-TH")}</td>
+                <td><ActionBtn item={item}/></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="asp-cards">
+          {filtered.length===0
+            ? <p style={{textAlign:"center",color:"#999",padding:20}}>ไม่มีรายการ</p>
+            : filtered.map(item=>(
+            <div key={item._id} className="asp-card">
+              <div className="asp-card-head">
+                <div>
+                  <div className="asp-card-name">{item.user?.email||"ไม่พบผู้ใช้"}</div>
+                  <div className="asp-card-plan">แพ็กเกจ: {item.plan}</div>
+                </div>
+                <span className="asp-price">฿{item.price?.toLocaleString()}</span>
+              </div>
+              <div className="asp-card-row">
+                <img src={getImg(item.slip)} className="asp-thumb" onClick={()=>setBigImg(getImg(item.slip))} alt="slip"/>
+                <span style={{fontSize:13,color:"#555"}}>วันที่: {new Date(item.createdAt).toLocaleString("th-TH")}</span>
+              </div>
+              <div className="asp-card-foot">
+                <span className="asp-card-date">{new Date(item.createdAt).toLocaleDateString("th-TH")}</span>
+                <ActionBtn item={item}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </>)}
+
+      {bigImg && (
+        <div className="asp-modal" onClick={()=>setBigImg(null)}>
+          <img src={bigImg} alt="slip large"/>
+        </div>
+      )}
+    </div>
+  );
 };
-
-const styles = {
-    container: { padding: "30px", maxWidth: "1000px", margin: "0 auto", fontFamily: "'Prompt', sans-serif" },
-    title: { color: "#00467f", marginBottom: "20px" },
-    tabContainer: { display: "flex", gap: "20px", marginBottom: "20px", borderBottom: "1px solid #ddd" },
-    tabBtn: { padding: "10px 15px", cursor: "pointer", background: "none", border: "none", fontSize: "16px", fontWeight: "600" },
-    tableWrapper: { backgroundColor: "#fff", borderRadius: "12px", boxShadow: "0 4px 15px rgba(0,0,0,0.05)", overflow: "hidden" },
-    table: { width: "100%", borderCollapse: "collapse" },
-    thRow: { backgroundColor: "#f9fafb" },
-    th: { padding: "15px", textAlign: "left", fontSize: "14px", color: "#666" },
-    tr: { borderBottom: "1px solid #f1f1f1" },
-    td: { padding: "15px", fontSize: "15px" },
-    thumbnail: { width: "50px", height: "70px", objectFit: "cover", borderRadius: "6px", cursor: "pointer", border: "1px solid #eee" },
-
-    // ปุ่มเริ่มต้น
-    initBtn: {
-        backgroundColor: "#00467f", color: "#fff", border: "none",
-        padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px"
-    },
-    // กลุ่มปุ่มยืนยัน
-    confirmGroup: { display: "flex", gap: "5px" },
-    yesBtn: {
-        backgroundColor: "#28a745", color: "#fff", border: "none",
-        padding: "8px 12px", borderRadius: "6px", cursor: "pointer", width: "50px"
-    },
-    noBtn: {
-        backgroundColor: "#6c757d", color: "#fff", border: "none",
-        padding: "8px 12px", borderRadius: "6px", cursor: "pointer"
-    },
-    statusPaid: {
-        color: "#28a745", fontWeight: "600", fontSize: "14px"
-    },
-    modalOverlay: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "rgba(0,0,0,0.6)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 9999,
-        padding: "20px"
-    },
-
-    modalContent: {
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-
-    modalImage: {
-        maxWidth: "80vw",
-        maxHeight: "80vh",
-        width: "auto",
-        height: "auto",
-        objectFit: "contain",
-        borderRadius: "10px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.4)"
-    }
-};
-
 export default AdminDashboardSubPay;

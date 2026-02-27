@@ -2,242 +2,171 @@ import React, { useState, useEffect } from "react";
 import api from "../../api";
 
 const API_URL = process.env.REACT_APP_API_URL;
-
-const getImageUrl = (img) => {
-    if (!img) return "/images/no-slip.png";
-
-    // ถ้าเป็น full URL แล้ว
-    if (img.startsWith("http")) return img;
-
-    if (!API_URL) return img;
-
-    return `${API_URL.replace(/\/$/, "")}/${img.replace(/^\//, "")}`;
+const getImg = (img) => {
+  if (!img) return "/images/no-slip.png";
+  if (img.startsWith("http")) return img;
+  if (!API_URL) return img;
+  return `${API_URL.replace(/\/$/, "")}/${img.replace(/^\//, "")}`;
 };
+
+const STYLE = `
+  .adp { padding:24px; max-width:1000px; margin:0 auto; font-family:'Prompt',sans-serif; }
+  .adp-h2 { color:#00467f; margin-bottom:18px; font-size:20px; }
+  .adp-tabs { display:flex; gap:20px; margin-bottom:18px; border-bottom:1px solid #ddd; }
+  .adp-tab { padding:10px 14px; cursor:pointer; background:none; border:none;
+    font-size:15px; font-weight:600; color:#888; font-family:inherit;
+    border-bottom:3px solid transparent; margin-bottom:-1px; transition:.15s; }
+  .adp-tab.on { color:#00467f; border-bottom-color:#00467f; }
+
+  /* table */
+  .adp-table-wrap { background:#fff; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,.05); overflow-x:auto; }
+  .adp-table { width:100%; border-collapse:collapse; min-width:620px; }
+  .adp-table thead tr { background:#f9fafb; }
+  .adp-table th { padding:14px 12px; text-align:left; font-size:13px; color:#666; white-space:nowrap; }
+  .adp-table td { padding:13px 12px; font-size:14px; vertical-align:middle; border-bottom:1px solid #f1f1f1; }
+  .adp-thumb { width:46px; height:64px; object-fit:cover; border-radius:6px; cursor:pointer; border:1px solid #eee; }
+  .adp-price { font-size:16px; font-weight:700; color:#ee4d2d; }
+  .adp-paid  { color:#28a745; font-weight:600; font-size:13px; }
+  .adp-init  { background:#00467f; color:#fff; border:none; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:13px; }
+  .adp-cg    { display:flex; gap:5px; }
+  .adp-yes   { background:#28a745; color:#fff; border:none; padding:7px 12px; border-radius:6px; cursor:pointer; }
+  .adp-no    { background:#6c757d; color:#fff; border:none; padding:7px 12px; border-radius:6px; cursor:pointer; }
+
+  /* mobile cards — hidden on desktop */
+  .adp-cards { display:none; flex-direction:column; gap:12px; }
+  .adp-card  { background:#fff; border-radius:12px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.06); border:1px solid #f0f0f0; }
+  .adp-card-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+  .adp-card-id   { font-weight:700; font-size:14px; color:#333; }
+  .adp-card-shop { font-size:12px; color:#00467f; margin-top:2px; }
+  .adp-card-row  { display:flex; gap:12px; margin-bottom:10px; align-items:flex-start; }
+  .adp-card-items{ flex:1; font-size:13px; color:#555; line-height:1.7; }
+  .adp-card-foot { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; border-top:1px solid #f1f1f1; padding-top:10px; }
+  .adp-card-date { font-size:11px; color:#999; }
+
+  /* modal */
+  .adp-modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; justify-content:center; align-items:center; z-index:9999; padding:20px; }
+  .adp-modal img { max-width:80vw; max-height:80vh; object-fit:contain; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+
+  @media (max-width:640px) {
+    .adp { padding:14px; }
+    .adp-table-wrap { display:none; }
+    .adp-cards { display:flex; }
+  }
+`;
+if (!document.getElementById("adp-style")) {
+  const el = document.createElement("style"); el.id="adp-style"; el.textContent=STYLE; document.head.appendChild(el);
+}
 
 const AdminDashboardPay = () => {
-    const [orders, setOrders] = useState([]);
-    const [activeTab, setActiveTab] = useState("waiting");
-    const [loading, setLoading] = useState(true);
-    const [confirmId, setConfirmId] = useState(null); // เก็บ ID ออเดอร์ที่กำลังจะกดยืนยัน
-    const [isUpdating, setIsUpdating] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(null);
+  const [orders, setOrders]       = useState([]);
+  const [tab, setTab]             = useState("waiting");
+  const [loading, setLoading]     = useState(true);
+  const [confirmId, setConfirmId] = useState(null);
+  const [updating, setUpdating]   = useState(false);
+  const [bigImg, setBigImg]       = useState(null);
 
-    const fetchOrders = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get("/api/orders/admin/all-payments");
-            setOrders(res.data);
-        } catch (err) {
-            console.error("Error:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const load = async () => {
+    setLoading(true);
+    try { const r = await api.get("/api/orders/admin/all-payments"); setOrders(r.data); }
+    catch(e){ console.error(e); } finally { setLoading(false); }
+  };
+  useEffect(()=>{ load(); },[]);
 
-    useEffect(() => { fetchOrders(); }, []);
+  const approve = async (id) => {
+    setUpdating(true);
+    try { await api.patch(`/api/orders/${id}/admin-confirm`); setConfirmId(null); load(); }
+    catch(e){ console.error(e); } finally { setUpdating(false); }
+  };
 
-    useEffect(() => {
-        if (orders.length > 0) {
-            console.log("First slip =", orders[0].paymentSlip);
-        }
-    }, [orders]);
+  const filtered = orders.filter(o => tab==="waiting" ? o.status==="WaitingConfirm" : o.status==="Paid");
 
-    const handleConfirmFinal = async (orderId) => {
-        setIsUpdating(true);
-        try {
-            await api.patch(`/api/orders/${orderId}/admin-confirm`);
-            setConfirmId(null);
-            fetchOrders();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsUpdating(false);
-        }
-    };
-
-    const filteredOrders = orders.filter(order =>
-        activeTab === "waiting" ? order.status === "WaitingConfirm" : order.status === "Paid"
-    );
-
-    return (
-        <div style={styles.container}>
-            <h2 style={styles.title}>ระบบจัดการบัญชีกลาง</h2>
-
-            <div style={styles.tabContainer}>
-                <button
-                    onClick={() => { setActiveTab("waiting"); setConfirmId(null); }}
-                    style={{ ...styles.tabBtn, color: activeTab === "waiting" ? "#00467f" : "#888", borderBottom: activeTab === "waiting" ? "3px solid #00467f" : "none" }}
-                >
-                    รอตรวจสอบ ({orders.filter(o => o.status === "WaitingConfirm").length})
-                </button>
-                <button
-                    onClick={() => { setActiveTab("approved"); setConfirmId(null); }}
-                    style={{ ...styles.tabBtn, color: activeTab === "approved" ? "#00467f" : "#888", borderBottom: activeTab === "approved" ? "3px solid #00467f" : "none" }}
-                >
-                    อนุมัติแล้ว
-                </button>
-            </div>
-
-            {loading ? <p style={{ textAlign: 'center' }}>กำลังโหลดข้อมูล...</p> : (
-                <div style={styles.tableWrapper}>
-                    <table style={styles.table}>
-                        <thead>
-                            <tr style={styles.thRow}>
-                                <th style={styles.th}>รหัส/ร้านค้า</th>
-                                <th style={styles.th}>รายการสินค้า</th>
-                                <th style={styles.th}>ยอดเงิน</th>
-                                <th style={styles.th}>หลักฐานการชำระเงิน</th>
-                                <th style={styles.th}>วันที่สั่ง</th>
-                                <th style={styles.th}>จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredOrders.map(order => (
-                                <tr key={order._id} style={styles.tr}>
-                                    {/* ข้อมูลออเดอร์และร้านค้า */}
-                                    <td style={styles.td}>
-                                        <div style={{ fontWeight: 'bold', color: '#333' }}>
-                                            #{order._id.slice(-6).toUpperCase()}
-                                        </div>
-                                        <div style={{ fontSize: '12px', color: '#00467f' }}>
-                                            {/* 🆕 แก้ไข: ดึงชื่อร้านจาก product.shop.name */}
-                                            {order.items[0]?.product?.user?.username || "ร้านค้าทั่วไป"}
-                                        </div>
-                                    </td>
-
-                                    {/* รายการสินค้าที่ซื้อ */}
-                                    <td style={styles.td}>
-                                        {order.items.map((item, index) => (
-                                            <div key={index} style={{ fontSize: '13px', color: '#555' }}>
-                                                {/* 🆕 แก้ไข: เปลี่ยนจาก .name เป็น .title ตาม Model Product */}
-                                                {item.product?.title || "ไม่พบชื่อสินค้า"} (x{item.quantity})
-                                            </div>
-                                        ))}
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        <strong style={{ fontSize: '16px', color: '#ee4d2d' }}>
-                                            ฿{order.totalPrice.toLocaleString()}
-                                        </strong>
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        <img
-                                            src={getImageUrl(order.paymentSlip)}
-                                            style={styles.thumbnail}
-                                            onClick={() => setSelectedImage(getImageUrl(order.paymentSlip))}
-                                            alt="slip"
-                                            onError={(e) => {
-                                                e.currentTarget.onerror = null;
-                                                e.currentTarget.src = "/images/no-slip.png";
-                                            }}
-                                        />
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        {new Date(order.createdAt).toLocaleString("th-TH")}
-                                    </td>
-
-                                    <td style={styles.td}>
-                                        {/* ส่วนปุ่มกดยืนยัน (เหมือนเดิม) */}
-                                        {activeTab === "waiting" ? (
-                                            confirmId === order._id ? (
-                                                <div style={styles.confirmGroup}>
-                                                    <button disabled={isUpdating} onClick={() => handleConfirmFinal(order._id)} style={styles.yesBtn}>ใช่</button>
-                                                    <button disabled={isUpdating} onClick={() => setConfirmId(null)} style={styles.noBtn}>ไม่</button>
-                                                </div>
-                                            ) : (
-                                                <button onClick={() => setConfirmId(order._id)} style={styles.initBtn}>อนุมัติ</button>
-                                            )
-                                        ) : (
-                                            <span style={styles.statusPaid}>✔️ จ่ายแล้ว</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-            {selectedImage && (
-                <div style={styles.modalOverlay} onClick={() => setSelectedImage(null)}>
-                    <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                        <img
-                            src={getImageUrl(selectedImage)}
-                            style={styles.modalImage}
-                            alt="slip large"
-                            onError={(e) => {
-                                e.currentTarget.onerror = null;
-                                e.currentTarget.src = "/images/no-slip.png";
-                            }}
-                        />
-                    </div>
-                </div>
-            )}
+  const ActionBtn = ({ order }) => tab==="waiting" ? (
+    confirmId===order._id
+      ? <div className="adp-cg">
+          <button className="adp-yes" disabled={updating} onClick={()=>approve(order._id)}>ใช่</button>
+          <button className="adp-no"  disabled={updating} onClick={()=>setConfirmId(null)}>ไม่</button>
         </div>
-    );
+      : <button className="adp-init" onClick={()=>setConfirmId(order._id)}>อนุมัติ</button>
+  ) : <span className="adp-paid">✔️ จ่ายแล้ว</span>;
+
+  const waitCount = orders.filter(o=>o.status==="WaitingConfirm").length;
+
+  return (
+    <div className="adp">
+      <h2 className="adp-h2">ระบบจัดการบัญชีกลาง</h2>
+
+      <div className="adp-tabs">
+        {[["waiting",`รอตรวจสอบ (${waitCount})`],["approved","อนุมัติแล้ว"]].map(([k,l])=>(
+          <button key={k} className={`adp-tab ${tab===k?"on":""}`}
+            onClick={()=>{setTab(k);setConfirmId(null);}}>{l}</button>
+        ))}
+      </div>
+
+      {loading ? <p style={{textAlign:"center"}}>กำลังโหลด...</p> : (<>
+
+        {/* Desktop table */}
+        <div className="adp-table-wrap">
+          <table className="adp-table">
+            <thead><tr>
+              {["รหัส/ร้านค้า","รายการสินค้า","ยอดเงิน","หลักฐาน","วันที่สั่ง","จัดการ"].map(h=>(
+                <th key={h}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>{filtered.map(o=>(
+              <tr key={o._id}>
+                <td>
+                  <div style={{fontWeight:700,color:"#333"}}>#{o._id.slice(-6).toUpperCase()}</div>
+                  <div style={{fontSize:12,color:"#00467f"}}>{o.items[0]?.product?.user?.username||"ร้านค้าทั่วไป"}</div>
+                </td>
+                <td>{o.items.map((it,i)=>(
+                  <div key={i} style={{fontSize:13,color:"#555"}}>{it.product?.title||"ไม่พบสินค้า"} (x{it.quantity})</div>
+                ))}</td>
+                <td><span className="adp-price">฿{o.totalPrice.toLocaleString()}</span></td>
+                <td><img src={getImg(o.paymentSlip)} className="adp-thumb" onClick={()=>setBigImg(getImg(o.paymentSlip))} alt="slip"
+                  onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src="/images/no-slip.png";}}/></td>
+                <td style={{fontSize:13}}>{new Date(o.createdAt).toLocaleString("th-TH")}</td>
+                <td><ActionBtn order={o}/></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="adp-cards">
+          {filtered.length===0
+            ? <p style={{textAlign:"center",color:"#999",padding:20}}>ไม่มีรายการ</p>
+            : filtered.map(o=>(
+            <div key={o._id} className="adp-card">
+              <div className="adp-card-head">
+                <div>
+                  <div className="adp-card-id">#{o._id.slice(-6).toUpperCase()}</div>
+                  <div className="adp-card-shop">{o.items[0]?.product?.user?.username||"ร้านค้าทั่วไป"}</div>
+                </div>
+                <span className="adp-price">฿{o.totalPrice.toLocaleString()}</span>
+              </div>
+              <div className="adp-card-row">
+                <img src={getImg(o.paymentSlip)} className="adp-thumb" onClick={()=>setBigImg(getImg(o.paymentSlip))} alt="slip"
+                  onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src="/images/no-slip.png";}}/>
+                <div className="adp-card-items">
+                  {o.items.map((it,i)=><div key={i}>{it.product?.title||"ไม่พบสินค้า"} (x{it.quantity})</div>)}
+                </div>
+              </div>
+              <div className="adp-card-foot">
+                <span className="adp-card-date">{new Date(o.createdAt).toLocaleString("th-TH")}</span>
+                <ActionBtn order={o}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </>)}
+
+      {bigImg && (
+        <div className="adp-modal" onClick={()=>setBigImg(null)}>
+          <img src={bigImg} alt="slip large"
+            onError={e=>{e.currentTarget.onerror=null;e.currentTarget.src="/images/no-slip.png";}}/>
+        </div>
+      )}
+    </div>
+  );
 };
-
-const styles = {
-    container: { padding: "30px", maxWidth: "1000px", margin: "0 auto", fontFamily: "'Prompt', sans-serif" },
-    title: { color: "#00467f", marginBottom: "20px" },
-    tabContainer: { display: "flex", gap: "20px", marginBottom: "20px", borderBottom: "1px solid #ddd" },
-    tabBtn: { padding: "10px 15px", cursor: "pointer", background: "none", border: "none", fontSize: "16px", fontWeight: "600" },
-    tableWrapper: { backgroundColor: "#fff", borderRadius: "12px", boxShadow: "0 4px 15px rgba(0,0,0,0.05)", overflow: "hidden" },
-    table: { width: "100%", borderCollapse: "collapse" },
-    thRow: { backgroundColor: "#f9fafb" },
-    th: { padding: "15px", textAlign: "left", fontSize: "14px", color: "#666" },
-    tr: { borderBottom: "1px solid #f1f1f1" },
-    td: { padding: "15px", fontSize: "15px" },
-    thumbnail: { width: "50px", height: "70px", objectFit: "cover", borderRadius: "6px", cursor: "pointer", border: "1px solid #eee" },
-
-    // ปุ่มเริ่มต้น
-    initBtn: {
-        backgroundColor: "#00467f", color: "#fff", border: "none",
-        padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px"
-    },
-    // กลุ่มปุ่มยืนยัน
-    confirmGroup: { display: "flex", gap: "5px" },
-    yesBtn: {
-        backgroundColor: "#28a745", color: "#fff", border: "none",
-        padding: "8px 12px", borderRadius: "6px", cursor: "pointer", width: "50px"
-    },
-    noBtn: {
-        backgroundColor: "#6c757d", color: "#fff", border: "none",
-        padding: "8px 12px", borderRadius: "6px", cursor: "pointer"
-    },
-    statusPaid: {
-        color: "#28a745", fontWeight: "600", fontSize: "14px"
-    },
-    modalOverlay: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "rgba(0,0,0,0.6)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 9999,
-        padding: "20px"
-    },
-
-    modalContent: {
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-
-    modalImage: {
-        maxWidth: "80vw",
-        maxHeight: "80vh",
-        width: "auto",
-        height: "auto",
-        objectFit: "contain",
-        borderRadius: "10px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.4)"
-    }
-};
-
 export default AdminDashboardPay;

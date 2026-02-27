@@ -68,3 +68,9 @@
 .ads-button:hover {
   background: #2e7d32;
 }
+/* ── MOBILE ── */
+@media (max-width: 640px) {
+  .ads-wrapper { padding: 14px; align-items: flex-start; }
+  .ads-form { padding: 20px 16px; }
+  .ads-title { font-size: 18px; }
+}
