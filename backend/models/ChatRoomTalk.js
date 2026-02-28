@@ -6,6 +6,11 @@ const chatRoomSchema = new mongoose.Schema({
     enum: ["trade", "normal"],
     default: "normal"
   },
+  confirmedBy: [{ 
+  type: mongoose.Schema.Types.ObjectId, 
+  ref: "User",
+  default: []
+}],
   // ✅ ปรับปรุงโครงสร้าง Array ของ Participants
   participants: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -98,5 +103,7 @@ chatRoomSchema.index(
   { type: 1, productId: 1, offeredProductId: 1, participants: 1 },
   { unique: true }
 );
+
+
 
 module.exports = mongoose.model("ChatRoomTalk", chatRoomSchema);

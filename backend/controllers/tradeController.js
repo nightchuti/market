@@ -536,3 +536,45 @@ exports.acceptMatch = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+exports.confirmSwapChat = async (req, res) => {
+  try {
+    const roomId = req.params.id;
+    const userId = req.user.id;
+
+    const room = await ChatRoom.findById(roomId);
+    if (!room) return res.status(404).json({ error: "ไม่พบห้องแชท" });
+
+    if (room.tradeStatus !== "accepted") {
+      return res.status(400).json({ error: "สถานะไม่ถูกต้อง" });
+    }
+
+    // กัน confirm ซ้ำ
+    const alreadyConfirmed = (room.confirmedBy || []).map(String).includes(String(userId));
+    if (alreadyConfirmed) {
+      return res.status(400).json({ error: "คุณยืนยันแล้ว" });
+    }
+
+    room.confirmedBy = [...(room.confirmedBy || []), userId];
+
+    // ถ้าครบ 2 คน → completed
+    if (room.confirmedBy.length >= 2) {
+      room.tradeStatus = "completed";
+      room.completedAt = new Date();
+
+      await Product.findByIdAndUpdate(room.productId,        { status: "exchanged" });
+      await Product.findByIdAndUpdate(room.offeredProductId, { status: "exchanged" });
+    }
+
+    await room.save();
+
+    res.json({ 
+      success: true, 
+      confirmedCount: room.confirmedBy.length,
+      completed: room.tradeStatus === "completed"
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
