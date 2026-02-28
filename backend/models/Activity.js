@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const activitySchema = new mongoose.Schema(
   {
@@ -7,34 +7,27 @@ const activitySchema = new mongoose.Schema(
       enum: ["ORDER", "PAYMENT", "USER", "COUPON", "ADS", "REPORT"],
       required: true
     },
-
     action: {
       type: String,
       required: true
-      // เช่น CREATE_ORDER, CONFIRM_PAYMENT
     },
-
     description: {
       type: String,
       required: true
     },
-
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      default: null
     },
-
     relatedId: {
       type: mongoose.Schema.Types.ObjectId,
       default: null
     },
-
     relatedModel: {
       type: String,
       default: null
     },
-
     meta: {
       type: Object,
       default: {}
@@ -45,4 +38,4 @@ const activitySchema = new mongoose.Schema(
 
 activitySchema.index({ createdAt: -1 });
 
-export default mongoose.model("Activity", activitySchema);
+module.exports = mongoose.model("Activity", activitySchema);

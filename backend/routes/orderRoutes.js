@@ -15,6 +15,7 @@ const Product = require("../models/Product");
 const { protect } = require("../middleware/authMiddleware");
 const calculateDistance = require("../utils/distance");
 const calculateDeliveryFee = require("../utils/deliveryFee");
+const logActivity = require("../utils/logActivity"); // 🔥 เพิ่ม
 
 const {
   acceptOrder,
@@ -49,7 +50,6 @@ router.put("/:orderId/ready-to-meetup", protect, async (req, res) => {
       return res.status(400).json({ message: "ออเดอร์นี้ไม่ใช่นัดรับ" });
     }
 
-    // สุ่ม OTP 6 หลัก
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     order.meetupOTP = otp;
     order.status = "WaitingMeetup";
@@ -65,7 +65,6 @@ router.put("/:orderId/verify-meetup", protect, async (req, res) => {
   const { otp } = req.body;
 
   try {
-
     const order = await Order.findOne({
       _id: req.params.orderId,
       seller: req.user._id
@@ -89,7 +88,7 @@ router.put("/:orderId/verify-meetup", protect, async (req, res) => {
     order.status = "Completed";
     order.meetupVerified = true;
     order.escrowStatus = "Released";
-    order.meetupOTP = null; // 🔥 ล้าง OTP ป้องกัน reuse
+    order.meetupOTP = null;
 
     if (order.paymentMethod === "COD") {
       order.paidAt = new Date();
@@ -119,7 +118,7 @@ router.get("/my", protect, async (req, res) => {
         select: "title images user",
         populate: {
           path: "user",
-          select: "username" // สมมติว่าต้องการแสดงชื่อเจ้าของจากโมเดล User
+          select: "username"
         }
       })
       .sort({ createdAt: -1 })
@@ -134,21 +133,19 @@ router.get("/my", protect, async (req, res) => {
 });
 
 // ==========================================
-// 🆕 [SELLER] ดึงคำสั่งซื้อที่ส่งมาถึงร้านค้าของเรา
+// [SELLER] ดึงคำสั่งซื้อที่ส่งมาถึงร้านค้าของเรา
 // ==========================================
 router.get("/seller/all", protect, async (req, res) => {
   try {
-    // 1. ค้นหาออเดอร์ทั้งหมดที่มีรายการสินค้า
     const orders = await Order.find()
       .populate("user", "username")
       .populate({
         path: "items.product",
         model: "Product",
-        select: "title price user images",  // ดึงข้อมูล seller มาด้วยเพื่อกรอง
+        select: "title price user images",
       })
       .sort({ createdAt: -1 });
 
-    // 2. กรองเฉพาะออเดอร์ที่มีสินค้าที่เป็นของเรา (req.user._id)
     const myOrders = orders.filter(order =>
       order.items.some(item =>
         item.product && item.product.user && item.product.user.toString() === req.user._id.toString()
@@ -178,7 +175,7 @@ router.get("/seller/orders", protect, async (req, res) => {
 });
 
 // ==========================================
-// 3. [BUYER] CHECKOUT (ฉบับแก้ไขสมบูรณ์)
+// 3. [BUYER] CHECKOUT
 // ==========================================
 router.post("/checkout", protect, async (req, res) => {
   const session = await mongoose.startSession();
@@ -205,18 +202,14 @@ router.post("/checkout", protect, async (req, res) => {
     const orderItems = [];
     let sellerId = null;
 
-    // 🔥 LOOP สินค้า
     for (const item of items) {
-
       const productData = await Product.findById(item.product).session(session);
       if (!productData) throw new Error("ไม่พบสินค้า");
 
-      // กันซื้อของตัวเอง
       if (productData.user.toString() === buyerId.toString()) {
         throw new Error(`ไม่สามารถซื้อสินค้าของตัวเองได้`);
       }
 
-      // 🔥 กันหลายร้าน
       if (!sellerId) {
         sellerId = productData.user;
       } else if (sellerId.toString() !== productData.user.toString()) {
@@ -224,10 +217,7 @@ router.post("/checkout", protect, async (req, res) => {
       }
 
       const updatedProduct = await Product.findOneAndUpdate(
-        {
-          _id: item.product,
-          quantity: { $gte: item.quantity }
-        },
+        { _id: item.product, quantity: { $gte: item.quantity } },
         { $inc: { quantity: -item.quantity } },
         { new: true, session }
       );
@@ -245,42 +235,34 @@ router.post("/checkout", protect, async (req, res) => {
       });
     }
 
-    // =============================
-    // 🔥 คำนวณค่าส่ง
-    // =============================
+    let finalDeliveryFee = 0;
 
     if (deliveryMode === "DELIVERY") {
+      const sellerShop = await shop.findOne({ owner: sellerId });
 
-  const sellerShop = await shop.findOne({ owner: sellerId });
+      if (
+        shippingAddress?.lat !== undefined &&
+        shippingAddress?.lng !== undefined &&
+        sellerShop?.location?.lat &&
+        sellerShop?.location?.lng
+      ) {
+        const distanceKm = calculateDistance(
+          sellerShop.location.lat,
+          sellerShop.location.lng,
+          shippingAddress.lat,
+          shippingAddress.lng
+        );
 
-  // ถ้ามีพิกัดครบ ค่อยคำนวณจริง
-  if (
-    shippingAddress?.lat !== undefined &&
-    shippingAddress?.lng !== undefined &&
-    sellerShop?.location?.lat &&
-    sellerShop?.location?.lng
-  ) {
+        if (distanceKm > 30) {
+          throw new Error("อยู่นอกเขตให้บริการ");
+        }
 
-    const distanceKm = calculateDistance(
-      sellerShop.location.lat,
-      sellerShop.location.lng,
-      shippingAddress.lat,
-      shippingAddress.lng
-    );
-
-    if (distanceKm > 30) {
-      throw new Error("อยู่นอกเขตให้บริการ");
+        finalDeliveryFee = calculateDeliveryFee(distanceKm);
+      } else {
+        finalDeliveryFee = 40;
+      }
     }
 
-    finalDeliveryFee = calculateDeliveryFee(distanceKm);
-
-  } else {
-    // 🔥 fallback แบบปลอดภัย (เช่น ค่าส่งคงที่)
-    finalDeliveryFee = 40; // หรือ 0 ถ้าต้องการ
-  }
-}
-
-    // 🔥 คำนวณยอดรวมจริงใน Backend เท่านั้น
     const finalTotal = subTotal + finalDeliveryFee;
 
     let initialStatus = "PendingPayment";
@@ -306,27 +288,19 @@ router.post("/checkout", protect, async (req, res) => {
       { session }
     );
 
-    // 🔥 ลบสินค้าออกจากตะกร้า
     const cart = await Cart.findOne({ user: buyerId }).session(session);
 
     if (cart) {
-      const productIds = items.map(i =>
-        new mongoose.Types.ObjectId(i.product)
-      );
-
+      const productIds = items.map(i => new mongoose.Types.ObjectId(i.product));
       cart.items = cart.items.filter(
         item => !productIds.some(id => id.equals(item.product))
       );
-
       await cart.save({ session });
     }
 
     await session.commitTransaction();
 
-    res.status(201).json({
-      success: true,
-      order: order[0]
-    });
+    res.status(201).json({ success: true, order: order[0] });
 
   } catch (err) {
     await session.abortTransaction();
@@ -354,7 +328,6 @@ router.patch("/:id/upload-slip", protect, uploadSlip.single("slip"), async (req,
         paymentMethod: "PROMPTPAY"
       },
       {
-        // ✅ ใช้ URL จาก Cloudinary แทน
         paymentSlip: req.file.path,
         status: "WaitingConfirm",
         paidAt: new Date(),
@@ -387,6 +360,18 @@ router.patch("/:id/admin-verify", protect, async (req, res) => {
       { status: "Paid" },
       { new: true }
     );
+
+    // 🔥 บันทึก Activity
+    await logActivity({
+      type: "PAYMENT",
+      action: "ADMIN_VERIFY_SLIP",
+      description: `แอดมินยืนยันสลิปการชำระเงิน Order #${order._id.toString().slice(-6).toUpperCase()} ยอด ฿${order.totalPrice?.toLocaleString()}`,
+      userId: req.user.id,
+      relatedId: order._id,
+      relatedModel: "Order",
+      meta: { totalPrice: order.totalPrice, status: "Paid" }
+    });
+
     res.json({ success: true, message: "ยืนยันการชำระเงินเรียบร้อย", order });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -417,60 +402,33 @@ router.patch("/:id/call-delivery", protect, async (req, res) => {
   try {
     const { riderName, riderPhone, trackingUrl } = req.body;
 
-    const order = await Order.findOne({
-      _id: req.params.id,
-      seller: req.user.id
-    });
+    const order = await Order.findOne({ _id: req.params.id, seller: req.user.id });
 
-    if (!order)
-      return res.status(404).json({ message: "ไม่พบออเดอร์" });
-
-    if (order.deliveryMode !== "DELIVERY")
-      return res.status(400).json({ message: "ออเดอร์นี้ไม่ใช่การจัดส่ง" });
-
-    if (order.status !== "Preparing")
-      return res.status(400).json({ message: "ต้องเตรียมสินค้าก่อน" });
+    if (!order) return res.status(404).json({ message: "ไม่พบออเดอร์" });
+    if (order.deliveryMode !== "DELIVERY") return res.status(400).json({ message: "ออเดอร์นี้ไม่ใช่การจัดส่ง" });
+    if (order.status !== "Preparing") return res.status(400).json({ message: "ต้องเตรียมสินค้าก่อน" });
 
     order.status = "Shipping";
-
-    order.deliveryDetails = {
-      riderName,
-      riderPhone,
-      trackingUrl
-    };
-
-    // 🔥 ตั้ง auto release 24 ชม.
-    order.autoReleaseAt = new Date(
-      Date.now() + 24 * 60 * 60 * 1000
-    );
+    order.deliveryDetails = { riderName, riderPhone, trackingUrl };
+    order.autoReleaseAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await order.save();
 
-    res.json({
-      success: true,
-      message: "บันทึกข้อมูลไรเดอร์และเริ่มจัดส่งแล้ว",
-      order
-    });
+    res.json({ success: true, message: "บันทึกข้อมูลไรเดอร์และเริ่มจัดส่งแล้ว", order });
 
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-
 // ==========================================
 // 8. [BUYER] ยืนยันได้รับสินค้า (Completed)
 // ==========================================
 router.patch("/:id/complete", protect, async (req, res) => {
   try {
-    const order = await Order.findOne({
-      _id: req.params.id,
-      user: req.user.id,
-      status: "Shipping"
-    });
+    const order = await Order.findOne({ _id: req.params.id, user: req.user.id, status: "Shipping" });
 
-    if (!order)
-      return res.status(400).json({ message: "ไม่สามารถยืนยันได้" });
+    if (!order) return res.status(400).json({ message: "ไม่สามารถยืนยันได้" });
 
     order.status = "Completed";
     order.escrowStatus = "Released";
@@ -478,11 +436,7 @@ router.patch("/:id/complete", protect, async (req, res) => {
 
     await order.save();
 
-    res.json({
-      success: true,
-      message: "ยืนยันรับสินค้า เงินถูกปล่อยแล้ว",
-      order
-    });
+    res.json({ success: true, message: "ยืนยันรับสินค้า เงินถูกปล่อยแล้ว", order });
 
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -490,36 +444,25 @@ router.patch("/:id/complete", protect, async (req, res) => {
 });
 
 // ==========================================
-// 🔥 [SELLER] รับออเดอร์ (Accept)
+// [SELLER] รับออเดอร์ / ส่งสินค้า / [BUYER] ยืนยัน
 // ==========================================
 router.patch("/:id/accept", protect, acceptOrder);
-
-// ==========================================
-// 🚚 [SELLER] กรอกข้อมูลไรเดอร์ + ส่งสินค้า
-// ==========================================
 router.patch("/:id/ship", protect, shipOrder);
-
-// ==========================================
-// ✅ [BUYER] ยืนยันได้รับสินค้า
-// ==========================================
 router.post("/:id/confirm-delivery", protect, confirmDelivery);
 
 // ==========================================
 // 9. รายละเอียดออเดอร์เดียว & ยกเลิกออเดอร์
 // ==========================================
-// orderRoutes.js 
 router.get("/:id", protect, async (req, res) => {
   try {
-    // แก้ไข: นำ seller ออกหากใน Model Order.js ไม่มีฟิลด์นี้
     const order = await Order.findOne({
       _id: req.params.id,
-      user: req.user.id // ค้นหาเฉพาะออเดอร์ของผู้ใช้นี้
+      user: req.user.id
     }).populate("items.product user");
 
     if (!order) return res.status(404).json({ message: "ไม่พบออเดอร์" });
     res.json(order);
   } catch (err) {
-    // บรรทัดนี้จะส่ง Error ที่แท้จริงกลับไปให้ Frontend เห็น
     res.status(500).json({ message: err.message });
   }
 });
@@ -547,29 +490,20 @@ router.patch("/:id/cancel", protect, async (req, res) => {
 });
 
 // ==========================================
-//  ตรวจสอบสลืปที่อัปโหลดโดยผู้ใช้ (สำหรับ Admin)
+// [ADMIN] ดึงรายการชำระเงินทั้งหมด
 // ==========================================
-// ✅ แก้ไขใน orderRoutes.js (เส้นทาง /admin/all-payments)
 router.get("/admin/all-payments", protect, async (req, res) => {
   try {
     const orders = await Order.find({
       status: { $in: ["WaitingConfirm", "Paid"] }
     })
-      .populate("user", "username") // ข้อมูลคนซื้อ
+      .populate("user", "username")
       .populate({
         path: "items.product",
-        select: "title price user", // ดึง user (เจ้าของสินค้า) ออกมา
-        populate: {
-          path: "user",
-          select: "username", // ดึงชื่อเจ้าของสินค้า
-        }
+        select: "title price user",
+        populate: { path: "user", select: "username" }
       })
       .sort({ updatedAt: -1 });
-
-    /* หมายเหตุ: หากคุณต้องการชื่อร้าน (Shop Name) จริงๆ 
-       คุณต้องมั่นใจว่า Model Shop มีฟิลด์ ownerId ที่ตรงกับ items.product.user
-       และอาจต้องดึงข้อมูล Shop แยก หรือทำ Virtual Populate
-    */
 
     res.json(orders);
   } catch (err) {
@@ -577,43 +511,64 @@ router.get("/admin/all-payments", protect, async (req, res) => {
   }
 });
 
-// Admin กดยืนยันเงินเข้า
+// ==========================================
+// [ADMIN] อนุมัติการชำระเงิน (admin-confirm)
+// ==========================================
 router.patch("/:id/admin-confirm", protect, async (req, res) => {
-  const order = await Order.findById(req.params.id);
-  order.status = "Paid";
-  await order.save();
-  res.json({ message: "Updated" });
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate({ path: "items.product", select: "title", populate: { path: "user", select: "username" } });
+
+    if (!order) return res.status(404).json({ message: "ไม่พบออเดอร์" });
+
+    order.status = "Paid";
+    await order.save();
+
+    // 🔥 บันทึก Activity
+    const shopName = order.items[0]?.product?.user?.username || "ร้านค้าทั่วไป";
+    await logActivity({
+      type: "PAYMENT",
+      action: "ADMIN_CONFIRM_PAYMENT",
+      description: `แอดมินอนุมัติการชำระเงิน Order #${order._id.toString().slice(-6).toUpperCase()} ร้าน: ${shopName} ยอด ฿${order.totalPrice?.toLocaleString()}`,
+      userId: req.user.id,
+      relatedId: order._id,
+      relatedModel: "Order",
+      meta: { totalPrice: order.totalPrice, shopName, status: "Paid" }
+    });
+
+    res.json({ message: "Updated", order });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-// 🔵 [ADMIN] รายการที่โอนแล้ว
+// ==========================================
+// [ADMIN] รายการที่โอนแล้ว
+// ==========================================
 router.get("/admin/transferred", protect, async (req, res) => {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "ไม่มีสิทธิ์เข้าถึง" });
     }
 
-    const orders = await Order.find({
-      sellerTransferStatus: "Transferred"
-    })
+    const orders = await Order.find({ sellerTransferStatus: "Transferred" })
       .populate({
         path: "items.product",
-        populate: {
-          path: "user",
-          select: "username bankAccount"
-        }
+        populate: { path: "user", select: "username bankAccount" }
       })
       .sort({ sellerTransferredAt: -1 });
 
     res.json(orders);
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
+// ==========================================
+// [ADMIN] รายการรอโอนเงิน
+// ==========================================
 router.get("/admin/pending-transfer", protect, async (req, res) => {
   try {
-
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "ไม่มีสิทธิ์เข้าถึง" });
     }
@@ -626,56 +581,54 @@ router.get("/admin/pending-transfer", protect, async (req, res) => {
       .populate({
         path: "items.product",
         select: "title price user",
-        populate: {
-          path: "user",
-          select: "username bankAccount" // ✅ ตรงนี้คือจุดสำคัญ
-        }
+        populate: { path: "user", select: "username bankAccount" }
       })
       .sort({ completedAt: -1 });
 
     res.json(orders);
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// 🔥 [ADMIN] โอนเงินให้ร้าน
+// ==========================================
+// [ADMIN] โอนเงินให้ร้านค้า
+// ==========================================
 router.patch("/:id/admin-transfer-seller", protect, async (req, res) => {
   try {
-    // 🔒 เช็คว่าเป็น admin จริง
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "ไม่มีสิทธิ์เข้าถึง" });
     }
 
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id)
+      .populate({ path: "items.product", select: "title", populate: { path: "user", select: "username bankAccount" } });
 
-    if (!order) {
-      return res.status(404).json({ message: "ไม่พบออเดอร์" });
-    }
+    if (!order) return res.status(404).json({ message: "ไม่พบออเดอร์" });
+    if (order.status !== "Completed") return res.status(400).json({ message: "ออเดอร์ยังไม่เสร็จสิ้น" });
+    if (order.sellerTransferStatus === "Transferred") return res.status(400).json({ message: "โอนเงินไปแล้ว" });
 
-    // ✅ ต้อง Completed ก่อนถึงจะโอนได้
-    if (order.status !== "Completed") {
-      return res.status(400).json({ message: "ออเดอร์ยังไม่เสร็จสิ้น" });
-    }
-
-    // ❌ กันกดซ้ำ
-    if (order.sellerTransferStatus === "Transferred") {
-      return res.status(400).json({ message: "โอนเงินไปแล้ว" });
-    }
-    
-
-    // 💰 เปลี่ยนสถานะโอนเงิน
     order.sellerTransferStatus = "Transferred";
     order.sellerTransferredAt = new Date();
-
     await order.save();
 
-    res.json({
-      success: true,
-      message: "โอนเงินให้ร้านเรียบร้อยแล้ว",
-      order
+    // 🔥 บันทึก Activity
+    const sellerUser = order.items[0]?.product?.user;
+    const sellerName = sellerUser?.username || "ไม่ทราบชื่อ";
+    const bankInfo = sellerUser?.bankAccount
+      ? `${sellerUser.bankAccount.bankName} - ${sellerUser.bankAccount.accountNumber}`
+      : "ไม่มีข้อมูลธนาคาร";
+
+    await logActivity({
+      type: "PAYMENT",
+      action: "ADMIN_TRANSFER_TO_SELLER",
+      description: `แอดมินโอนเงินให้ร้าน "${sellerName}" Order #${order._id.toString().slice(-6).toUpperCase()} ยอด ฿${order.totalPrice?.toLocaleString()} | ${bankInfo}`,
+      userId: req.user.id,
+      relatedId: order._id,
+      relatedModel: "Order",
+      meta: { totalPrice: order.totalPrice, sellerName, bankInfo }
     });
+
+    res.json({ success: true, message: "โอนเงินให้ร้านเรียบร้อยแล้ว", order });
 
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -9,6 +9,7 @@ const Membership = require("../models/Membership");
 const User = require("../models/User");
 const Shop = require("../models/Shop");
 const { protect } = require("../middleware/authMiddleware");
+const logActivity = require("../utils/logActivity"); // 🔥 เพิ่ม
 
 
 // ============================
@@ -54,7 +55,7 @@ router.post("/", protect, upload.single("slip"), async (req, res) => {
       user: req.user.id,
       plan,
       price,
-      slip: req.file.path, // ✅ Cloudinary URL
+      slip: req.file.path,
       status: "pending"
     });
 
@@ -75,7 +76,6 @@ router.post("/upgrade", protect, async (req, res) => {
     const { planDays, planType } = req.body;
     const userId = req.user.id;
 
-    // 1️⃣ หา Shop
     const shop = await Shop.findOne({ ownerId: userId });
     if (!shop) {
       return res.status(404).json({
@@ -83,9 +83,6 @@ router.post("/upgrade", protect, async (req, res) => {
       });
     }
 
-    // ===============================
-    // 🔵 กรณีสมัคร PRO (รายเดือน)
-    // ===============================
     if (planType === "PRO") {
 
       let newExpireDate = new Date();
@@ -98,19 +95,14 @@ router.post("/upgrade", protect, async (req, res) => {
         newExpireDate.getDate() + parseInt(planDays || 30)
       );
 
-      // อัปเดต Shop
       shop.isPromoted = true;
       shop.promotionTier = "PRO";
       shop.promotionExpireAt = newExpireDate;
       await shop.save();
 
-      // อัปเดต User (+5 boost)
       const updatedUser = await User.findByIdAndUpdate(
         userId,
-        {
-          membershipTier: "PRO",
-          $inc: { boostQuota: 5 }
-        },
+        { membershipTier: "PRO", $inc: { boostQuota: 5 } },
         { new: true }
       );
 
@@ -122,16 +114,11 @@ router.post("/upgrade", protect, async (req, res) => {
       });
     }
 
-    // ===============================
-    // 🟢 กรณี Boost รายครั้ง
-    // ===============================
     if (planType === "SINGLE") {
 
       const updatedUser = await User.findByIdAndUpdate(
         userId,
-        {
-          $inc: { boostQuota: 1 }
-        },
+        { $inc: { boostQuota: 1 } },
         { new: true }
       );
 
@@ -142,26 +129,19 @@ router.post("/upgrade", protect, async (req, res) => {
       });
     }
 
-    // ===============================
-    // ❌ ถ้า planType ไม่ถูกต้อง
-    // ===============================
-    return res.status(400).json({
-      message: "ประเภทแพ็กเกจไม่ถูกต้อง"
-    });
+    return res.status(400).json({ message: "ประเภทแพ็กเกจไม่ถูกต้อง" });
 
   } catch (error) {
-    res.status(500).json({
-      message: "เกิดข้อผิดพลาด: " + error.message
-    });
+    res.status(500).json({ message: "เกิดข้อผิดพลาด: " + error.message });
   }
 });
 
 // ============================
-// 🟡 อนุมัติ (Manual Approve)
+// 🟡 อนุมัติ Membership (Admin)
 // ============================
 router.post("/approve/:id", async (req, res) => {
   try {
-    const membership = await Membership.findById(req.params.id);
+    const membership = await Membership.findById(req.params.id).populate("user", "username email");
     if (!membership) {
       return res.status(404).json({ message: "ไม่พบข้อมูล" });
     }
@@ -169,7 +149,7 @@ router.post("/approve/:id", async (req, res) => {
     membership.status = "approved";
     await membership.save();
 
-    const user = await User.findById(membership.user);
+    const user = await User.findById(membership.user._id || membership.user);
 
     if (membership.plan === "PRO") {
       user.membershipTier = "PRO";
@@ -182,6 +162,19 @@ router.post("/approve/:id", async (req, res) => {
     }
 
     await user.save();
+
+    // 🔥 บันทึก Activity
+    const memberEmail = membership.user?.email || membership.user?.username || "ผู้ใช้";
+    const planLabel = membership.plan === "PRO" ? "PRO (รายเดือน)" : "SINGLE (Boost 1 ครั้ง)";
+    await logActivity({
+      type: "USER",
+      action: "ADMIN_APPROVE_MEMBERSHIP",
+      description: `แอดมินอนุมัติสมาชิก ${planLabel} ให้ผู้ใช้ "${memberEmail}" ราคา ฿${membership.price}`,
+      userId: req.user?.id || null,
+      relatedId: membership._id,
+      relatedModel: "Membership",
+      meta: { plan: membership.plan, price: membership.price, memberEmail }
+    });
 
     res.json({ message: "อนุมัติสำเร็จ" });
 

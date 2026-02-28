@@ -3,7 +3,7 @@
 ============================================================ */
 *, *::before, *::after { box-sizing: border-box; }
 html { overflow-x: hidden; }
-body { overflow-x: hidden; padding-top: 72px; margin: 0; }
+body { overflow-x: hidden; padding-top: 0px; margin: 0; }
 
 /* ============================================================
    NAVBAR BASE
@@ -157,7 +157,7 @@ body { overflow-x: hidden; padding-top: 72px; margin: 0; }
 
 /* Tablet portrait / large phone → hamburger */
 @media (max-width: 768px) {
-  body { padding-top: 0px; }
+  body { padding-top: 10px; }
   .navbar { height: 64px; padding: 0 14px; }
   .logo-img  { width: 36px; height: 36px; }
   .logo span { font-size: 14px; }

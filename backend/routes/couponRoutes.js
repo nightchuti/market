@@ -4,8 +4,9 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const Coupon = require("../models/Coupon");
 const CouponUsage = require("../models/CouponUsage");
-const ClaimedCoupon = require("../models/ClaimedCoupon"); // นำเข้า Model ใหม่
+const ClaimedCoupon = require("../models/ClaimedCoupon");
 const { protect } = require("../middleware/authMiddleware");
+const logActivity = require("../utils/logActivity"); // 🔥 เพิ่ม
 
 // ================= 1. GET ALL FOR FEED (พร้อมสถานะการเก็บ) =================
 router.get("/", protect, async (req, res) => {
@@ -14,19 +15,16 @@ router.get("/", protect, async (req, res) => {
     let allowedTiers = ['FREE'];
     if (userTier === 'PRO') allowedTiers.push('PRO');
 
-    // ดึงคูปองที่ยังใช้งานได้
     const coupons = await Coupon.find({
       isActive: true,
       expireAt: { $gt: new Date() },
       requiredTier: { $in: allowedTiers }
     }).sort({ createdAt: -1 }).lean();
 
-    // ดึงรายการที่ User เคยเก็บไปแล้วมาเช็คสถานะ
     const myClaimed = await ClaimedCoupon.find({ userId: req.user.id }).select('couponId isUsed');
     const claimedIds = myClaimed.map(c => c.couponId.toString());
     const usedIds = myClaimed.filter(c => c.isUsed).map(c => c.couponId.toString());
 
-    // ปรับรูปแบบข้อมูลส่งกลับให้ UI ทำงานง่าย
     const couponsWithStatus = coupons.map(coupon => ({
       ...coupon,
       isClaimed: claimedIds.includes(coupon._id.toString()),
@@ -40,7 +38,7 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
-// ================= 2. CLAIM COUPON (กดเก็บคูปอง) =================
+// ================= 2. CLAIM COUPON =================
 router.post("/claim/:id", protect, async (req, res) => {
   try {
     const couponId = req.params.id;
@@ -49,18 +47,15 @@ router.post("/claim/:id", protect, async (req, res) => {
     const coupon = await Coupon.findOne({ _id: couponId, isActive: true, expireAt: { $gt: new Date() } });
     if (!coupon) return res.status(404).json({ message: "ไม่พบคูปอง หรือคูปองหมดอายุแล้ว" });
 
-    // เช็ค Tier
     const tierLevels = ['FREE', 'PRO'];
     if (tierLevels.indexOf(req.user.membershipTier || 'FREE') < tierLevels.indexOf(coupon.requiredTier)) {
       return res.status(403).json({ message: `เฉพาะสมาชิกระดับ ${coupon.requiredTier} เท่านั้น` });
     }
 
-    // เช็คโควตารวม
     if (coupon.quotaLimit > 0 && coupon.quotaUsed >= coupon.quotaLimit) {
       return res.status(400).json({ message: "คูปองถูกเก็บจนเต็มจำนวนแล้ว" });
     }
 
-    // บันทึกการเก็บ (Claim)
     try {
       await ClaimedCoupon.create({ userId, couponId });
       res.json({ success: true, message: "เก็บคูปองลงกระเป๋าสำเร็จ!" });
@@ -73,7 +68,7 @@ router.post("/claim/:id", protect, async (req, res) => {
   }
 });
 
-// ================= 3. CHECK PRICE (ใช้สำหรับคำนวณส่วนลด) =================
+// ================= 3. CHECK PRICE =================
 router.post("/check", protect, async (req, res) => {
   try {
     const { code, subTotal } = req.body;
@@ -90,7 +85,6 @@ router.post("/check", protect, async (req, res) => {
       return res.status(400).json({ message: "คูปองถูกใช้ครบจำนวนแล้ว" });
     }
 
-    // เช็คว่าเคยเก็บคูปองนี้หรือยัง (บังคับต้องเก็บก่อนใช้เหมือน Shopee)
     const claimData = await ClaimedCoupon.findOne({ userId: req.user.id, couponId: coupon._id });
     if (!claimData) return res.status(400).json({ message: "คุณต้องเก็บคูปองนี้ก่อนใช้งาน" });
     if (claimData.isUsed) return res.status(400).json({ message: "คุณใช้คูปองนี้ไปแล้ว" });
@@ -99,7 +93,6 @@ router.post("/check", protect, async (req, res) => {
       return res.status(400).json({ message: `ยอดสั่งซื้อขั้นต่ำ ฿${coupon.minSpend}` });
     }
 
-    // คำนวณส่วนลด
     let discount = coupon.discountType === 'PERCENT'
       ? (subTotal * coupon.discountValue) / 100
       : coupon.discountValue;
@@ -113,7 +106,7 @@ router.post("/check", protect, async (req, res) => {
   }
 });
 
-// ================= 4. REDEEM (ตัดยอดจริงเมื่อชำระเงิน) =================
+// ================= 4. REDEEM =================
 router.post("/redeem", protect, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -128,7 +121,6 @@ router.post("/redeem", protect, async (req, res) => {
 
     if (!coupon) throw new Error("คูปองไม่ถูกต้องหรือโควตาเต็มแล้ว");
 
-    // อัปเดตสถานะในกระเป๋าคูปองเป็น "ใช้แล้ว"
     const updateClaim = await ClaimedCoupon.findOneAndUpdate(
       { userId: req.user.id, couponId: coupon._id, isUsed: false },
       { isUsed: true },
@@ -137,7 +129,6 @@ router.post("/redeem", protect, async (req, res) => {
 
     if (!updateClaim) throw new Error("คุณใช้คูปองนี้ไปแล้ว หรือยังไม่ได้เก็บคูปอง");
 
-    // บันทึกประวัติการใช้
     let discount = coupon.discountType === 'PERCENT' ? (subTotal * coupon.discountValue) / 100 : coupon.discountValue;
     if (coupon.maxDiscountAmount > 0 && discount > coupon.maxDiscountAmount) discount = coupon.maxDiscountAmount;
 
@@ -158,7 +149,7 @@ router.post("/redeem", protect, async (req, res) => {
 // ================= 5. CREATE (Admin Only) =================
 router.post("/", protect, async (req, res) => {
   try {
-    const { code, tier, expireAt } = req.body;
+    const { code, tier, expireAt, discountType, discountValue, quotaLimit, minSpend } = req.body;
     const existing = await Coupon.findOne({ code: code.toUpperCase() });
     if (existing) return res.status(400).json({ message: "มีโค้ดนี้ในระบบแล้ว" });
 
@@ -167,6 +158,24 @@ router.post("/", protect, async (req, res) => {
       code: code.toUpperCase(),
       requiredTier: tier || 'FREE'
     });
+
+    // 🔥 บันทึก Activity
+    const discountLabel = discountType === "PERCENT"
+      ? `${discountValue}%`
+      : `฿${Number(discountValue).toLocaleString()}`;
+    const quotaLabel = quotaLimit > 0 ? `${quotaLimit} สิทธิ์` : "ไม่จำกัด";
+    const expireLabel = expireAt ? new Date(expireAt).toLocaleDateString("th-TH") : "-";
+
+    await logActivity({
+      type: "COUPON",
+      action: "ADMIN_CREATE_COUPON",
+      description: `แอดมินสร้างคูปองใหม่ รหัส "${coupon.code}" ส่วนลด ${discountLabel} | โควตา: ${quotaLabel} | หมดอายุ: ${expireLabel} | ระดับ: ${tier || 'FREE'}`,
+      userId: req.user.id,
+      relatedId: coupon._id,
+      relatedModel: "Coupon",
+      meta: { code: coupon.code, discountType, discountValue, quotaLimit, minSpend, expireAt, tier }
+    });
+
     res.status(201).json(coupon);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -183,11 +192,7 @@ router.get("/my", protect, async (req, res) => {
 
     const validCoupons = claimed
       .map(c => c.couponId)
-      .filter(c =>
-        c &&
-        c.isActive &&
-        c.expireAt > new Date()
-      );
+      .filter(c => c && c.isActive && c.expireAt > new Date());
 
     res.json(validCoupons);
 
