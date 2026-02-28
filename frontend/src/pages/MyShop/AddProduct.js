@@ -143,8 +143,14 @@ export default function AddProduct() {
   };
 
   // ---------------- LOCATION ----------------
+  const [locLoading, setLocLoading] = useState(false);
+
   const getMyLocation = () => {
-    if (!navigator.geolocation) return alert("เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง");
+    if (!navigator.geolocation) {
+      return alert("เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง");
+    }
+
+    setLocLoading(true);
 
     navigator.geolocation.getCurrentPosition(
       async ({ coords: { latitude, longitude } }) => {
@@ -164,13 +170,33 @@ export default function AddProduct() {
               data.address?.city ||
               data.address?.town || "",
           }));
-          alert("ดึงตำแหน่งพร้อมที่อยู่เรียบร้อยแล้ว");
         } catch (err) {
           console.error(err);
-          alert("ไม่สามารถแปลงพิกัดเป็นชื่อพื้นที่ได้");
+          // ดึงพิกัดสำเร็จแต่แปลงชื่อไม่ได้ — เซ็ตพิกัดไว้ก่อน
+          setForm(prev => ({
+            ...prev,
+            lat: String(latitude),
+            lng: String(longitude),
+          }));
+          alert("ดึงพิกัดแล้ว แต่แปลงเป็นชื่อสถานที่ไม่ได้\nสามารถพิมพ์ที่อยู่เองได้เลยครับ");
+        } finally {
+          setLocLoading(false);
         }
       },
-      () => alert("ไม่สามารถเข้าถึงตำแหน่งได้")
+      (err) => {
+        setLocLoading(false);
+        const MSG = {
+          1: "คุณปฏิเสธการอนุญาตตำแหน่ง\nกรุณาไปที่การตั้งค่าเบราว์เซอร์ แล้วอนุญาตการเข้าถึงตำแหน่ง",
+          2: "ไม่พบสัญญาณ GPS หรือเครือข่าย\nลองเปิด Wi-Fi หรือ GPS แล้วลองอีกครั้ง",
+          3: "หมดเวลาดึงตำแหน่ง กรุณาลองใหม่อีกครั้ง",
+        };
+        alert(MSG[err.code] || "ไม่สามารถดึงตำแหน่งได้ กรุณาลองใหม่");
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 60000,
+      }
     );
   };
 
@@ -368,8 +394,8 @@ export default function AddProduct() {
       <div className="form-group">
         <div className="location-header">
           <label>พิกัด</label>
-          <button type="button" className="location-btn" onClick={getMyLocation}>
-            ใช้ตำแหน่งปัจจุบัน
+          <button type="button" className="location-btn" onClick={getMyLocation} disabled={locLoading}>
+            {locLoading ? "กำลังดึงตำแหน่ง..." : "📍 ใช้ตำแหน่งปัจจุบัน"}
           </button>
         </div>
         <div className="form-row">

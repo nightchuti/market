@@ -108,7 +108,7 @@ const AdminDashboardPay = () => {
         <div className="adp-table-wrap">
           <table className="adp-table">
             <thead><tr>
-              {["รหัส/ร้านค้า","รายการสินค้า","ยอดเงิน","หลักฐาน","วันที่สั่ง","จัดการ"].map(h=>(
+              {["รหัส/ร้านค้า","ลูกค้าผู้โอน","รายการสินค้า","ยอดเงิน","หลักฐาน","วันที่สั่ง","จัดการ"].map(h=>(
                 <th key={h}>{h}</th>
               ))}
             </tr></thead>
@@ -117,6 +117,10 @@ const AdminDashboardPay = () => {
                 <td>
                   <div style={{fontWeight:700,color:"#333"}}>#{o._id.slice(-6).toUpperCase()}</div>
                   <div style={{fontSize:12,color:"#00467f"}}>{o.items[0]?.product?.user?.username||"ร้านค้าทั่วไป"}</div>
+                </td>
+                <td>
+                  <div style={{fontWeight:600,fontSize:13,color:"#333"}}>{o.user?.username||o.user?.email||"-"}</div>
+                  <div style={{fontSize:11,color:"#999"}}>{o.user?.email||""}</div>
                 </td>
                 <td>{o.items.map((it,i)=>(
                   <div key={i} style={{fontSize:13,color:"#555"}}>{it.product?.title||"ไม่พบสินค้า"} (x{it.quantity})</div>
@@ -141,6 +145,7 @@ const AdminDashboardPay = () => {
                 <div>
                   <div className="adp-card-id">#{o._id.slice(-6).toUpperCase()}</div>
                   <div className="adp-card-shop">{o.items[0]?.product?.user?.username||"ร้านค้าทั่วไป"}</div>
+                  <div style={{fontSize:12,color:"#555",marginTop:2}}>👤 {o.user?.username||o.user?.email||"-"}</div>
                 </div>
                 <span className="adp-price">฿{o.totalPrice.toLocaleString()}</span>
               </div>
