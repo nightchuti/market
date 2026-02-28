@@ -8,6 +8,7 @@ export default function AddProduct() {
 
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [errors, setErrors] = useState({});
 
   const [tradeImages, setTradeImages] = useState([]);
   const [tradePreviews, setTradePreviews] = useState([]);
@@ -86,9 +87,39 @@ export default function AddProduct() {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // ---------------- VALIDATE ----------------
+  const validate = () => {
+    const e = {};
+    if (!form.title.trim())       e.title       = "กรุณากรอกชื่อสินค้า";
+    if (images.length === 0)      e.images      = "กรุณาอัปโหลดรูปสินค้าอย่างน้อย 1 รูป";
+    if (!form.category)           e.category    = "กรุณาเลือกหมวดหมู่";
+    if ((form.tradeOption === "sell_only" || form.tradeOption === "negotiable") && (!form.price || Number(form.price) <= 0))
+                                  e.price       = "กรุณากรอกราคาสินค้า";
+    if ((form.deliveryType === "meetup" || form.deliveryType === "both") && !form.meetupAddress.trim())
+                                  e.meetupAddress = "กรุณากรอกจุดนัดรับ";
+    if (!form.locationName.trim()) e.locationName = "กรุณากรอกที่อยู่โดยประมาณ หรือกดใช้ตำแหน่งปัจจุบัน";
+    if (form.tradeOption === "trade_allowed") {
+      if (!form.wantedCategory)   e.wantedCategory = "กรุณาเลือกหมวดที่ต้องการแลก";
+      if (form.wantedKeywords.length === 0) e.wantedKeywords = "กรุณาเพิ่มคำค้นหาสินค้าที่อยากได้อย่างน้อย 1 คำ";
+    }
+    return e;
+  };
+
   // ---------------- SUBMIT ----------------
   const submit = async (e) => {
     if (e) e.preventDefault();
+
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      // scroll ไปที่ error แรก
+      setTimeout(() => {
+        const el = document.querySelector(".ap-error");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
+      return;
+    }
+    setErrors({});
 
     // ── Build FormData ───────────────────────────────────
     try {
@@ -143,6 +174,10 @@ export default function AddProduct() {
   };
 
   // ---------------- LOCATION ----------------
+  const ErrMsg = ({ field }) => errors[field]
+    ? <p style={{color:"#dc2626",fontSize:12,marginTop:4,marginBottom:0}}>⚠ {errors[field]}</p>
+    : null;
+
   const [locLoading, setLocLoading] = useState(false);
 
   const getMyLocation = () => {
@@ -213,7 +248,9 @@ export default function AddProduct() {
 
       <div className="form-group">
         <label>ชื่อสินค้า *</label>
-        <input name="title" value={form.title} onChange={handleChange} />
+        <input name="title" value={form.title} onChange={handleChange}
+          style={errors.title?{borderColor:"#dc2626"}:{}}/>
+        <ErrMsg field="title" />
       </div>
 
       <div className="form-group">
@@ -225,6 +262,7 @@ export default function AddProduct() {
       <div className="form-group">
         <label>รูปสินค้า *</label>
         <input type="file" multiple accept="image/*" onChange={handleImageChange} />
+        <ErrMsg field="images" />
         <div className="image-preview">
           {imagePreviews.map((preview, i) => (
             <div key={i} className="preview-item">
@@ -247,7 +285,9 @@ export default function AddProduct() {
         <div className="inline-row">
           <div className="form-group">
             <label>ราคา (บาท) *</label>
-            <input name="price" type="number" min="0" value={form.price} onChange={handleChange} />
+            <input name="price" type="number" min="0" value={form.price} onChange={handleChange}
+              style={errors.price?{borderColor:"#dc2626"}:{}}/>
+            <ErrMsg field="price" />
           </div>
           <div className="form-group">
             <label>จำนวนสินค้า</label>
@@ -260,7 +300,8 @@ export default function AddProduct() {
       <div className="inline-row">
         <div className="form-group">
           <label>หมวดหมู่ *</label>
-          <select name="category" value={form.category} onChange={handleChange}>
+          <select name="category" value={form.category} onChange={handleChange}
+            style={errors.category?{borderColor:"#dc2626"}:{}}>
             <option value="">-- เลือกหมวด --</option>
             <option value="เสื้อผ้า">เสื้อผ้า</option>
             <option value="เครื่องใช้ไฟฟ้า">เครื่องใช้ไฟฟ้า</option>
@@ -272,6 +313,7 @@ export default function AddProduct() {
             <option value="อุปกรณ์อิเล็กทรอนิกส์">อุปกรณ์อิเล็กทรอนิกส์</option>
             <option value="อื่นๆ">อื่นๆ</option>
           </select>
+          <ErrMsg field="category" />
         </div>
 
         <div className="form-group">
@@ -293,7 +335,8 @@ export default function AddProduct() {
             value={form.meetupAddress}
             onChange={handleChange}
             placeholder="เช่น หอ A ห้อง 203 หรือ หน้าอาคารเรียน"
-          />
+            style={errors.meetupAddress?{borderColor:"#dc2626"}:{}}/>
+          <ErrMsg field="meetupAddress" />
         </div>
       )}
 
@@ -316,7 +359,8 @@ export default function AddProduct() {
           <div className="inline-row">
             <div className="form-group">
               <label>หมวดหมู่ที่อยากได้ *</label>
-              <select name="wantedCategory" value={form.wantedCategory} onChange={handleChange}>
+              <select name="wantedCategory" value={form.wantedCategory} onChange={handleChange}
+                style={errors.wantedCategory?{borderColor:"#dc2626"}:{}}>
                 <option value="">-- เลือกหมวด --</option>
                 <option value="เสื้อผ้า">เสื้อผ้า</option>
                 <option value="เครื่องใช้ไฟฟ้า">เครื่องใช้ไฟฟ้า</option>
@@ -387,7 +431,8 @@ export default function AddProduct() {
           value={form.locationName}
           onChange={handleChange}
           placeholder="กดใช้ตำแหน่งปัจจุบัน หรือพิมพ์เอง"
-        />
+          style={errors.locationName?{borderColor:"#dc2626"}:{}}/>
+        <ErrMsg field="locationName" />
       </div>
 
       {/* พิกัด */}
